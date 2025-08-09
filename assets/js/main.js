@@ -48,7 +48,6 @@ function updateInfo(text) {
   }, 200);
 }
 
-// Then update the calls like this:
 updateInfo(`It's ${playerColors[currentPlayer]}'s turn`);
 
 function createFallingDisc(col, player, targetRow) {
@@ -62,7 +61,7 @@ function createFallingDisc(col, player, targetRow) {
     const cellRect = cell.getBoundingClientRect();
 
     const startX = cellRect.left - boardRect.left;
-    const startY = -cellRect.height * 1.5; // above the board
+    const startY = -cellRect.height * 1.5; 
     const endY = cellRect.top - boardRect.top;
 
     disc.style.left = `${startX}px`;
@@ -98,7 +97,7 @@ function createFallingDisc(col, player, targetRow) {
 }
 
 function checkWin(player) {
-  // Horizontal, vertical, diagonal check
+
   const directions = [
     { r: 0, c: 1 },
     { r: 1, c: 0 },
@@ -185,7 +184,6 @@ function confettiLoop() {
     p.rotation += p.rotationSpeed;
     p.life--;
 
-    // Fade out near end of life
     if (p.life < 20) {
       p.opacity = p.life / 20;
     }
@@ -234,7 +232,6 @@ async function placeDisc(col) {
     return;
   }
 
-  // Check draw
   if (boardState.flat().every(cell => cell !== 0)) {
     updateInfo("It's a draw!");
     restartBtn.disabled = false;
@@ -254,7 +251,6 @@ async function restartGame() {
   clearWinningPulse();
   updateInfo('');
 
-  // Animate board shake + fade out
   board.classList.add('shake');
   board.style.opacity = '0.5';
 
