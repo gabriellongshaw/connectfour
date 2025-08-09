@@ -2,12 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Connect Four</title>
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
-  <div class="game-container">
+  <div id="start-screen" class="screen active fade">
+    <h1>Connect Four</h1>
+    <button id="play-offline" class="start-screen-button">Play Offline</button>
+    <button id="play-online" class="start-screen-button-disabled">Play Online</button>
+  </div>
+
+  <div id="game-container" class="game-container" style="display:none;">
     <h1>Connect Four</h1>
     <div id="board" class="board" aria-label="Connect Four board" role="grid"></div>
     <div id="info" class="info">Player 1's turn (Red)</div>
@@ -15,29 +21,7 @@
   </div>
   
   <canvas id="confetti-canvas"></canvas>
-  <script src="assets/js/main.js"></script>
-  <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-  
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyB18M9FSegBBx8ZJnQmXVuWOE_GtAYT1D0",
-    authDomain: "connect-four-ea92e.firebaseapp.com",
-    projectId: "connect-four-ea92e",
-    storageBucket: "connect-four-ea92e.firebasestorage.app",
-    messagingSenderId: "661961025897",
-    appId: "1:661961025897:web:d983ac6833d8d6c015b5f8",
-    measurementId: "G-QPY4TNXN2Y"
-  };
-  
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
+
+  <script src="assets/js/main.js" type="module"></script>
 </body>
 </html>

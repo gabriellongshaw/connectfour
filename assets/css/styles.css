@@ -1,3 +1,42 @@
+:root {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --header-color: #000000;
+  --card-background: #ffffff;
+  --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --button-background: #0388fc;
+  --button-text: white;
+  --button-hover-background: #146dba;
+  --board-background: #ffffff;
+  --cell-background: #d4e0e9;
+  --cell-hover-background: #a9c6d6;
+  --winning-glow: #f1c40f;
+  --player1-color: #f55a5a;
+  --player2-color: #f1c40f;
+  --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --cell-size: clamp(48px, 7.5vw, 80px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #1a1a1a;
+    --text-color: #ffffff;
+    --header-color: #ffffff;
+    --card-background: #2c2c2c;
+    --card-shadow: 0 0px 18px rgba(0, 0, 0, 0.2);
+    --button-background: #0388fc;
+    --button-text: white;
+    --button-hover-background: #146dba;
+    --board-background: #1f1f1f;
+    --cell-background: #3c3c3c;
+    --cell-hover-background: #4a4a4a;
+    --winning-glow: #f1c40f;
+    --player1-color: #f55a5a;
+    --player2-color: #f1c40f;
+    --cell-size: clamp(48px, 7.5vw, 80px);
+  }
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -5,9 +44,9 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-  color: #eee;
+  font-family: var(--font-family);
+  background: var(--background-color);
+  color: var(--text-color);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -15,39 +54,114 @@ body {
   padding: 20px;
   overflow-x: hidden;
   overflow-y: auto;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+#start-screen, #game-container {
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+#start-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--background-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  text-align: center;
+  z-index: 9999;
+  transition: background 0.4s ease;
+}
+
+#start-screen h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: var(--header-color);
+  text-shadow: none;
+}
+
+.start-screen-button {
+  padding: 15px 50px;
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 600;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  background: var(--button-background);
+  color: var(--button-text);
+  margin: 10px 0;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.4s ease, background-color 0.4s ease, padding 0.2s ease;
+  width: 80%;
+  max-width: 300px;
+}
+
+.start-screen-button:hover {
+  transform: scale(1.05);
+  background: var(--button-hover-background);
+}
+
+.start-screen-button:active {
+  transform: scale(1.05);
+}
+
+.start-screen-button-disabled {
+  padding: 15px 50px;
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 600;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  background: #777;
+  color: var(--button-text);
+  margin: 10px 0;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s ease, background-color 0.3s ease;
+  width: 80%;
+  max-width: 300px;
+  opacity: 0.3;
 }
 
 .game-container {
+  display: flex;
   text-align: center;
-  max-width: 400px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   width: 100%;
+  max-width: none;
   position: relative;
 }
 
 h1 {
-  margin-bottom: 15px;
-  font-weight: 900;
+  margin-bottom: 20px;
+  font-weight: 800;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #ff4d4d;
-  text-shadow: 1px 1px 5px #a01e1e;
+  color: var(--header-color);
+  text-shadow: none;
 }
 
 .board {
   position: relative;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-gap: 10px;
-  background: #004466;
-  padding: 15px;
+  grid-template-rows: repeat(6, 1fr);
+  grid-gap: clamp(8px, 1.5vw, 12px);
+  background: var(--board-background);
+  padding: clamp(10px, 2vw, 15px);
   border-radius: 15px;
-  box-shadow: 0 0 30px #003355;
+  box-shadow: var(--card-shadow);
   user-select: none;
   cursor: pointer;
-  aspect-ratio: 7 / 6;
-  overflow: visible;
   transform-origin: center;
-  transition: transform 0.5s ease;
+  transition: transform 0.5s ease, background 0.4s ease;
+  aspect-ratio: 7 / 6;
+  max-width: 90vw;
 }
 
 .board.shake {
@@ -57,31 +171,27 @@ h1 {
 @keyframes boardShake {
   0%, 100% {
     transform: translateX(0) rotate(0deg);
-    opacity: 1;
   }
   20%, 60% {
-    transform: translateX(-10px) rotate(-5deg);
-    opacity: 0.8;
+    transform: translateX(-15px) rotate(-5deg);
   }
   40%, 80% {
-    transform: translateX(10px) rotate(5deg);
-    opacity: 0.8;
+    transform: translateX(15px) rotate(5deg);
   }
 }
 
 .cell {
-  background: #0077aa;
+  background: var(--cell-background);
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  aspect-ratio: 1 / 1;
   position: relative;
   overflow: hidden;
-  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
   transition: background 0.3s ease;
 }
 
 .cell:hover {
-  background: #0099ff;
+  background: var(--cell-hover-background);
 }
 
 .cell[data-player="1"]::before,
@@ -90,66 +200,69 @@ h1 {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 80%;
-  height: 80%;
+  width: 90%;
+  height: 90%;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
-  opacity: 0.9;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+  opacity: 1;
   pointer-events: none;
   transition: none;
 }
 
 .cell[data-player="1"]::before {
-  background: radial-gradient(circle at center, #ff3d3d 60%, #b20000);
+  background: radial-gradient(circle at center, var(--player1-color) 60%, #e63939);
 }
 
 .cell[data-player="2"]::before {
-  background: radial-gradient(circle at center, #ffd54f 60%, #b28f00);
+  background: radial-gradient(circle at center, var(--player2-color) 60%, #e2b600);
 }
 
 .cell.winning {
-  box-shadow: 0 0 30px 10px #ffff6f;
+  box-shadow: 0 0 15px 5px var(--winning-glow);
   animation: pulseWin 1s infinite alternate ease-in-out;
 }
 
 @keyframes pulseWin {
   0% {
-    box-shadow: 0 0 15px 5px #ffff6f;
+    transform: scale(1);
+    box-shadow: 0 0 15px 5px var(--winning-glow);
   }
   100% {
-    box-shadow: 0 0 35px 15px #ffea00;
+    transform: scale(1.05);
+    box-shadow: 0 0 25px 10px var(--winning-glow);
   }
 }
 
 .info {
   margin: 20px 0 10px;
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   min-height: 1.5em;
   opacity: 1;
   transition: opacity 0.2s ease;
+  color: var(--text-color);
 }
 
 .restart-btn {
-  padding: 10px 20px;
-  background: #ff4d4d;
+  padding: 12px 35px;
+  background: var(--button-background);
   border: none;
   border-radius: 50px;
-  color: #fff;
-  font-size: 14px;
+  color: var(--button-text);
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 5px 15px #a01e1e;
-  transition: background 0.3s ease, padding 0.3s ease, font-size 0.2s ease;
+  box-shadow: var(--card-shadow);
+  transition: background 0.4s ease, transform 0.4s ease;
   user-select: none;
 }
 
 .restart-btn:hover,
 .restart-btn:focus {
-  background: #ff1a1a;
   outline: none;
-  padding: 12px 25px;
+  background: var(--button-hover-background);
+  transform: scale(1.05);
 }
 
 .restart-btn:disabled {
@@ -172,11 +285,20 @@ h1 {
 }
 
 .falling-disc.red {
-  background: radial-gradient(circle at center, #ff3d3d 60%, #b20000);
+  background: radial-gradient(circle at center, var(--player1-color) 60%, #e63939);
 }
 
 .falling-disc.yellow {
-  background: radial-gradient(circle at center, #ffd54f 60%, #b28f00);
+  background: radial-gradient(circle at center, var(--player2-color) 60%, #e2b600);
+}
+
+@keyframes dropDisc {
+  0% {
+    transform: translate(Y(calc(-100% - var(--cell-size))));
+  }
+  100% {
+    transform: translate(0);
+  }
 }
 
 #confetti-canvas {
@@ -188,29 +310,31 @@ h1 {
 }
 
 .mode-select {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 15px;
 }
 
 .mode-btn {
   flex: 1;
-  padding: 10px 0;
-  background: #004466;
+  padding: 12px 0;
+  background: var(--button-background);
   border: none;
   border-radius: 30px;
-  color: #eee;
-  font-weight: 700;
+  color: var(--button-text);
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 3px 10px rgba(0, 68, 102, 0.6);
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: var(--card-shadow);
+  transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
   user-select: none;
+  max-width: 150px;
 }
 
 .mode-btn.active,
 .mode-btn:hover {
-  background: #0099ff;
-  box-shadow: 0 5px 20px rgba(0, 153, 255, 0.8);
+  background: var(--button-hover-background);
+  box-shadow: var(--card-shadow);
+  transform: scale(1.02);
   color: #fff;
 }
