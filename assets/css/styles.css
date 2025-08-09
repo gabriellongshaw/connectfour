@@ -1,0 +1,225 @@
+/* Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: #eee;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.game-container {
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  position: relative;
+}
+
+h1 {
+  margin-bottom: 15px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ff4d4d;
+  text-shadow: 1px 1px 5px #a01e1e;
+}
+
+/* Board */
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-gap: 10px;
+  background: #004466;
+  padding: 15px;
+  border-radius: 15px;
+  box-shadow: 0 0 30px #003355;
+  user-select: none;
+  cursor: pointer;
+  aspect-ratio: 7 / 6;
+  overflow: visible;
+  transform-origin: center;
+  transition: transform 0.5s ease;
+}
+
+/* Animate board shake */
+.board.shake {
+  animation: boardShake 0.7s ease-in-out;
+}
+
+@keyframes boardShake {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  20%, 60% {
+    transform: translateX(-10px) rotate(-5deg);
+    opacity: 0.8;
+  }
+  40%, 80% {
+    transform: translateX(10px) rotate(5deg);
+    opacity: 0.8;
+  }
+}
+
+/* Cells */
+.cell {
+  background: #0077aa;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: background 0.3s ease;
+}
+
+.cell:hover {
+  background: #0099ff;
+}
+
+.cell[data-player="1"]::before,
+.cell[data-player="2"]::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
+  pointer-events: none;
+  transition: none;
+}
+
+.cell[data-player="1"]::before {
+  background: radial-gradient(circle at center, #ff3d3d 60%, #b20000);
+}
+
+.cell[data-player="2"]::before {
+  background: radial-gradient(circle at center, #ffd54f 60%, #b28f00);
+}
+
+/* Winning cell pulse */
+.cell.winning {
+  box-shadow: 0 0 30px 10px #ffff6f;
+  animation: pulseWin 1s infinite alternate ease-in-out;
+}
+
+@keyframes pulseWin {
+  0% {
+    box-shadow: 0 0 15px 5px #ffff6f;
+  }
+  100% {
+    box-shadow: 0 0 35px 15px #ffea00;
+  }
+}
+
+/* Info text fade */
+.info {
+  margin: 20px 0 10px;
+  font-weight: 600;
+  font-size: 1.2rem;
+  min-height: 1.5em;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+/* Restart button */
+.restart-btn {
+  padding: 10px 20px;
+  background: #ff4d4d;
+  border: none;
+  border-radius: 50px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 5px 15px #a01e1e;
+  transition: background 0.3s ease, padding 0.3s ease, font-size 0.2s ease;
+  user-select: none;
+}
+
+.restart-btn:hover,
+.restart-btn:focus {
+  background: #ff1a1a;
+  outline: none;
+  padding: 12px 25px;
+}
+
+.restart-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Falling disc animation container */
+.falling-disc {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  will-change: transform;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: forwards;
+  animation-duration: 400ms;
+}
+
+.falling-disc.red {
+  background: radial-gradient(circle at center, #ff3d3d 60%, #b20000);
+}
+
+.falling-disc.yellow {
+  background: radial-gradient(circle at center, #ffd54f 60%, #b28f00);
+}
+
+/* Confetti canvas styling */
+#confetti-canvas {
+  position: fixed;
+  pointer-events: none;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: 9999;
+  display: none;
+}
+
+.mode-select {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 10px 0;
+  background: #004466;
+  border: none;
+  border-radius: 30px;
+  color: #eee;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 68, 102, 0.6);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+}
+
+.mode-btn.active,
+.mode-btn:hover {
+  background: #0099ff;
+  box-shadow: 0 5px 20px rgba(0, 153, 255, 0.8);
+  color: #fff;
+}
