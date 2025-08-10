@@ -35,11 +35,20 @@ let gameActive = false;
 let unsubscribeGameListener = null;
 let unsubscribeWaitListener = null;
 
+// Helper function to unflatten a 1D array back into a 2D array
+function unflattenBoard(flatArray) {
+  const newBoard = [];
+  while(flatArray.length) newBoard.push(flatArray.splice(0, COLS));
+  return newBoard;
+}
+
 // Firebase Listeners
 createGameBtn.addEventListener('click', async () => {
   multiplayerStatus.textContent = "Creating game...";
+  
+  // CHANGED: Flatten the boardState before sending it to Firebase
   const docRef = await addDoc(collection(db, "games"), {
-    board: boardState,
+    board: boardState.flat(),
     currentPlayer: 1,
     status: "waiting",
     winner: 0
@@ -116,8 +125,9 @@ boardDiv.addEventListener('click', e => {
 // Restart Buttons
 restartBtn.addEventListener('click', async () => {
   if (!gameActive) {
+    // CHANGED: Flatten the boardState before sending it to Firebase
     await updateDoc(doc(db, "games", gameId), {
-      board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)),
+      board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
       currentPlayer: 1,
       status: "playing",
       winner: 0
@@ -127,8 +137,9 @@ restartBtn.addEventListener('click', async () => {
 playAgainBtn.addEventListener('click', async () => {
   if (!gameActive) {
     hideGameOver();
+    // CHANGED: Flatten the boardState before sending it to Firebase
     await updateDoc(doc(db, "games", gameId), {
-      board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)),
+      board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
       currentPlayer: 1,
       status: "playing",
       winner: 0
@@ -229,7 +240,8 @@ async function handleMove(col) {
   const isDraw = tempBoard.flat().every(cell => cell !== 0);
 
   const updateData = {
-    board: tempBoard,
+    // CHANGED: Flatten the boardState before sending it to Firebase
+    board: tempBoard.flat(),
     currentPlayer: newPlayer,
     status: (winner || isDraw) ? "finished" : "playing",
     winner: winner ? currentPlayer : 0
@@ -322,11 +334,14 @@ function subscribeToGame() {
     if (!snapshot.exists()) return;
     const data = snapshot.data();
 
-    if (JSON.stringify(boardState) !== JSON.stringify(data.board)) {
-      animateOpponentMove(data.board);
+    // CHANGED: Unflatten the board before comparing and updating state
+    const receivedBoard = unflattenBoard([...data.board]);
+
+    if (JSON.stringify(boardState) !== JSON.stringify(receivedBoard)) {
+      animateOpponentMove(receivedBoard);
     }
     
-    boardState = data.board;
+    boardState = receivedBoard;
     currentPlayer = data.currentPlayer;
     gameActive = data.status === "playing";
     const winner = data.winner || 0;
