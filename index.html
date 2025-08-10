@@ -10,9 +10,28 @@
   <div id="start-screen" class="screen active fade">
     <h1>Connect Four</h1>
     <button id="play-offline" class="start-screen-button">Play Offline</button>
-    <button id="play-online" class="start-screen-button-disabled">Play Online</button>
+    <button id="play-online" class="start-screen-button">Play Online</button>
   </div>
 
+  <div id="multiplayer-screen" class="screen" style="display:none;">
+    <h1>Online Multiplayer</h1>
+    <div id="multiplayer-options">
+      <button id="create-game-btn" class="start-screen-button">Create New Game</button>
+      <button id="show-join-screen-btn" class="start-screen-button">Join Game</button>
+    </div>
+    <div id="join-input-section" style="display:none;">
+      <input type="text" id="join-code-input" placeholder="Enter Room Code" class="text-input">
+      <button id="join-game-btn" class="start-screen-button">Join Game</button>
+      <button id="back-to-options-btn" class="back-button">Back to Options</button>
+    </div>
+    <p id="multiplayer-status" class="status-message"></p>
+    <div id="room-code-display" class="room-code-section" style="display:none;">
+      <p>Share this code with a friend:</p>
+      <span id="room-code"></span>
+      <button id="back-to-start-btn" class="back-button">Back</button>
+    </div>
+  </div>
+  
   <div id="game-container" class="game-container" style="display:none;">
     <h1>Connect Four</h1>
     <div id="board" class="board" aria-label="Connect Four board" role="grid"></div>
@@ -27,6 +46,29 @@
     <button id="playAgainBtn">Play Again</button>
   </div>
   
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyB18M9FSegBBx8ZJnQmXVuWOE_GtAYT1D0",
+      authDomain: "connect-four-ea92e.firebaseapp.com",
+      projectId: "connect-four-ea92e",
+      storageBucket: "connect-four-ea92e.firebasestorage.app",
+      messagingSenderId: "661961025897",
+      appId: "1:661961025897:web:d983ac6833d8d6c015b5f8",
+      measurementId: "G-QPY4TNXN2Y"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // Expose the database globally for other scripts to use
+    window.firebaseDB = db;
+  </script>
+
   <script src="assets/js/main.js" type="module"></script>
 </body>
 </html>

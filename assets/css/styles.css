@@ -309,11 +309,39 @@ h1 {
 }
 
 .cell[data-player="1"]::before {
-  background: radial-gradient(circle at center, var(--player1-color) 60%, #e63939);
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  height: 90%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 35% 35%, var(--player1-color) 60%, #e63939);
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.4),
+    0 4px 6px rgba(0, 0, 0, 0.2);
+  opacity: 1;
+  pointer-events: none;
+  transition: none;
 }
 
 .cell[data-player="2"]::before {
-  background: radial-gradient(circle at center, var(--player2-color) 60%, #e2b600);
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  height: 90%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 35% 35%, var(--player2-color) 60%, #ffb300);
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.4),
+    0 4px 6px rgba(0, 0, 0, 0.2);
+  opacity: 1;
+  pointer-events: none;
+  transition: none;
 }
 
 .cell.winning {
@@ -383,11 +411,17 @@ h1 {
 }
 
 .falling-disc.red {
-  background: radial-gradient(circle at center, var(--player1-color) 60%, #e63939);
+  background: radial-gradient(circle at 35% 35%, var(--player1-color) 60%, #e63939);
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.4),
+    0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .falling-disc.yellow {
-  background: radial-gradient(circle at center, var(--player2-color) 60%, #e2b600);
+  background: radial-gradient(circle at 35% 35%, var(--player2-color) 60%, #ffb300);
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.4),
+    0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes dropDisc {
@@ -435,4 +469,122 @@ h1 {
   box-shadow: var(--card-shadow);
   transform: scale(1.02);
   color: #fff;
+}
+
+#multiplayer-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--background-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  text-align: center;
+  z-index: 9999;
+  transition: opacity 0.4s ease;
+}
+
+#multiplayer-screen h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: var(--header-color);
+  text-shadow: none;
+}
+
+#multiplayer-options,
+#join-input-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.join-game-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80%;
+  max-width: 300px;
+  margin-bottom: 20px;
+}
+
+.text-input {
+  width: 100%;
+  padding: 12px 20px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  border: 2px solid var(--cell-background);
+  border-radius: 50px;
+  background: var(--card-background);
+  color: var(--text-color);
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.text-input::placeholder {
+  color: #a9a9a9;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: var(--button-background);
+  box-shadow: 0 0 0 3px rgba(3, 136, 252, 0.2);
+}
+
+.status-message {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  font-weight: 500;
+  color: var(--text-color);
+  min-height: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.room-code-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 15px;
+  background: var(--card-background);
+  border-radius: 15px;
+  box-shadow: var(--card-shadow);
+  width: 80%;
+  max-width: 300px;
+}
+
+.room-code-section p {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+#room-code {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 2px;
+  background: var(--board-background);
+  color: var(--header-color);
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: all;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 30px;
+  padding: 10px;
+  transition: color 0.2s ease;
+}
+
+.back-button:hover {
+  color: #777;
 }

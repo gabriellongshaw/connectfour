@@ -1,86 +1,134 @@
 import { collection, addDoc, getDoc, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const db = window.firebaseDB;
-const isLocal = location.hostname === "localhost" || location.hostname === "127.0.0.1";
 
-let gameId = null;
-let playerNumber = null;
-let currentPlayer = 1;
-let board = Array.from({ length: 6 }, () => Array(7).fill(0));
-let gameActive = false;
-
-const gameContainer = document.querySelector('.game-container');
-gameContainer.innerHTML = `
-  <h1>Connect Four (Online)</h1>
-  <div id="lobby">
-    <button id="create-game" class="start-screen-button">Create Game</button>
-    <button id="join-game" class="start-screen-button">Join Game</button>
-    <div id="lobby-info" style="margin-top:15px;font-size:1.1rem;"></div>
-  </div>
-  <div id="board" class="board" style="display:none;" aria-label="Connect Four board" role="grid"></div>
-  <div id="info" class="info" style="display:none;">Waiting for game...</div>
-  <button id="restartBtn" class="restart-btn" style="display:none;">Restart</button>
-`;
-
-const lobbyInfo = document.getElementById('lobby-info');
+// DOM Elements
+const multiplayerScreen = document.getElementById('multiplayer-screen');
+const multiplayerOptions = document.getElementById('multiplayer-options');
+const createGameBtn = document.getElementById('create-game-btn');
+const showJoinScreenBtn = document.getElementById('show-join-screen-btn');
+const joinInputSection = document.getElementById('join-input-section');
+const joinCodeInput = document.getElementById('join-code-input');
+const joinGameBtn = document.getElementById('join-game-btn');
+const backToOptionsBtn = document.getElementById('back-to-options-btn');
+const multiplayerStatus = document.getElementById('multiplayer-status');
+const roomCodeDisplay = document.getElementById('room-code-display');
+const roomCodeSpan = document.getElementById('room-code');
+const backToStartBtn = document.getElementById('back-to-start-btn');
+const gameContainer = document.getElementById('game-container');
 const boardDiv = document.getElementById('board');
 const infoDiv = document.getElementById('info');
 const restartBtn = document.getElementById('restartBtn');
+const overlay = document.getElementById('overlay');
+const playAgainBtn = document.getElementById('playAgainBtn');
+const startScreen = document.getElementById('start-screen');
 
+// Game State
+const ROWS = 6;
+const COLS = 7;
+let gameId = null;
+let playerNumber = null;
+let currentPlayer = 1;
+let boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+let isAnimating = false;
+let gameActive = false;
 let unsubscribeGameListener = null;
 let unsubscribeWaitListener = null;
 
-document.getElementById('create-game').addEventListener('click', async () => {
-  if (isLocal) {
-    gameId = "LOCAL_TEST";
-    playerNumber = 1;
-    startGame();
-  } else {
-    const docRef = await addDoc(collection(db, "games"), {
-      board,
+// Firebase Listeners
+createGameBtn.addEventListener('click', async () => {
+  multiplayerStatus.textContent = "Creating game...";
+  const docRef = await addDoc(collection(db, "games"), {
+    board: boardState,
+    currentPlayer: 1,
+    status: "waiting",
+    winner: 0
+  });
+  gameId = docRef.id;
+  playerNumber = 1;
+
+  await window.fadeOut(multiplayerOptions);
+  multiplayerOptions.style.display = 'none';
+  
+  roomCodeSpan.textContent = gameId;
+  roomCodeDisplay.style.display = 'flex';
+  await window.fadeIn(roomCodeDisplay);
+  
+  multiplayerStatus.textContent = "Game created! Waiting for opponent...";
+  waitForOpponent();
+});
+
+showJoinScreenBtn.addEventListener('click', async () => {
+  await window.fadeOut(multiplayerOptions);
+  multiplayerOptions.style.display = 'none';
+
+  joinInputSection.style.display = 'flex';
+  await window.fadeIn(joinInputSection);
+});
+
+joinGameBtn.addEventListener('click', async () => {
+  const id = joinCodeInput.value.trim();
+  if (!id) {
+    multiplayerStatus.textContent = "Please enter a game ID.";
+    return;
+  }
+  multiplayerStatus.textContent = "Joining game...";
+  const gameRef = doc(db, "games", id);
+  const snapshot = await getDoc(gameRef);
+
+  if (!snapshot.exists() || snapshot.data().status !== "waiting") {
+    multiplayerStatus.textContent = "Game not found or already started.";
+    return;
+  }
+
+  gameId = id;
+  playerNumber = 2;
+  await updateDoc(gameRef, { status: "playing" });
+  startGame();
+});
+
+backToOptionsBtn.addEventListener('click', async () => {
+  await window.fadeOut(joinInputSection);
+  joinInputSection.style.display = 'none';
+
+  multiplayerStatus.textContent = "";
+
+  multiplayerOptions.style.display = 'flex';
+  await window.fadeIn(multiplayerOptions);
+});
+
+backToStartBtn.addEventListener('click', async () => {
+  await window.fadeOut(multiplayerScreen);
+  multiplayerScreen.style.display = 'none';
+  
+  startScreen.style.display = 'flex';
+  await window.fadeIn(startScreen);
+});
+
+// Game Board Event Listener
+boardDiv.addEventListener('click', e => {
+  if (e.target.classList.contains('cell') && !isAnimating) {
+    const col = Number(e.target.dataset.col);
+    handleMove(col);
+  }
+});
+
+// Restart Buttons
+restartBtn.addEventListener('click', async () => {
+  if (!gameActive) {
+    await updateDoc(doc(db, "games", gameId), {
+      board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)),
       currentPlayer: 1,
-      status: "waiting",
+      status: "playing",
       winner: 0
     });
-    gameId = docRef.id;
-    playerNumber = 1;
-    lobbyInfo.textContent = `Game created! Share this ID: ${gameId}`;
-    waitForOpponent();
   }
 });
-
-document.getElementById('join-game').addEventListener('click', async () => {
-  const id = prompt("Enter game ID:");
-  if (!id) return;
-
-  if (isLocal) {
-    gameId = "LOCAL_TEST";
-    playerNumber = 2;
-    startGame();
-  } else {
-    const gameRef = doc(db, "games", id);
-    const snapshot = await getDoc(gameRef);
-    if (!snapshot.exists()) {
-      lobbyInfo.textContent = "Game not found.";
-      return;
-    }
-    gameId = id;
-    playerNumber = 2;
-    await updateDoc(gameRef, { status: "playing" });
-    startGame();
-  }
-});
-
-restartBtn.addEventListener('click', async () => {
-  if (!gameActive) return;
-  if (isLocal) {
-    board = Array.from({ length: 6 }, () => Array(7).fill(0));
-    currentPlayer = 1;
-    drawBoard();
-    updateInfo();
-  } else {
+playAgainBtn.addEventListener('click', async () => {
+  if (!gameActive) {
+    hideGameOver();
     await updateDoc(doc(db, "games", gameId), {
-      board: Array.from({ length: 6 }, () => Array(7).fill(0)),
+      board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)),
       currentPlayer: 1,
       status: "playing",
       winner: 0
@@ -88,125 +136,179 @@ restartBtn.addEventListener('click', async () => {
   }
 });
 
-function startGame() {
-  document.getElementById('lobby').style.display = 'none';
-  boardDiv.style.display = 'grid';
-  infoDiv.style.display = 'block';
-  restartBtn.style.display = 'inline-block';
-  gameActive = true;
-  drawBoard();
-  updateInfo();
 
-  if (!isLocal) {
-    if (unsubscribeWaitListener) {
-      unsubscribeWaitListener();
-      unsubscribeWaitListener = null;
-    }
-    subscribeToGame();
-  }
+// Game Logic Functions
+function updateInfo(text) {
+  infoDiv.style.opacity = 0;
+  setTimeout(() => {
+    infoDiv.textContent = text;
+    infoDiv.style.opacity = 1;
+  }, 200);
 }
 
 function drawBoard() {
   boardDiv.innerHTML = '';
-  boardDiv.style.gridTemplateColumns = 'repeat(7, 1fr)';
-  board.forEach((row, rowIndex) => {
-    row.forEach((cell, colIndex) => {
+  boardDiv.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+  boardState.forEach((row, r) => {
+    row.forEach((cell, c) => {
       const cellDiv = document.createElement('div');
-      cellDiv.className = 'cell';
-      cellDiv.dataset.col = colIndex;
-      cellDiv.dataset.row = rowIndex; 
-
-      if (rowIndex === 0 && gameActive && currentPlayer === playerNumber) {
-        cellDiv.addEventListener('click', () => handleMove(colIndex));
-      }
-
+      cellDiv.classList.add('cell');
+      cellDiv.dataset.row = r;
+      cellDiv.dataset.col = c;
       if (cell !== 0) {
-        const disc = document.createElement('div');
-        disc.classList.add('disc', cell === 1 ? 'red' : 'yellow');
-        cellDiv.appendChild(disc);
+        cellDiv.dataset.player = cell;
       }
-
       boardDiv.appendChild(cellDiv);
     });
   });
 }
 
-async function handleMove(col) {
-  if (!gameActive) return;
-  if (playerNumber !== currentPlayer) return;
+function createFallingDisc(col, player, targetRow) {
+  return new Promise((resolve) => {
+    const disc = document.createElement('div');
+    disc.classList.add('falling-disc', player === 1 ? 'red' : 'yellow');
+    boardDiv.appendChild(disc);
 
-  let placedRow = -1;
-  for (let row = 5; row >= 0; row--) {
-    if (board[row][col] === 0) {
-      board[row][col] = currentPlayer;
-      placedRow = row;
-      break;
+    const cell = boardDiv.querySelector(`.cell[data-row="${targetRow}"][data-col="${col}"]`);
+    const boardRect = boardDiv.getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
+
+    const startX = cellRect.left - boardRect.left;
+    const startY = -cellRect.height * 1.5;
+    const endY = cellRect.top - boardRect.top;
+
+    disc.style.left = `${startX}px`;
+    disc.style.top = `${startY}px`;
+
+    const duration = 300;
+    let startTime = null;
+
+    function easeOutQuad(t) {
+      return t * (2 - t);
     }
-  }
-  if (placedRow === -1) return;
 
-  const targetCell = boardDiv.querySelector(`.cell[data-col="${col}"][data-row="${placedRow}"]`);
-  if (targetCell) {
-    const fallingDisc = document.createElement('div');
-    fallingDisc.classList.add('falling-disc', currentPlayer === 1 ? 'red' : 'yellow');
-    targetCell.appendChild(fallingDisc);
+    function animate(time) {
+      if (!startTime) startTime = time;
+      let elapsed = time - startTime;
+      if (elapsed > duration) elapsed = duration;
+      let progress = elapsed / duration;
+      let easedProgress = easeOutQuad(progress);
 
-    fallingDisc.addEventListener('animationend', async () => {
-      fallingDisc.remove();
-      const finalDisc = document.createElement('div');
-      finalDisc.classList.add('disc', currentPlayer === 1 ? 'red' : 'yellow');
-      targetCell.appendChild(finalDisc);
+      let currentY = startY + (endY - startY) * easedProgress;
+      disc.style.top = `${currentY}px`;
 
-      const winner = checkWin(board, currentPlayer, placedRow, col);
-      if (winner) {
-        gameActive = false;
-        infoDiv.textContent = `Player ${currentPlayer} wins! 🎉`;
-        if (!isLocal) {
-          await updateDoc(doc(db, "games", gameId), {
-            board,
-            currentPlayer,
-            status: "finished",
-            winner: currentPlayer
-          });
-        }
-        return;
+      if (elapsed < duration) {
+        requestAnimationFrame(animate);
+      } else {
+        disc.remove();
+        resolve();
       }
+    }
 
-      if (board.flat().every(cell => cell !== 0)) {
-        gameActive = false;
-        infoDiv.textContent = "It's a draw!";
-        if (!isLocal) {
-          await updateDoc(doc(db, "games", gameId), {
-            board,
-            currentPlayer,
-            status: "finished",
-            winner: 0
-          });
-        }
-        return;
-      }
-
-      currentPlayer = currentPlayer === 1 ? 2 : 1;
-      updateInfo();
-
-      if (!isLocal) {
-        await updateDoc(doc(db, "games", gameId), {
-          board,
-          currentPlayer
-        });
-      }
-    });
-  }
-
+    requestAnimationFrame(animate);
+  });
 }
 
-function updateInfo() {
-  if (!gameActive) {
-    restartBtn.disabled = false;
-    return;
+async function handleMove(col) {
+  if (!gameActive || playerNumber !== currentPlayer || isAnimating) return;
+
+  const row = getAvailableRow(col);
+  if (row === -1) return;
+
+  isAnimating = true;
+
+  const tempBoard = JSON.parse(JSON.stringify(boardState));
+  tempBoard[row][col] = currentPlayer;
+  
+  await createFallingDisc(col, currentPlayer, row);
+
+  const gameRef = doc(db, "games", gameId);
+  const newPlayer = currentPlayer === 1 ? 2 : 1;
+  
+  const winner = checkWin(tempBoard, currentPlayer, row, col);
+  const isDraw = tempBoard.flat().every(cell => cell !== 0);
+
+  const updateData = {
+    board: tempBoard,
+    currentPlayer: newPlayer,
+    status: (winner || isDraw) ? "finished" : "playing",
+    winner: winner ? currentPlayer : 0
+  };
+
+  await updateDoc(gameRef, updateData);
+  isAnimating = false;
+}
+
+function getAvailableRow(col) {
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if (boardState[r][col] === 0) return r;
   }
-  infoDiv.textContent = `Player ${currentPlayer}'s turn (${currentPlayer === 1 ? 'Red' : 'Yellow'})`;
-  restartBtn.disabled = true;
+  return -1;
+}
+
+function checkWin(board, player, lastRow, lastCol) {
+  const directions = [
+    { dr: 0, dc: 1 },
+    { dr: 1, dc: 0 },
+    { dr: 1, dc: 1 },
+    { dr: 1, dc: -1 }
+  ];
+
+  for (const { dr, dc } of directions) {
+    let count = 1;
+    let r = lastRow + dr;
+    let c = lastCol + dc;
+    while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
+      count++;
+      r += dr;
+      c += dc;
+    }
+
+    r = lastRow - dr;
+    c = lastCol - dc;
+    while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
+      count++;
+      r -= dr;
+      c -= dc;
+    }
+
+    if (count >= 4) return true;
+  }
+  return false;
+}
+
+function showGameOver(message) {
+  const messageEl = overlay.querySelector('.message');
+  if (messageEl) {
+    messageEl.textContent = message;
+  }
+  overlay.classList.add('visible');
+}
+
+function hideGameOver() {
+  overlay.classList.remove('visible');
+}
+
+// Game Flow
+async function startGame() {
+  await window.fadeOut(multiplayerScreen);
+  multiplayerScreen.style.display = 'none';
+
+  gameContainer.style.opacity = 0;
+  gameContainer.style.display = 'block';
+  await window.fadeIn(gameContainer);
+
+  gameActive = true;
+  drawBoard();
+  updateInfo(`Player ${currentPlayer}'s turn`);
+  
+  if (playerNumber === 1) {
+    infoDiv.textContent = `You are Player 1 (Red). Waiting for opponent...`;
+  } else {
+    infoDiv.textContent = `You are Player 2 (Yellow). Game started.`;
+  }
+  
+  subscribeToGame();
 }
 
 function subscribeToGame() {
@@ -220,65 +322,64 @@ function subscribeToGame() {
     if (!snapshot.exists()) return;
     const data = snapshot.data();
 
-    const oldBoard = JSON.stringify(board);
-    const newBoard = JSON.stringify(data.board);
-
-    if (oldBoard !== newBoard) {
-        const oldFlat = board.flat();
-        const newFlat = data.board.flat();
-        let placedDiscIndex = -1;
-
-        for (let i = 0; i < oldFlat.length; i++) {
-            if (oldFlat[i] !== newFlat[i]) {
-                placedDiscIndex = i;
-                break;
-            }
-        }
-
-        if (placedDiscIndex !== -1) {
-            const placedRow = Math.floor(placedDiscIndex / 7);
-            const placedCol = placedDiscIndex % 7;
-            const targetCell = boardDiv.querySelector(`.cell[data-col="${placedCol}"][data-row="${placedRow}"]`);
-
-            if (targetCell) {
-                const fallingDisc = document.createElement('div');
-                fallingDisc.classList.add('falling-disc', data.currentPlayer === 1 ? 'yellow' : 'red');
-                targetCell.appendChild(fallingDisc);
-
-                fallingDisc.addEventListener('animationend', () => {
-                    fallingDisc.remove();
-                    const finalDisc = document.createElement('div');
-                    finalDisc.classList.add('disc', data.currentPlayer === 1 ? 'yellow' : 'red');
-                    targetCell.appendChild(finalDisc);
-                });
-            }
-        }
+    if (JSON.stringify(boardState) !== JSON.stringify(data.board)) {
+      animateOpponentMove(data.board);
     }
-
-    board = data.board;
+    
+    boardState = data.board;
     currentPlayer = data.currentPlayer;
     gameActive = data.status === "playing";
     const winner = data.winner || 0;
 
     if (winner) {
       gameActive = false;
-      updateInfo();
-      infoDiv.textContent = `Player ${winner} wins! 🎉`;
-      restartBtn.disabled = false;
-    } else if (!gameActive) {
-      updateInfo();
-      infoDiv.textContent = "Game ended.";
-      restartBtn.disabled = false;
+      showGameOver(`Player ${winner} wins! 🎉`);
+      updateInfo(`Player ${winner} wins!`);
+      restartBtn.style.display = 'inline-block';
+    } else if (data.status === "finished") {
+      gameActive = false;
+      showGameOver("It's a draw!");
+      updateInfo("It's a draw!");
+      restartBtn.style.display = 'inline-block';
     } else {
-
-      updateInfo();
+      hideGameOver();
+      updateInfo(gameActive ? `Player ${currentPlayer}'s turn` : 'Waiting for game...');
+      restartBtn.style.display = 'none';
+      if (playerNumber === currentPlayer) {
+        infoDiv.textContent = `Your turn!`;
+      } else {
+        infoDiv.textContent = `Player ${currentPlayer}'s turn`;
+      }
     }
+    drawBoard();
   });
+}
+
+async function animateOpponentMove(newBoard) {
+  const oldFlat = boardState.flat();
+  const newFlat = newBoard.flat();
+  let placedDiscIndex = -1;
+
+  for (let i = 0; i < oldFlat.length; i++) {
+    if (oldFlat[i] !== newFlat[i]) {
+      placedDiscIndex = i;
+      break;
+    }
+  }
+
+  if (placedDiscIndex !== -1) {
+    const placedRow = Math.floor(placedDiscIndex / COLS);
+    const placedCol = placedDiscIndex % COLS;
+    const playerWhoMoved = newBoard[placedRow][placedCol];
+
+    isAnimating = true;
+    await createFallingDisc(placedCol, playerWhoMoved, placedRow);
+    isAnimating = false;
+  }
 }
 
 function waitForOpponent() {
   const gameRef = doc(db, "games", gameId);
-
   if (unsubscribeWaitListener) {
     unsubscribeWaitListener();
   }
@@ -292,36 +393,4 @@ function waitForOpponent() {
       startGame();
     }
   });
-}
-
-function checkWin(board, player, lastRow, lastCol) {
-  const directions = [
-    { dr: 0, dc: 1 },  
-    { dr: 1, dc: 0 },  
-    { dr: 1, dc: 1 },  
-    { dr: 1, dc: -1 }  
-  ];
-
-  for (const { dr, dc } of directions) {
-    let count = 1;
-
-    let r = lastRow + dr;
-    let c = lastCol + dc;
-    while (r >= 0 && r < 6 && c >= 0 && c < 7 && board[r][c] === player) {
-      count++;
-      r += dr;
-      c += dc;
-    }
-
-    r = lastRow - dr;
-    c = lastCol - dc;
-    while (r >= 0 && r < 6 && c >= 0 && c < 7 && board[r][c] === player) {
-      count++;
-      r -= dr;
-      c -= dc;
-    }
-
-    if (count >= 4) return true;
-  }
-  return false;
 }
