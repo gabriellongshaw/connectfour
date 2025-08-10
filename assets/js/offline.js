@@ -3,6 +3,8 @@ const info = document.getElementById('info');
 const restartBtn = document.getElementById('restartBtn');
 const confettiCanvas = document.getElementById('confetti-canvas');
 const confettiCtx = confettiCanvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const playAgainBtn = document.getElementById('playAgainBtn');
 const ROWS = 6;
 const COLS = 7;
 
@@ -48,7 +50,7 @@ function updateInfo(text) {
   }, 200);
 }
 
-updateInfo(`It's ${playerColors[currentPlayer]}'s turn`);
+updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
 
 function createFallingDisc(col, player, targetRow) {
   return new Promise((resolve) => {
@@ -61,7 +63,7 @@ function createFallingDisc(col, player, targetRow) {
     const cellRect = cell.getBoundingClientRect();
 
     const startX = cellRect.left - boardRect.left;
-    const startY = -cellRect.height * 1.5;  // start above the board
+    const startY = -cellRect.height * 1.5; // start above the board
     const endY = cellRect.top - boardRect.top;
 
     disc.style.left = `${startX}px`;
@@ -96,9 +98,7 @@ function createFallingDisc(col, player, targetRow) {
   });
 }
 
-
 function checkWin(player) {
-
   const directions = [
     { r: 0, c: 1 },
     { r: 1, c: 0 },
@@ -142,7 +142,7 @@ function pulseWinningCells(cells) {
   });
 }
 
-function clearWinningPulse() {
+function hideWinningPulse() {
   board.querySelectorAll('.cell.winning').forEach(cell => {
     cell.classList.remove('winning');
   });
@@ -167,7 +167,7 @@ function startConfetti() {
       rotationSpeed: (Math.random() - 0.5) * 10,
       color: `hsl(${Math.floor(Math.random() * 360)}, 90%, 60%)`,
       opacity: 1,
-      life: 100,
+      life: 300,
     });
   }
   confettiActive = true;
@@ -209,6 +209,18 @@ function confettiLoop() {
   }
 }
 
+function showGameOver(message) {
+  const messageEl = overlay.querySelector('.message');
+  if (messageEl) {
+    messageEl.textContent = message;
+  }
+  overlay.style.display = 'flex';
+}
+
+function hideGameOver() {
+  overlay.style.display = 'none';
+}
+
 async function placeDisc(col) {
   if (isAnimating) return;
 
@@ -228,28 +240,34 @@ async function placeDisc(col) {
     pulseWinningCells(winningCells);
     updateInfo(`Player ${currentPlayer} wins! 🎉`);
     startConfetti();
-    restartBtn.disabled = false;
+    showGameOver(`Player ${currentPlayer} wins!`);
+
+    setTimeout(() => {
+      hideWinningPulse();
+    }, 3000);
+
     isAnimating = false;
     return;
   }
 
   if (boardState.flat().every(cell => cell !== 0)) {
     updateInfo("It's a draw!");
-    restartBtn.disabled = false;
+    showGameOver("It's a draw!");
     isAnimating = false;
     return;
   }
 
   currentPlayer = currentPlayer === 1 ? 2 : 1;
-  updateInfo(`Player ${currentPlayer}'s turn`);
+  updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
   isAnimating = false;
 }
 
 async function restartGame() {
   if (isAnimating) return;
+  isAnimating = true;
 
-  restartBtn.disabled = true;
-  clearWinningPulse();
+  hideGameOver();
+  hideWinningPulse();
   updateInfo('');
 
   board.classList.add('shake');
@@ -262,13 +280,12 @@ async function restartGame() {
 
   initBoard();
   currentPlayer = 1;
-  updateInfo(`Player ${currentPlayer}'s turn`);
-  restartBtn.disabled = false;
+  updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
+  isAnimating = false;
 }
 
 board.addEventListener('click', e => {
   if (e.target.classList.contains('cell')) {
-    if (restartBtn.disabled) return;
     if (isAnimating) return;
     const col = Number(e.target.dataset.col);
     placeDisc(col);
@@ -276,6 +293,7 @@ board.addEventListener('click', e => {
 });
 
 restartBtn.addEventListener('click', restartGame);
+playAgainBtn.addEventListener('click', restartGame);
 
 window.addEventListener('resize', () => {
   confettiCanvas.width = window.innerWidth;
@@ -283,4 +301,4 @@ window.addEventListener('resize', () => {
 });
 
 initBoard();
-updateInfo(`Player ${currentPlayer}'s turn`);
+updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
