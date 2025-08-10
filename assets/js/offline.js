@@ -50,8 +50,6 @@ function updateInfo(text) {
   }, 200);
 }
 
-updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
-
 function createFallingDisc(col, player, targetRow) {
   return new Promise((resolve) => {
     const disc = document.createElement('div');
@@ -63,13 +61,13 @@ function createFallingDisc(col, player, targetRow) {
     const cellRect = cell.getBoundingClientRect();
 
     const startX = cellRect.left - boardRect.left;
-    const startY = -cellRect.height * 1.5; // start above the board
+    const startY = -cellRect.height * 1.5;
     const endY = cellRect.top - boardRect.top;
 
     disc.style.left = `${startX}px`;
     disc.style.top = `${startY}px`;
 
-    const duration = 400;
+    const duration = 300;
     let startTime = null;
 
     function easeOutQuad(t) {
@@ -214,11 +212,11 @@ function showGameOver(message) {
   if (messageEl) {
     messageEl.textContent = message;
   }
-  overlay.style.display = 'flex';
+  overlay.classList.add('visible');
 }
 
 function hideGameOver() {
-  overlay.style.display = 'none';
+  overlay.classList.remove('visible');
 }
 
 async function placeDisc(col) {
@@ -270,15 +268,14 @@ async function restartGame() {
   hideWinningPulse();
   updateInfo('');
 
-  board.classList.add('shake');
-  board.style.opacity = '0.5';
+  board.classList.add('shake', 'faded');
 
   await new Promise(r => setTimeout(r, 700));
 
-  board.classList.remove('shake');
-  board.style.opacity = '1';
-
   initBoard();
+
+  board.classList.remove('shake', 'faded');
+
   currentPlayer = 1;
   updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
   isAnimating = false;
@@ -302,3 +299,5 @@ window.addEventListener('resize', () => {
 
 initBoard();
 updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
+board.classList.add('fade-in');
+setTimeout(() => board.classList.remove('fade-in'), 500);
