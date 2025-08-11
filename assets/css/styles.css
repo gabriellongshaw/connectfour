@@ -153,8 +153,7 @@ body {
 #overlay .message {
   font-size: clamp(1.8rem, 4vw, 3rem);
   font-weight: 800;
-  color: var(--header-color);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+  color: #fff;
   opacity: 0;
   transform: translateY(20px);
   animation: fadeInUp 0.5s forwards;
