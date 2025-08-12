@@ -1,6 +1,15 @@
-import { doc, getDoc, updateDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  onSnapshot,
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// DOM Elements
 const multiplayerScreen = document.getElementById('multiplayer-screen');
 const multiplayerOptions = document.getElementById('multiplayer-options');
 const joinInputSection = document.getElementById('join-input-section');
@@ -11,7 +20,8 @@ const showJoinScreenBtn = document.getElementById('show-join-screen-btn');
 const joinCodeInput = document.getElementById('join-code-input');
 const joinGameBtn = document.getElementById('join-game-btn');
 const backToOptionsBtn = document.getElementById('back-to-options-btn');
-const backToStartBtn = document.getElementById('back-to-start-btn');
+const backToStartBtn = document.getElementById('back-to-start-btn'); 
+const backToStartFromMultiplayerBtn = document.getElementById('back-to-start-from-multiplayer'); 
 const boardDiv = document.getElementById('board');
 const infoDiv = document.getElementById('info');
 const restartBtn = document.getElementById('restartBtn');
@@ -23,6 +33,7 @@ const ROWS = 6;
 const COLS = 7;
 
 const db = window.firebaseDB;
+const gamesCollection = collection(db, "games");
 
 let currentPlayer = 1;
 let boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
@@ -41,25 +52,42 @@ const unflattenBoard = (flatBoard) => {
   return newBoard;
 };
 
+function generateRoomCode(length = 7) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < length; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 createGameBtn.addEventListener('click', async () => {
-  const gamesCollection = collection(db, "games");
-  const newGameRef = await addDoc(gamesCollection, {
-    board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
-    currentPlayer: 1,
-    status: "waiting",
-    winner: 0
-  });
-  gameId = newGameRef.id;
-  playerNumber = 1;
+  try {
+    const shortCode = generateRoomCode(7);
 
-  await window.fadeOut(multiplayerOptions);
-  
-  roomCodeSpan.textContent = gameId;
-  multiplayerStatus.textContent = "Game created! Waiting for opponent...";
-  
-  await window.fadeIn(roomCodeDisplay, 'flex');
+    const newGameRef = await addDoc(gamesCollection, {
+      shortCode: shortCode,
+      board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
+      currentPlayer: 1,
+      status: "waiting",
+      winner: 0
+    });
 
-  waitForOpponent();
+    gameId = newGameRef.id;
+    playerNumber = 1;
+
+    await window.fadeOut(multiplayerOptions);
+
+    roomCodeSpan.textContent = shortCode;
+    multiplayerStatus.textContent = "Game created! Waiting for opponent...";
+
+    await window.fadeIn(roomCodeDisplay, 'flex');
+
+    waitForOpponent();
+  } catch (err) {
+    console.error("Error creating game:", err);
+    multiplayerStatus.textContent = "Error creating game. Try again.";
+  }
 });
 
 showJoinScreenBtn.addEventListener('click', async () => {
@@ -68,25 +96,51 @@ showJoinScreenBtn.addEventListener('click', async () => {
 });
 
 joinGameBtn.addEventListener('click', async () => {
-  const id = joinCodeInput.value.trim();
-  if (!id) {
-    multiplayerStatus.textContent = "Please enter a game ID.";
-    return;
-  }
-  multiplayerStatus.textContent = "Joining game...";
-  const gameRef = doc(db, "games", id);
-  const snapshot = await getDoc(gameRef);
-
-  if (!snapshot.exists() || snapshot.data().status !== "waiting") {
-    multiplayerStatus.textContent = "Game not found or already started.";
+  const code = joinCodeInput.value.trim().toUpperCase();
+  if (!code) {
+    multiplayerStatus.textContent = "Please enter a game code.";
     return;
   }
 
-  gameId = id;
-  playerNumber = 2;
-  await updateDoc(gameRef, { status: "playing" });
-  startGame();
+  try {
+    multiplayerStatus.textContent = "Joining game...";
+
+    const q = query(gamesCollection, where("shortCode", "==", code));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      multiplayerStatus.textContent = "Game not found or already started.";
+      return;
+    }
+
+    const docSnap = querySnapshot.docs[0];
+    const data = docSnap.data();
+
+    if (!data || data.status !== "waiting") {
+      multiplayerStatus.textContent = "Game not found or already started.";
+      return;
+    }
+
+    gameId = docSnap.id;
+    playerNumber = 2;
+
+    await updateDoc(doc(db, "games", gameId), { status: "playing" });
+
+    startGame();
+  } catch (err) {
+    console.error("Error joining game:", err);
+    multiplayerStatus.textContent = "Error joining game. Try again.";
+  }
 });
+
+if (backToStartFromMultiplayerBtn) {
+  backToStartFromMultiplayerBtn.addEventListener('click', async () => {
+    await window.fadeOut(multiplayerScreen);
+    multiplayerStatus.textContent = "";
+    joinCodeInput.value = "";
+    await window.fadeIn(startScreen, 'flex');
+  });
+}
 
 backToOptionsBtn.addEventListener('click', async () => {
   await window.fadeOut(joinInputSection);
@@ -95,6 +149,7 @@ backToOptionsBtn.addEventListener('click', async () => {
 });
 
 backToStartBtn.addEventListener('click', async () => {
+
   await window.fadeOut(roomCodeDisplay);
   multiplayerStatus.textContent = "";
   await window.fadeIn(multiplayerOptions, 'flex');
@@ -108,13 +163,17 @@ boardDiv.addEventListener('click', e => {
 });
 
 restartBtn.addEventListener('click', async () => {
-  if (!gameActive) {
-    await updateDoc(doc(db, "games", gameId), {
-      board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
-      currentPlayer: 1,
-      status: "playing",
-      winner: 0
-    });
+  if (!gameActive && gameId) {
+    try {
+      await updateDoc(doc(db, "games", gameId), {
+        board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
+        currentPlayer: 1,
+        status: "playing",
+        winner: 0
+      });
+    } catch (err) {
+      console.error("Error restarting:", err);
+    }
   }
 });
 
@@ -150,6 +209,11 @@ function createFallingDisc(col, player, targetRow) {
     boardDiv.appendChild(disc);
 
     const cell = boardDiv.querySelector(`.cell[data-row="${targetRow}"][data-col="${col}"]`);
+    if (!cell) {
+      disc.remove();
+      resolve();
+      return;
+    }
     const boardRect = boardDiv.getBoundingClientRect();
     const cellRect = cell.getBoundingClientRect();
 
@@ -190,7 +254,7 @@ function createFallingDisc(col, player, targetRow) {
 }
 
 async function handleMove(col) {
-  if (!gameActive || playerNumber !== currentPlayer || isAnimating) return;
+  if (!gameActive || playerNumber !== currentPlayer || isAnimating || !gameId) return;
 
   const row = getAvailableRow(col);
   if (row === -1) return;
@@ -215,8 +279,13 @@ async function handleMove(col) {
     winner: winner ? currentPlayer : 0
   };
 
-  await updateDoc(gameRef, updateData);
-  isAnimating = false;
+  try {
+    await updateDoc(gameRef, updateData);
+  } catch (err) {
+    console.error("Error updating game after move:", err);
+  } finally {
+    isAnimating = false;
+  }
 }
 
 function getAvailableRow(col) {
@@ -270,10 +339,14 @@ async function startGame() {
     infoDiv.textContent = `You are Player 2 (Yellow). Game started.`;
   }
 
+  if (leaveGameBtn) leaveGameBtn.style.display = 'block';
+
   subscribeToGame();
 }
 
 function subscribeToGame() {
+  if (!gameId) return;
+
   const gameRef = doc(db, "games", gameId);
   if (unsubscribeGameListener) {
     unsubscribeGameListener();
@@ -282,6 +355,8 @@ function subscribeToGame() {
   unsubscribeGameListener = onSnapshot(gameRef, (snapshot) => {
     if (!snapshot.exists()) return;
     const data = snapshot.data();
+
+    if (!data.board) return;
 
     const receivedBoard = unflattenBoard([...data.board]);
 
@@ -339,6 +414,8 @@ async function animateOpponentMove(newBoard) {
 }
 
 function waitForOpponent() {
+  if (!gameId) return;
+
   const gameRef = doc(db, "games", gameId);
   if (unsubscribeWaitListener) {
     unsubscribeWaitListener();
@@ -348,9 +425,63 @@ function waitForOpponent() {
     if (!snapshot.exists()) return;
     const data = snapshot.data();
     if (data.status === "playing") {
-      unsubscribeWaitListener();
-      unsubscribeWaitListener = null;
+      if (unsubscribeWaitListener) {
+        unsubscribeWaitListener();
+        unsubscribeWaitListener = null;
+      }
       startGame();
     }
   });
 }
+
+const leaveGameBtn = document.createElement('button');
+leaveGameBtn.textContent = 'Leave';
+leaveGameBtn.classList.add('leave-game-btn');
+leaveGameBtn.style.position = 'absolute';
+leaveGameBtn.style.top = '10px';
+leaveGameBtn.style.right = '10px';
+leaveGameBtn.style.zIndex = '1000';
+leaveGameBtn.style.padding = '8px 12px';
+leaveGameBtn.style.borderRadius = '6px';
+leaveGameBtn.style.border = 'none';
+leaveGameBtn.style.cursor = 'pointer';
+
+leaveGameBtn.style.background = '#e74c3c';
+leaveGameBtn.style.color = '#fff';
+leaveGameBtn.style.display = 'none';
+
+if (gameContainer) {
+
+  const computed = window.getComputedStyle(gameContainer);
+  if (computed.position === 'static') {
+    gameContainer.style.position = 'relative';
+  }
+  gameContainer.appendChild(leaveGameBtn);
+}
+
+async function leaveGame() {
+
+  if (unsubscribeGameListener) {
+    unsubscribeGameListener();
+    unsubscribeGameListener = null;
+  }
+  if (unsubscribeWaitListener) {
+    unsubscribeWaitListener();
+    unsubscribeWaitListener = null;
+  }
+
+  gameId = null;
+  gameActive = false;
+  playerNumber = 0;
+  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+  restartBtn.style.display = 'none';
+  infoDiv.textContent = '';
+
+  if (leaveGameBtn) leaveGameBtn.style.display = 'none';
+
+  await window.fadeOut(gameContainer);
+  await window.fadeIn(multiplayerOptions, 'flex');
+}
+
+leaveGameBtn.addEventListener('click', leaveGame);
+
