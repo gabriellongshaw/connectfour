@@ -20,14 +20,15 @@ const showJoinScreenBtn = document.getElementById('show-join-screen-btn');
 const joinCodeInput = document.getElementById('join-code-input');
 const joinGameBtn = document.getElementById('join-game-btn');
 const backToOptionsBtn = document.getElementById('back-to-options-btn');
-const backToStartBtn = document.getElementById('back-to-start-btn'); 
-const backToStartFromMultiplayerBtn = document.getElementById('back-to-start-from-multiplayer'); 
+const backToStartBtn = document.getElementById('back-to-start-btn');
+const backToStartFromMultiplayerBtn = document.getElementById('back-to-start-from-multiplayer');
 const boardDiv = document.getElementById('board');
 const infoDiv = document.getElementById('info');
 const restartBtn = document.getElementById('restartBtn');
 const gameContainer = document.getElementById('game-container');
 const startScreen = document.getElementById('start-screen');
 const roomCodeSpan = document.getElementById('room-code');
+const leaveGameBtn = document.getElementById('leave-game-btn');
 
 const ROWS = 6;
 const COLS = 7;
@@ -44,13 +45,13 @@ let playerNumber = 0;
 let unsubscribeWaitListener = null;
 let unsubscribeGameListener = null;
 
-const unflattenBoard = (flatBoard) => {
+function unflattenBoard(flatBoard) {
   const newBoard = [];
   while (flatBoard.length) {
     newBoard.push(flatBoard.splice(0, COLS));
   }
   return newBoard;
-};
+}
 
 function generateRoomCode(length = 7) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -60,6 +61,8 @@ function generateRoomCode(length = 7) {
   }
   return code;
 }
+
+// --- Event Listeners ---
 
 createGameBtn.addEventListener('click', async () => {
   try {
@@ -149,7 +152,6 @@ backToOptionsBtn.addEventListener('click', async () => {
 });
 
 backToStartBtn.addEventListener('click', async () => {
-
   await window.fadeOut(roomCodeDisplay);
   multiplayerStatus.textContent = "";
   await window.fadeIn(multiplayerOptions, 'flex');
@@ -177,11 +179,30 @@ restartBtn.addEventListener('click', async () => {
   }
 });
 
+// Leave button toggling & logic
+if (leaveGameBtn) {
+  leaveGameBtn.addEventListener('click', async () => {
+    if (!gameId) return;
+
+    try {
+      // Delete or reset the game to effectively kick players
+      await updateDoc(doc(db, "games", gameId), {
+        status: "finished"
+      });
+    } catch (err) {
+      console.error("Error leaving game:", err);
+    }
+    resetToStart();
+  });
+}
+
+// --- Functions ---
+
 function updateInfo(text) {
-  infoDiv.style.opacity = 0;
+  infoDiv.classList.add('fade-out');
   setTimeout(() => {
     infoDiv.textContent = text;
-    infoDiv.style.opacity = 1;
+    infoDiv.classList.remove('fade-out');
   }, 200);
 }
 
@@ -261,31 +282,37 @@ async function handleMove(col) {
 
   isAnimating = true;
 
-  const tempBoard = JSON.parse(JSON.stringify(boardState));
-  tempBoard[row][col] = currentPlayer;
-
   await createFallingDisc(col, currentPlayer, row);
 
-  const gameRef = doc(db, "games", gameId);
-  const newPlayer = currentPlayer === 1 ? 2 : 1;
+  boardState[row][col] = currentPlayer;
+  drawBoard();
 
-  const winner = checkWin(tempBoard, currentPlayer, row, col);
-  const isDraw = tempBoard.flat().every(cell => cell !== 0);
-
-  const updateData = {
-    board: tempBoard.flat(),
-    currentPlayer: newPlayer,
-    status: (winner || isDraw) ? "finished" : "playing",
-    winner: winner ? currentPlayer : 0
-  };
-
-  try {
-    await updateDoc(gameRef, updateData);
-  } catch (err) {
-    console.error("Error updating game after move:", err);
-  } finally {
-    isAnimating = false;
+  if (checkWin(row, col, currentPlayer)) {
+    await updateDoc(doc(db, "games", gameId), {
+      board: boardState.flat(),
+      status: "finished",
+      winner: currentPlayer
+    });
+    updateInfo(`Player ${currentPlayer} wins!`);
+    gameActive = false;
+  } else if (checkDraw()) {
+    await updateDoc(doc(db, "games", gameId), {
+      board: boardState.flat(),
+      status: "finished",
+      winner: 0
+    });
+    updateInfo("Draw game.");
+    gameActive = false;
+  } else {
+    currentPlayer = currentPlayer === 1 ? 2 : 1;
+    await updateDoc(doc(db, "games", gameId), {
+      board: boardState.flat(),
+      currentPlayer: currentPlayer
+    });
+    updateInfo(`Player ${currentPlayer}'s turn.`);
   }
+
+  isAnimating = false;
 }
 
 function getAvailableRow(col) {
@@ -295,172 +322,106 @@ function getAvailableRow(col) {
   return -1;
 }
 
-function checkWin(board, player, lastRow, lastCol) {
-  const directions = [
-    { dr: 0, dc: 1 },
-    { dr: 1, dc: 0 },
-    { dr: 1, dc: 1 },
-    { dr: 1, dc: -1 }
-  ];
-
-  for (const { dr, dc } of directions) {
-    let count = 1;
-    let r = lastRow + dr;
-    let c = lastCol + dc;
-    while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
-      count++;
-      r += dr;
-      c += dc;
-    }
-
-    r = lastRow - dr;
-    c = lastCol - dc;
-    while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
-      count++;
-      r -= dr;
-      c -= dc;
-    }
-
-    if (count >= 4) return true;
-  }
-  return false;
+function checkWin(row, col, player) {
+  return (
+    checkDirection(row, col, player, 1, 0) ||  // vertical
+    checkDirection(row, col, player, 0, 1) ||  // horizontal
+    checkDirection(row, col, player, 1, 1) ||  // diagonal /
+    checkDirection(row, col, player, 1, -1)    // diagonal \
+  );
 }
 
-async function startGame() {
-  await window.fadeOut(multiplayerScreen);
-  await window.fadeIn(gameContainer, 'block');
-  gameActive = true;
+function checkDirection(row, col, player, dRow, dCol) {
+  let count = 1;
+
+  for (let i = 1; i < 4; i++) {
+    const r = row + dRow * i;
+    const c = col + dCol * i;
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS || boardState[r][c] !== player) break;
+    count++;
+  }
+  for (let i = 1; i < 4; i++) {
+    const r = row - dRow * i;
+    const c = col - dCol * i;
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS || boardState[r][c] !== player) break;
+    count++;
+  }
+
+  return count >= 4;
+}
+
+function checkDraw() {
+  return boardState.every(row => row.every(cell => cell !== 0));
+}
+
+function startGame() {
+  multiplayerStatus.textContent = "";
+  joinInputSection.style.display = "none";
+  roomCodeDisplay.style.display = "none";
+  multiplayerOptions.style.display = "none";
+  multiplayerScreen.style.display = "flex";
+
+  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
   drawBoard();
-  updateInfo(`Player ${currentPlayer}'s turn`);
 
-  if (playerNumber === 1) {
-    infoDiv.textContent = `You are Player 1 (Red). Waiting for opponent...`;
-  } else {
-    infoDiv.textContent = `You are Player 2 (Yellow). Game started.`;
-  }
+  gameActive = true;
+  currentPlayer = 1;
 
-  if (leaveGameBtn) leaveGameBtn.style.display = 'block';
+  updateInfo(`Player ${currentPlayer}'s turn.`);
 
-  subscribeToGame();
-}
-
-function subscribeToGame() {
-  if (!gameId) return;
-
-  const gameRef = doc(db, "games", gameId);
-  if (unsubscribeGameListener) {
-    unsubscribeGameListener();
-  }
-
-  unsubscribeGameListener = onSnapshot(gameRef, (snapshot) => {
-    if (!snapshot.exists()) return;
-    const data = snapshot.data();
-
-    if (!data.board) return;
-
-    const receivedBoard = unflattenBoard([...data.board]);
-
-    if (JSON.stringify(boardState) !== JSON.stringify(receivedBoard)) {
-      animateOpponentMove(receivedBoard);
-    }
-
-    boardState = receivedBoard;
-    currentPlayer = data.currentPlayer;
-    gameActive = data.status === "playing";
-    const winner = data.winner || 0;
-
-    if (winner) {
-      gameActive = false;
-      updateInfo(`Player ${winner} wins!`);
-      restartBtn.style.display = 'inline-block';
-    } else if (data.status === "finished") {
-      gameActive = false;
-      updateInfo("It's a draw!");
-      restartBtn.style.display = 'inline-block';
-    } else {
-      updateInfo(gameActive ? `Player ${currentPlayer}'s turn` : 'Waiting for game...');
-      restartBtn.style.display = 'none';
-      if (playerNumber === currentPlayer) {
-        infoDiv.textContent = `Your turn!`;
-      } else {
-        infoDiv.textContent = `Player ${currentPlayer}'s turn`;
-      }
-    }
-    drawBoard();
-  });
-}
-
-async function animateOpponentMove(newBoard) {
-  const oldFlat = boardState.flat();
-  const newFlat = newBoard.flat();
-  let placedDiscIndex = -1;
-
-  for (let i = 0; i < oldFlat.length; i++) {
-    if (oldFlat[i] !== newFlat[i]) {
-      placedDiscIndex = i;
-      break;
-    }
-  }
-
-  if (placedDiscIndex !== -1) {
-    const placedRow = Math.floor(placedDiscIndex / COLS);
-    const placedCol = placedDiscIndex % COLS;
-    const playerWhoMoved = newBoard[placedRow][placedCol];
-
-    isAnimating = true;
-    await createFallingDisc(placedCol, playerWhoMoved, placedRow);
-    isAnimating = false;
-  }
+  listenForGameUpdates();
+  showLeaveButton(true);
 }
 
 function waitForOpponent() {
-  if (!gameId) return;
+  unsubscribeWaitListener = onSnapshot(doc(db, "games", gameId), (docSnap) => {
+    if (!docSnap.exists()) {
+      multiplayerStatus.textContent = "Game canceled.";
+      unsubscribeWaitListener();
+      return;
+    }
 
-  const gameRef = doc(db, "games", gameId);
-  if (unsubscribeWaitListener) {
-    unsubscribeWaitListener();
-  }
-
-  unsubscribeWaitListener = onSnapshot(gameRef, (snapshot) => {
-    if (!snapshot.exists()) return;
-    const data = snapshot.data();
+    const data = docSnap.data();
     if (data.status === "playing") {
-      if (unsubscribeWaitListener) {
-        unsubscribeWaitListener();
-        unsubscribeWaitListener = null;
-      }
+      unsubscribeWaitListener();
       startGame();
     }
   });
 }
 
-const leaveGameBtn = document.createElement('button');
-leaveGameBtn.textContent = 'Leave';
-leaveGameBtn.classList.add('leave-game-btn');
-leaveGameBtn.style.position = 'absolute';
-leaveGameBtn.style.top = '10px';
-leaveGameBtn.style.right = '10px';
-leaveGameBtn.style.zIndex = '1000';
-leaveGameBtn.style.padding = '8px 12px';
-leaveGameBtn.style.borderRadius = '6px';
-leaveGameBtn.style.border = 'none';
-leaveGameBtn.style.cursor = 'pointer';
+function listenForGameUpdates() {
+  unsubscribeGameListener = onSnapshot(doc(db, "games", gameId), (docSnap) => {
+    if (!docSnap.exists()) {
+      updateInfo("Game ended or canceled.");
+      cleanupListeners();
+      resetToStart();
+      return;
+    }
 
-leaveGameBtn.style.background = '#e74c3c';
-leaveGameBtn.style.color = '#fff';
-leaveGameBtn.style.display = 'none';
+    const data = docSnap.data();
+    if (!data) return;
 
-if (gameContainer) {
+    boardState = unflattenBoard([...data.board]);
+    currentPlayer = data.currentPlayer;
+    drawBoard();
 
-  const computed = window.getComputedStyle(gameContainer);
-  if (computed.position === 'static') {
-    gameContainer.style.position = 'relative';
-  }
-  gameContainer.appendChild(leaveGameBtn);
+    if (data.status === "finished") {
+      gameActive = false;
+      if (data.winner === 0) {
+        updateInfo("Game ended in a draw.");
+      } else {
+        updateInfo(`Player ${data.winner} wins!`);
+      }
+      showLeaveButton(true);
+    } else {
+      gameActive = true;
+      updateInfo(`Player ${currentPlayer}'s turn.`);
+      showLeaveButton(true);
+    }
+  });
 }
 
-async function leaveGame() {
-
+function cleanupListeners() {
   if (unsubscribeGameListener) {
     unsubscribeGameListener();
     unsubscribeGameListener = null;
@@ -469,19 +430,34 @@ async function leaveGame() {
     unsubscribeWaitListener();
     unsubscribeWaitListener = null;
   }
-
-  gameId = null;
-  gameActive = false;
-  playerNumber = 0;
-  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-  restartBtn.style.display = 'none';
-  infoDiv.textContent = '';
-
-  if (leaveGameBtn) leaveGameBtn.style.display = 'none';
-
-  await window.fadeOut(gameContainer);
-  await window.fadeIn(multiplayerOptions, 'flex');
 }
 
-leaveGameBtn.addEventListener('click', leaveGame);
+function resetToStart() {
+  cleanupListeners();
+  gameActive = false;
+  currentPlayer = 1;
+  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+  drawBoard();
 
+  multiplayerScreen.style.display = "none";
+  multiplayerOptions.style.display = "flex";
+  joinInputSection.style.display = "none";
+  roomCodeDisplay.style.display = "none";
+  multiplayerStatus.textContent = "";
+  joinCodeInput.value = "";
+  showLeaveButton(false);
+  gameId = null;
+  playerNumber = 0;
+}
+
+function showLeaveButton(show) {
+  if (!leaveGameBtn) return;
+  if (show) {
+    leaveGameBtn.classList.add('visible');
+  } else {
+    leaveGameBtn.classList.remove('visible');
+  }
+}
+
+// Initialize board at load
+drawBoard();
