@@ -1,5 +1,3 @@
-// main.js (full)
-
 import {
   doc,
   getDoc,
@@ -12,7 +10,6 @@ import {
   getDocs
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// DOM Elements
 const multiplayerScreen = document.getElementById('multiplayer-screen');
 const multiplayerOptions = document.getElementById('multiplayer-options');
 const joinInputSection = document.getElementById('join-input-section');
@@ -24,7 +21,7 @@ const joinCodeInput = document.getElementById('join-code-input');
 const joinGameBtn = document.getElementById('join-game-btn');
 const backToOptionsBtn = document.getElementById('back-to-options-btn');
 const backToStartBtn = document.getElementById('back-to-start-btn');
-const backToStartFromMultiplayerBtn = document.getElementById('back-to-start-from-multiplayer'); // new back button (optional in HTML)
+const backToStartFromMultiplayerBtn = document.getElementById('back-to-start-from-multiplayer'); 
 const boardDiv = document.getElementById('board');
 const infoDiv = document.getElementById('info');
 const restartBtn = document.getElementById('restartBtn');
@@ -47,7 +44,6 @@ let playerNumber = 0;
 let unsubscribeWaitListener = null;
 let unsubscribeGameListener = null;
 
-// Helper: unflatten board (we expect a copy passed in)
 const unflattenBoard = (flatBoard) => {
   const newBoard = [];
   while (flatBoard.length) {
@@ -56,7 +52,6 @@ const unflattenBoard = (flatBoard) => {
   return newBoard;
 };
 
-// Helper: generate short room code (7 chars, A-Z + 0-9)
 function generateRoomCode(length = 7) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code = '';
@@ -66,9 +61,6 @@ function generateRoomCode(length = 7) {
   return code;
 }
 
-/* ----------------------
-   Create Game (host)
-   ---------------------- */
 createGameBtn.addEventListener('click', async () => {
   try {
     const shortCode = generateRoomCode(7);
@@ -98,17 +90,11 @@ createGameBtn.addEventListener('click', async () => {
   }
 });
 
-/* ----------------------
-   Show Join Screen
-   ---------------------- */
 showJoinScreenBtn.addEventListener('click', async () => {
   await window.fadeOut(multiplayerOptions);
   await window.fadeIn(joinInputSection, 'flex');
 });
 
-/* ----------------------
-   Join Game (by short code)
-   ---------------------- */
 joinGameBtn.addEventListener('click', async () => {
   const code = joinCodeInput.value.trim().toUpperCase();
   if (!code) {
@@ -140,7 +126,6 @@ joinGameBtn.addEventListener('click', async () => {
 
     await updateDoc(doc(db, "games", gameId), { status: "playing" });
 
-    // Transition to game UI
     await window.fadeOut(joinInputSection);
     multiplayerStatus.textContent = "";
     await window.fadeIn(gameContainer, 'block');
@@ -152,9 +137,6 @@ joinGameBtn.addEventListener('click', async () => {
   }
 });
 
-/* ----------------------
-   Back buttons
-   ---------------------- */
 if (backToStartFromMultiplayerBtn) {
   backToStartFromMultiplayerBtn.addEventListener('click', async () => {
     await window.fadeOut(multiplayerScreen);
@@ -176,9 +158,6 @@ backToStartBtn.addEventListener('click', async () => {
   await window.fadeIn(multiplayerOptions, 'flex');
 });
 
-/* ----------------------
-   Board interactions
-   ---------------------- */
 boardDiv.addEventListener('click', e => {
   if (e.target.classList.contains('cell') && !isAnimating) {
     const col = Number(e.target.dataset.col);
@@ -201,9 +180,6 @@ restartBtn.addEventListener('click', async () => {
   }
 });
 
-/* ----------------------
-   UI helpers
-   ---------------------- */
 function updateInfo(text) {
   infoDiv.style.opacity = 0;
   setTimeout(() => {
@@ -229,9 +205,6 @@ function drawBoard() {
   });
 }
 
-/* ----------------------
-   Falling disc animation
-   ---------------------- */
 function createFallingDisc(col, player, targetRow) {
   return new Promise((resolve) => {
     const disc = document.createElement('div');
@@ -240,7 +213,7 @@ function createFallingDisc(col, player, targetRow) {
 
     const cell = boardDiv.querySelector(`.cell[data-row="${targetRow}"][data-col="${col}"]`);
     if (!cell) {
-      // fallback - resolve to avoid hanging
+
       disc.remove();
       resolve();
       return;
@@ -284,9 +257,6 @@ function createFallingDisc(col, player, targetRow) {
   });
 }
 
-/* ----------------------
-   Move handling
-   ---------------------- */
 async function handleMove(col) {
   if (!gameActive || playerNumber !== currentPlayer || isAnimating || !gameId) return;
 
@@ -329,9 +299,6 @@ function getAvailableRow(col) {
   return -1;
 }
 
-/* ----------------------
-   Win detection
-   ---------------------- */
 function checkWin(board, player, lastRow, lastCol) {
   const directions = [
     { dr: 0, dc: 1 },
@@ -363,9 +330,6 @@ function checkWin(board, player, lastRow, lastCol) {
   return false;
 }
 
-/* ----------------------
-   Start game (show UI + subscribe)
-   ---------------------- */
 async function startGame() {
   await window.fadeOut(multiplayerScreen);
   await window.fadeIn(gameContainer, 'block');
@@ -382,9 +346,6 @@ async function startGame() {
   subscribeToGame();
 }
 
-/* ----------------------
-   Firestore subscription for game updates
-   ---------------------- */
 function subscribeToGame() {
   if (!gameId) return;
 
@@ -429,9 +390,6 @@ function subscribeToGame() {
   });
 }
 
-/* ----------------------
-   Animate opponent move (falling disc)
-   ---------------------- */
 async function animateOpponentMove(newBoard) {
   const oldFlat = boardState.flat();
   const newFlat = newBoard.flat();
@@ -455,9 +413,6 @@ async function animateOpponentMove(newBoard) {
   }
 }
 
-/* ----------------------
-   Host: wait for opponent to join
-   ---------------------- */
 function waitForOpponent() {
   if (!gameId) return;
 
