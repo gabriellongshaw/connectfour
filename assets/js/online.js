@@ -1,78 +1,70 @@
-import { collection, addDoc, getDoc, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-const db = window.firebaseDB;
+import { doc, getDoc, updateDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // DOM Elements
 const multiplayerScreen = document.getElementById('multiplayer-screen');
 const multiplayerOptions = document.getElementById('multiplayer-options');
+const joinInputSection = document.getElementById('join-input-section');
+const roomCodeDisplay = document.getElementById('room-code-display');
+const multiplayerStatus = document.getElementById('multiplayer-status');
 const createGameBtn = document.getElementById('create-game-btn');
 const showJoinScreenBtn = document.getElementById('show-join-screen-btn');
-const joinInputSection = document.getElementById('join-input-section');
 const joinCodeInput = document.getElementById('join-code-input');
 const joinGameBtn = document.getElementById('join-game-btn');
 const backToOptionsBtn = document.getElementById('back-to-options-btn');
-const multiplayerStatus = document.getElementById('multiplayer-status');
-const roomCodeDisplay = document.getElementById('room-code-display');
-const roomCodeSpan = document.getElementById('room-code');
 const backToStartBtn = document.getElementById('back-to-start-btn');
-const gameContainer = document.getElementById('game-container');
 const boardDiv = document.getElementById('board');
 const infoDiv = document.getElementById('info');
 const restartBtn = document.getElementById('restartBtn');
-const overlay = document.getElementById('overlay');
-const playAgainBtn = document.getElementById('playAgainBtn');
+const gameContainer = document.getElementById('game-container');
 const startScreen = document.getElementById('start-screen');
+const roomCodeSpan = document.getElementById('room-code');
 
-// Game State
 const ROWS = 6;
 const COLS = 7;
-let gameId = null;
-let playerNumber = null;
+
+const db = window.firebaseDB;
+
 let currentPlayer = 1;
 let boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-let isAnimating = false;
 let gameActive = false;
-let unsubscribeGameListener = null;
+let isAnimating = false;
+let gameId = null;
+let playerNumber = 0;
 let unsubscribeWaitListener = null;
+let unsubscribeGameListener = null;
 
-// Helper function to unflatten a 1D array back into a 2D array
-function unflattenBoard(flatArray) {
+const unflattenBoard = (flatBoard) => {
   const newBoard = [];
-  while(flatArray.length) newBoard.push(flatArray.splice(0, COLS));
+  while (flatBoard.length) {
+    newBoard.push(flatBoard.splice(0, COLS));
+  }
   return newBoard;
-}
+};
 
-// Firebase Listeners
 createGameBtn.addEventListener('click', async () => {
-  multiplayerStatus.textContent = "Creating game...";
-  
-  // CHANGED: Flatten the boardState before sending it to Firebase
-  const docRef = await addDoc(collection(db, "games"), {
-    board: boardState.flat(),
+  const gamesCollection = collection(db, "games");
+  const newGameRef = await addDoc(gamesCollection, {
+    board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
     currentPlayer: 1,
     status: "waiting",
     winner: 0
   });
-  gameId = docRef.id;
+  gameId = newGameRef.id;
   playerNumber = 1;
 
   await window.fadeOut(multiplayerOptions);
-  multiplayerOptions.style.display = 'none';
   
   roomCodeSpan.textContent = gameId;
-  roomCodeDisplay.style.display = 'flex';
-  await window.fadeIn(roomCodeDisplay);
-  
   multiplayerStatus.textContent = "Game created! Waiting for opponent...";
+  
+  await window.fadeIn(roomCodeDisplay, 'flex');
+
   waitForOpponent();
 });
 
 showJoinScreenBtn.addEventListener('click', async () => {
   await window.fadeOut(multiplayerOptions);
-  multiplayerOptions.style.display = 'none';
-
-  joinInputSection.style.display = 'flex';
-  await window.fadeIn(joinInputSection);
+  await window.fadeIn(joinInputSection, 'flex');
 });
 
 joinGameBtn.addEventListener('click', async () => {
@@ -98,23 +90,16 @@ joinGameBtn.addEventListener('click', async () => {
 
 backToOptionsBtn.addEventListener('click', async () => {
   await window.fadeOut(joinInputSection);
-  joinInputSection.style.display = 'none';
-
   multiplayerStatus.textContent = "";
-
-  multiplayerOptions.style.display = 'flex';
-  await window.fadeIn(multiplayerOptions);
+  await window.fadeIn(multiplayerOptions, 'flex');
 });
 
 backToStartBtn.addEventListener('click', async () => {
-  await window.fadeOut(multiplayerScreen);
-  multiplayerScreen.style.display = 'none';
-  
-  startScreen.style.display = 'flex';
-  await window.fadeIn(startScreen);
+  await window.fadeOut(roomCodeDisplay);
+  multiplayerStatus.textContent = "";
+  await window.fadeIn(multiplayerOptions, 'flex');
 });
 
-// Game Board Event Listener
 boardDiv.addEventListener('click', e => {
   if (e.target.classList.contains('cell') && !isAnimating) {
     const col = Number(e.target.dataset.col);
@@ -122,22 +107,8 @@ boardDiv.addEventListener('click', e => {
   }
 });
 
-// Restart Buttons
 restartBtn.addEventListener('click', async () => {
   if (!gameActive) {
-    // CHANGED: Flatten the boardState before sending it to Firebase
-    await updateDoc(doc(db, "games", gameId), {
-      board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
-      currentPlayer: 1,
-      status: "playing",
-      winner: 0
-    });
-  }
-});
-playAgainBtn.addEventListener('click', async () => {
-  if (!gameActive) {
-    hideGameOver();
-    // CHANGED: Flatten the boardState before sending it to Firebase
     await updateDoc(doc(db, "games", gameId), {
       board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
       currentPlayer: 1,
@@ -147,8 +118,6 @@ playAgainBtn.addEventListener('click', async () => {
   }
 });
 
-
-// Game Logic Functions
 function updateInfo(text) {
   infoDiv.style.opacity = 0;
   setTimeout(() => {
@@ -230,17 +199,16 @@ async function handleMove(col) {
 
   const tempBoard = JSON.parse(JSON.stringify(boardState));
   tempBoard[row][col] = currentPlayer;
-  
+
   await createFallingDisc(col, currentPlayer, row);
 
   const gameRef = doc(db, "games", gameId);
   const newPlayer = currentPlayer === 1 ? 2 : 1;
-  
+
   const winner = checkWin(tempBoard, currentPlayer, row, col);
   const isDraw = tempBoard.flat().every(cell => cell !== 0);
 
   const updateData = {
-    // CHANGED: Flatten the boardState before sending it to Firebase
     board: tempBoard.flat(),
     currentPlayer: newPlayer,
     status: (winner || isDraw) ? "finished" : "playing",
@@ -289,43 +257,24 @@ function checkWin(board, player, lastRow, lastCol) {
   return false;
 }
 
-function showGameOver(message) {
-  const messageEl = overlay.querySelector('.message');
-  if (messageEl) {
-    messageEl.textContent = message;
-  }
-  overlay.classList.add('visible');
-}
-
-function hideGameOver() {
-  overlay.classList.remove('visible');
-}
-
-// Game Flow
 async function startGame() {
   await window.fadeOut(multiplayerScreen);
-  multiplayerScreen.style.display = 'none';
-
-  gameContainer.style.opacity = 0;
-  gameContainer.style.display = 'block';
-  await window.fadeIn(gameContainer);
-
+  await window.fadeIn(gameContainer, 'block');
   gameActive = true;
   drawBoard();
   updateInfo(`Player ${currentPlayer}'s turn`);
-  
+
   if (playerNumber === 1) {
     infoDiv.textContent = `You are Player 1 (Red). Waiting for opponent...`;
   } else {
     infoDiv.textContent = `You are Player 2 (Yellow). Game started.`;
   }
-  
+
   subscribeToGame();
 }
 
 function subscribeToGame() {
   const gameRef = doc(db, "games", gameId);
-
   if (unsubscribeGameListener) {
     unsubscribeGameListener();
   }
@@ -334,13 +283,12 @@ function subscribeToGame() {
     if (!snapshot.exists()) return;
     const data = snapshot.data();
 
-    // CHANGED: Unflatten the board before comparing and updating state
     const receivedBoard = unflattenBoard([...data.board]);
 
     if (JSON.stringify(boardState) !== JSON.stringify(receivedBoard)) {
       animateOpponentMove(receivedBoard);
     }
-    
+
     boardState = receivedBoard;
     currentPlayer = data.currentPlayer;
     gameActive = data.status === "playing";
@@ -348,16 +296,13 @@ function subscribeToGame() {
 
     if (winner) {
       gameActive = false;
-      showGameOver(`Player ${winner} wins! 🎉`);
       updateInfo(`Player ${winner} wins!`);
       restartBtn.style.display = 'inline-block';
     } else if (data.status === "finished") {
       gameActive = false;
-      showGameOver("It's a draw!");
       updateInfo("It's a draw!");
       restartBtn.style.display = 'inline-block';
     } else {
-      hideGameOver();
       updateInfo(gameActive ? `Player ${currentPlayer}'s turn` : 'Waiting for game...');
       restartBtn.style.display = 'none';
       if (playerNumber === currentPlayer) {

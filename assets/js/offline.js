@@ -4,7 +4,6 @@ const restartBtn = document.getElementById('restartBtn');
 const confettiCanvas = document.getElementById('confetti-canvas');
 const confettiCtx = confettiCanvas.getContext('2d');
 const overlay = document.getElementById('overlay');
-const playAgainBtn = document.getElementById('playAgainBtn');
 const ROWS = 6;
 const COLS = 7;
 
@@ -207,18 +206,6 @@ function confettiLoop() {
   }
 }
 
-function showGameOver(message) {
-  const messageEl = overlay.querySelector('.message');
-  if (messageEl) {
-    messageEl.textContent = message;
-  }
-  overlay.classList.add('visible');
-}
-
-function hideGameOver() {
-  overlay.classList.remove('visible');
-}
-
 async function placeDisc(col) {
   if (isAnimating) return;
 
@@ -238,7 +225,6 @@ async function placeDisc(col) {
     pulseWinningCells(winningCells);
     updateInfo(`Player ${currentPlayer} wins! 🎉`);
     startConfetti();
-    showGameOver(`Player ${currentPlayer} wins!`);
 
     setTimeout(() => {
       hideWinningPulse();
@@ -250,7 +236,6 @@ async function placeDisc(col) {
 
   if (boardState.flat().every(cell => cell !== 0)) {
     updateInfo("It's a draw!");
-    showGameOver("It's a draw!");
     isAnimating = false;
     return;
   }
@@ -264,7 +249,6 @@ async function restartGame() {
   if (isAnimating) return;
   isAnimating = true;
 
-  hideGameOver();
   hideWinningPulse();
   updateInfo('');
 
@@ -290,7 +274,6 @@ board.addEventListener('click', e => {
 });
 
 restartBtn.addEventListener('click', restartGame);
-playAgainBtn.addEventListener('click', restartGame);
 
 window.addEventListener('resize', () => {
   confettiCanvas.width = window.innerWidth;
@@ -301,3 +284,7 @@ initBoard();
 updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
 board.classList.add('fade-in');
 setTimeout(() => board.classList.remove('fade-in'), 500);
+
+function exitGame() {
+  
+}

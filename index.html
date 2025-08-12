@@ -36,21 +36,17 @@
     <h1>Connect Four</h1>
     <div id="board" class="board" aria-label="Connect Four board" role="grid"></div>
     <div id="info" class="info">Player 1's turn (Red)</div>
-    <button id="restartBtn" class="restart-btn">Restart</button>
+    <div class="gamebutton-container">
+        <button id="restartBtn" class="restart-btn">Restart</button>
+    </div>
   </div>
   
   <canvas id="confetti-canvas"></canvas>
-  
-  <div id="overlay">
-    <span class="message"></span>
-    <button id="playAgainBtn">Play Again</button>
-  </div>
   
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
     
-    // Your web app's Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyB18M9FSegBBx8ZJnQmXVuWOE_GtAYT1D0",
       authDomain: "connect-four-ea92e.firebaseapp.com",
@@ -61,11 +57,9 @@
       measurementId: "G-QPY4TNXN2Y"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     
-    // Expose the database globally for other scripts to use
     window.firebaseDB = db;
   </script>
 
