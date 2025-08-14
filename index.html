@@ -1,43 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Connect Four</title>
-  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
   <div id="start-screen" class="screen active fade">
     <h1>Connect Four</h1>
     <button id="play-offline" class="start-screen-button">Play Offline</button>
     <button id="play-online" class="start-screen-button">Play Online</button>
+    <p style="position: absolute; margin-top: 80vh">Fixed by <a style="text-decoration: underline; color: white; font-weight: bold;" target="_blank" href="https://bocajthomas.github.io">bocajthomas</a></p>
   </div>
-
+  
   <div id="multiplayer-screen" class="screen" style="display:none;">
     <h1>Online Multiplayer</h1>
     <div id="multiplayer-options">
       <button id="create-game-btn" class="start-screen-button">Create New Game</button>
       <button id="show-join-screen-btn" class="start-screen-button">Join Game</button>
+      <button id="back-to-start-from-multiplayer" class="back-button">Back to Start</button>
     </div>
+
     <div id="join-input-section" style="display:none;">
       <input type="text" id="join-code-input" placeholder="Enter Room Code" class="text-input">
       <button id="join-game-btn" class="start-screen-button">Join Game</button>
       <button id="back-to-options-btn" class="back-button">Back to Options</button>
     </div>
+
     <p id="multiplayer-status" class="status-message"></p>
-    <div id="room-code-display" class="room-code-section" style="display:none;">
+
+    <div id="room-code-display" class="room-code-section" style="display: none">
       <p>Share this code with a friend:</p>
       <span id="room-code"></span>
       <button id="back-to-start-btn" class="back-button">Back</button>
     </div>
   </div>
   
-  <div id="game-container" class="game-container" style="display:none;">
+  <div id="game-container" class="game-container" style="display: none">
     <h1>Connect Four</h1>
     <div id="board" class="board" aria-label="Connect Four board" role="grid"></div>
     <div id="info" class="info">Player 1's turn (Red)</div>
     <div class="gamebutton-container">
-        <button id="restartBtn" class="restart-btn">Restart</button>
+      <button id="restartBtn" class="restart-btn">Restart</button>
+      <button id="leaveGameBtn" class="hidden">Leave</button>
     </div>
   </div>
   
