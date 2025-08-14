@@ -309,7 +309,7 @@ h1 {
   color: var(--text-color);
 }
 
-.restart-btn {
+.restart-btn, #leaveGameBtn {
   padding: 12px 35px;
   background: var(--button-background);
   border: none;
