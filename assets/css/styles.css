@@ -152,10 +152,6 @@ body {
   transition: color 0.4s ease;
 }
 
-.credits-link:hover {
-  opacity: 0.8;
-}
-
 .gamebutton-container {
   display: flex;
   width: 100%;
