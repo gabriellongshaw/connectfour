@@ -1,6 +1,7 @@
 :root {
   --background-color: #ffffff;
   --text-color: #000000;
+  --credits-link-color: #ffffff;
   --header-color: #000000;
   --card-background: #ffffff;
   --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -22,6 +23,7 @@
     --background-color: #1a1a1a;
     --text-color: #ffffff;
     --header-color: #ffffff;
+    --credits-link-color: #ffffff;
     --card-background: #2c2c2c;
     --card-shadow: 0 0px 18px rgba(0, 0, 0, 0.2);
     --button-background: #0388fc;
@@ -125,6 +127,33 @@ body {
   width: 80%;
   max-width: 300px;
   opacity: 0.3;
+}
+
+.credits {
+  position: absolute;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--text-color);
+  transition: color 0.2s ease;
+}
+
+.created-by {
+  top: 75vh;
+}
+
+.fixed-by {
+  top: 80vh;
+}
+
+.credits-link {
+  font-weight: bold;
+  text-decoration: underline;
+  color: var(--text-color);
+  transition: color 0.4s ease;
+}
+
+.credits-link:hover {
+  opacity: 0.8;
 }
 
 .gamebutton-container {
