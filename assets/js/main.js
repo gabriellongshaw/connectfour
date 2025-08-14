@@ -23,6 +23,7 @@ const leaveGameBtn = document.getElementById('leaveGameBtn');
 const roomCodeSpan = document.getElementById('room-code');
 const confettiCanvas = document.getElementById('confetti-canvas');
 const confettiCtx = confettiCanvas.getContext('2d');
+
 const ROWS = 6;
 const COLS = 7;
 
@@ -30,7 +31,7 @@ let gameMode = null;
 let currentPlayer = 1;
 let boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 let gameActive = false;
-let isAnimating = false;
+let isAnimating = false;              
 let confettiParticles = [];
 let confettiActive = false;
 
@@ -41,6 +42,10 @@ let gameId = null;
 let playerNumber = 0;
 let unsubscribeWaitListener = null;
 let unsubscribeGameListener = null;
+
+let lastGameData = null;
+
+let iInitiatedLeave = false;
 
 const playerColors = {
   1: 'Red',
@@ -346,17 +351,21 @@ function createFallingDisc(col, player, targetRow) {
 async function handleMove(col) {
   if (!gameActive || isAnimating) return;
 
+  if (gameMode === 'online' && (playerNumber !== currentPlayer || !gameId)) return;
+
   const row = getAvailableRow(col);
   if (row === -1) return;
 
   isAnimating = true;
 
   if (gameMode === 'offline') {
+
     await createFallingDisc(col, currentPlayer, row);
+
     boardState[row][col] = currentPlayer;
     const cell = boardDiv.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-    cell.dataset.player = currentPlayer;
-    
+    if (cell) cell.dataset.player = currentPlayer;
+
     const winningCells = getWinningCells(currentPlayer);
     if (winningCells) {
       pulseWinningCells(winningCells);
@@ -371,39 +380,51 @@ async function handleMove(col) {
       updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
     }
     isAnimating = false;
+
   } else if (gameMode === 'online') {
-    if (playerNumber !== currentPlayer || !gameId) {
-      isAnimating = false;
-      return;
-    }
-    
+
     const tempBoard = JSON.parse(JSON.stringify(boardState));
     tempBoard[row][col] = currentPlayer;
 
     const gameRef = doc(db, "games", gameId);
     const newPlayer = currentPlayer === 1 ? 2 : 1;
-    
+
     const winner = checkWin(tempBoard, currentPlayer, row, col);
     const isDraw = tempBoard.flat().every(cell => cell !== 0);
 
     const updateData = {
       board: tempBoard.flat(),
-      currentPlayer: newPlayer,
+      currentPlayer: (winner || isDraw) ? currentPlayer : newPlayer, 
       status: (winner || isDraw) ? "finished" : "playing",
       winner: winner ? currentPlayer : 0
     };
+
+    await createFallingDisc(col, currentPlayer, row);
+
+    boardState[row][col] = currentPlayer;
+    drawBoard();
 
     try {
       await updateDoc(gameRef, updateData);
     } catch (err) {
       console.error("Error updating game after move:", err);
+
+      boardState[row][col] = 0;
+      drawBoard();
     } finally {
+
+      if (!(winner || isDraw)) {
+        currentPlayer = newPlayer;
+      } else {
+        gameActive = false;
+      }
       isAnimating = false;
     }
   }
 }
 
 boardDiv.addEventListener('click', e => {
+  if (isAnimating) return;
   if (e.target.classList.contains('cell')) {
     const col = Number(e.target.dataset.col);
     handleMove(col);
@@ -441,8 +462,13 @@ restartBtn.addEventListener('click', async () => {
 });
 
 leaveGameBtn.addEventListener('click', async () => {
+  iInitiatedLeave = true;
   if (gameMode === 'online' && gameId) {
-    await deleteDoc(doc(db, "games", gameId));
+    try {
+      await deleteDoc(doc(db, "games", gameId));
+    } catch (e) {
+
+    }
   }
   handleLeaveGame();
 });
@@ -459,11 +485,15 @@ function handleLeaveGame() {
   hideWinningPulse();
   window.fadeOut(gameContainer);
   window.fadeIn(multiplayerScreen, 'flex');
+
+  setTimeout(() => { iInitiatedLeave = false; }, 0);
 }
 
+function endGameOpponentLeft(previousData) {
+  if (previousData && previousData.status === "finished") {
 
-function endGameOpponentLeft() {
-  if (unsubscribeGameListener) unsubscribeGameListener();
+    return;
+  }
   gameActive = false;
   updateInfo(`Opponent left the game. You win! 🎉`);
   startConfetti();
@@ -555,7 +585,7 @@ async function joinGame() {
     await window.fadeOut(multiplayerScreen);
     multiplayerStatus.textContent = "";
     await window.fadeIn(gameContainer, 'block');
-    
+
     startOnlineGame();
   } catch (err) {
     console.error("Error joining game:", err);
@@ -598,72 +628,94 @@ function subscribeToGame() {
   }
 
   unsubscribeGameListener = onSnapshot(gameRef, async (snapshot) => {
+
     if (!snapshot.exists()) {
-      endGameOpponentLeft();
+
+      if (!iInitiatedLeave) {
+        endGameOpponentLeft(lastGameData);
+      }
       return;
     }
+
     const data = snapshot.data();
+    lastGameData = data;
+
     const receivedBoard = unflattenBoard([...data.board]);
     const oldBoard = JSON.parse(JSON.stringify(boardState));
-    
-    if (JSON.stringify(oldBoard) !== JSON.stringify(receivedBoard)) {
-      boardState = receivedBoard;
-      drawBoard();
-      await animateOpponentMove(oldBoard);
+
+    let placedDiscIndex = -1;
+    const oldFlat = oldBoard.flat();
+    const newFlat = data.board; 
+
+    for (let i = 0; i < newFlat.length; i++) {
+      if (oldFlat[i] !== newFlat[i]) {
+        placedDiscIndex = i;
+        break;
+      }
     }
-    
+
     currentPlayer = data.currentPlayer;
     gameActive = data.status === "playing";
     const winner = data.winner || 0;
     const isDraw = data.status === "finished" && !winner;
 
     if (winner) {
+
+      boardState = receivedBoard;
+      drawBoard();
       gameActive = false;
       const winningCells = getWinningCells(winner);
       if (winningCells) {
         pulseWinningCells(winningCells);
-        startConfetti();
+        startConfetti(); 
       }
       updateInfo(`Player ${winner} wins!`);
       restartBtn.style.display = 'inline-block';
+      return;
     } else if (isDraw) {
+      boardState = receivedBoard;
+      drawBoard();
       gameActive = false;
       updateInfo("It's a draw!");
       restartBtn.style.display = 'inline-block';
-    } else {
-      updateInfo(`Player ${currentPlayer}'s turn`);
-      restartBtn.style.display = 'none';
-      if (playerNumber === currentPlayer) {
-        infoDiv.textContent = `Your turn!`;
-      } else {
-        infoDiv.textContent = `Player ${currentPlayer}'s turn`;
+      return;
+    }
+
+    if (placedDiscIndex !== -1) {
+      const placedRow = Math.floor(placedDiscIndex / COLS);
+      const placedCol = placedDiscIndex % COLS;
+      const playerWhoMoved = newFlat[placedDiscIndex];
+
+      const mover = data.currentPlayer === 1 ? 2 : 1;
+
+      const alreadyMatches = boardState[placedRow][placedCol] === playerWhoMoved;
+
+      if (!alreadyMatches) {
+
+        isAnimating = true;
+        await createFallingDisc(placedCol, playerWhoMoved, placedRow);
+        isAnimating = false;
       }
-      hideWinningPulse(); 
+
+      boardState = receivedBoard;
+      drawBoard();
+      hideWinningPulse();
+    } else {
+
+      if (JSON.stringify(oldBoard) !== JSON.stringify(receivedBoard)) {
+        boardState = receivedBoard;
+        drawBoard();
+      }
+      hideWinningPulse();
+    }
+
+    restartBtn.style.display = 'none';
+    if (playerNumber === currentPlayer) {
+      infoDiv.textContent = `Your turn!`;
+    } else {
+      infoDiv.textContent = `Player ${currentPlayer}'s turn`;
     }
   });
-}
-
-async function animateOpponentMove(oldBoard) {
-  const oldFlat = oldBoard.flat();
-  const newFlat = boardState.flat();
-  let placedDiscIndex = -1;
-
-  for (let i = 0; i < oldFlat.length; i++) {
-    if (oldFlat[i] !== newFlat[i]) {
-      placedDiscIndex = i;
-      break;
-    }
-  }
-
-  if (placedDiscIndex !== -1) {
-    const placedRow = Math.floor(placedDiscIndex / COLS);
-    const placedCol = placedDiscIndex % COLS;
-    const playerWhoMoved = newFlat[placedDiscIndex];
-
-    isAnimating = true;
-    await createFallingDisc(placedCol, playerWhoMoved, placedRow);
-    isAnimating = false;
-  }
 }
 
 function waitForOpponent() {
