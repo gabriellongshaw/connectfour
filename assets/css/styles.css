@@ -14,6 +14,11 @@
   --winning-glow: #f1c40f;
   --player1-color: #f55a5a;
   --player2-color: #f1c40f;
+    --blue-start: #007bff;
+  --blue-end: #00c6ff;
+  --hover-blue-start: #0056b3;
+  --hover-blue-end: #00a0d4;
+  --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --cell-size: clamp(48px, 7.5vw, 80px);
 }
@@ -94,22 +99,32 @@ body {
   border: none;
   border-radius: 50px;
   cursor: pointer;
-  background: var(--button-background);
-  color: var(--button-text);
+  color: #ffffff;
   margin: 10px 0;
   box-shadow: var(--card-shadow);
-  transition: transform 0.4s ease, background-color 0.4s ease, padding 0.2s ease;
+  transition: transform 0.4s ease, background-position 0.4s ease,
+    box-shadow 0.4s ease;
   width: 80%;
   max-width: 300px;
+  background: linear-gradient(
+    45deg,
+    var(--blue-start),
+    var(--blue-end),
+    var(--hover-blue-start),
+    var(--hover-blue-end)
+  );
+  background-size: 300% 300%;
+  background-position: 50% 0;
 }
 
 .start-screen-button:hover {
   transform: scale(1.05);
-  background: var(--button-hover-background);
+  background-position: 0 100%;
+  box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
 }
 
 .start-screen-button:active {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
 .start-screen-button-disabled {
@@ -141,14 +156,6 @@ body {
   font-weight: 500;
   color: var(--text-color);
   text-align: center;
-}
-
-.created-by {
-  top: 75vh;
-}
-
-.fixed-by {
-  top: 80vh;
 }
 
 .credits-link {
@@ -340,24 +347,36 @@ h1 {
   color: var(--text-color);
 }
 
-.restart-btn, #leaveGameBtn {
+.restart-btn {
   padding: 12px 35px;
-  background: var(--button-background);
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 600;
   border: none;
   border-radius: 50px;
-  color: var(--button-text);
-  font-size: 18px;
-  font-weight: 700;
   cursor: pointer;
+  color: #ffffff;
+  margin: 10px 0;
   box-shadow: var(--card-shadow);
-  transition: background 0.4s ease, transform 0.4s ease;
-  user-select: none;
+  transition: transform 0.4s ease, background-position 0.4s ease,
+    box-shadow 0.4s ease;
+  background: linear-gradient(
+    45deg,
+    var(--blue-start),
+    var(--blue-end),
+    var(--hover-blue-start),
+    var(--hover-blue-end)
+  );
+  background-size: 300% 300%;
+  background-position: 50% 0;
 }
 
-.restart-btn:hover,
-.restart-btn:focus {
-  outline: none;
-  background: var(--button-hover-background);
+.restart-btn:hover {
+  transform: scale(1.05);
+  background-position: 0 100%;
+  box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
+}
+
+.restart-btn:active {
   transform: scale(1.05);
 }
 
@@ -552,11 +571,11 @@ h1 {
   cursor: pointer;
   margin-top: 30px;
   padding: 10px;
-  transition: color 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .back-button:hover {
-  color: #777;
+  opacity: 0.3;
 }
 
 .hidden {
