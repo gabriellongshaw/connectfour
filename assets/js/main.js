@@ -615,7 +615,6 @@ async function joinGame() {
 
     await updateDoc(doc(db, "games", gameId), { status: "playing" });
 
-    // Prepare clean UI BEFORE showing game container to avoid flicker
     resetUIForNewOnlineGame();
 
     await window.fadeOut(multiplayerScreen);
