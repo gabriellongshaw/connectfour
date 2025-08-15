@@ -14,11 +14,10 @@
   --winning-glow: #f1c40f;
   --player1-color: #f55a5a;
   --player2-color: #f1c40f;
-    --blue-start: #007bff;
+  --blue-start: #007bff;
   --blue-end: #00c6ff;
   --hover-blue-start: #0056b3;
   --hover-blue-end: #00a0d4;
-  --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --cell-size: clamp(48px, 7.5vw, 80px);
 }
@@ -110,8 +109,8 @@ body {
     45deg,
     var(--blue-start),
     var(--blue-end),
-    var(--hover-blue-start),
-    var(--hover-blue-end)
+    var(--blue-start),
+    var(--blue-end)
   );
   background-size: 300% 300%;
   background-position: 50% 0;
@@ -347,7 +346,7 @@ h1 {
   color: var(--text-color);
 }
 
-.restart-btn {
+.restart-btn, #leaveGameBtn {
   padding: 12px 35px;
   font-size: clamp(1.2rem, 3vw, 1.6rem);
   font-weight: 600;
@@ -370,7 +369,8 @@ h1 {
   background-position: 50% 0;
 }
 
-.restart-btn:hover {
+.restart-btn:hover,
+#leaveGameBtn:hover{
   transform: scale(1.05);
   background-position: 0 100%;
   box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
