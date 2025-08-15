@@ -31,7 +31,7 @@ let gameMode = null;
 let currentPlayer = 1;
 let boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 let gameActive = false;
-let isAnimating = false;              
+let isAnimating = false;
 let confettiParticles = [];
 let confettiActive = false;
 
@@ -46,6 +46,7 @@ let unsubscribeGameListener = null;
 let lastGameData = null;
 
 let iInitiatedLeave = false;
+let onlineEventsBound = false; // prevent double-binding of buttons
 
 const playerColors = {
   1: 'Red',
@@ -69,6 +70,26 @@ window.fadeIn = (element, displayType = 'flex', duration = 400) => {
   element.style.opacity = 1;
   return new Promise(resolve => setTimeout(resolve, duration));
 };
+
+// === NEW: centralized reset to avoid old counters flashing ===
+function resetUIForNewOnlineGame() {
+  // state
+  lastGameData = null;
+  gameActive = true;           // entering a playing state
+  isAnimating = false;
+  currentPlayer = 1;
+  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+
+  // visuals
+  hideWinningPulse();
+  stopConfetti();
+  updateInfo('');
+  restartBtn.style.display = 'none';
+  leaveGameBtn.classList.remove('hidden');
+
+  // draw a clean board immediately
+  initBoard();
+}
 
 function initGame(mode) {
   gameMode = mode;
@@ -97,6 +118,9 @@ function initOnlineGame() {
 }
 
 function addOnlineEventListeners() {
+  if (onlineEventsBound) return; // prevent duplicate listeners
+  onlineEventsBound = true;
+
   createGameBtn.addEventListener('click', createGame);
   showJoinScreenBtn.addEventListener('click', showJoinScreen);
   joinGameBtn.addEventListener('click', joinGame);
@@ -262,6 +286,13 @@ function startConfetti() {
   requestAnimationFrame(confettiLoop);
 }
 
+function stopConfetti() {
+  confettiActive = false;
+  confettiParticles = [];
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  confettiCanvas.style.display = 'none';
+}
+
 function confettiLoop() {
   if (!confettiActive) return;
 
@@ -394,7 +425,7 @@ async function handleMove(col) {
 
     const updateData = {
       board: tempBoard.flat(),
-      currentPlayer: (winner || isDraw) ? currentPlayer : newPlayer, 
+      currentPlayer: (winner || isDraw) ? currentPlayer : newPlayer,
       status: (winner || isDraw) ? "finished" : "playing",
       winner: winner ? currentPlayer : 0
     };
@@ -467,15 +498,15 @@ leaveGameBtn.addEventListener('click', async () => {
     try {
       await deleteDoc(doc(db, "games", gameId));
     } catch (e) {
-
+      // ignore
     }
   }
   handleLeaveGame();
 });
 
 function handleLeaveGame() {
-  if (unsubscribeWaitListener) unsubscribeWaitListener();
-  if (unsubscribeGameListener) unsubscribeGameListener();
+  if (unsubscribeWaitListener) { unsubscribeWaitListener(); unsubscribeWaitListener = null; }
+  if (unsubscribeGameListener) { unsubscribeGameListener(); unsubscribeGameListener = null; }
   gameId = null;
   playerNumber = 0;
   gameActive = false;
@@ -483,6 +514,8 @@ function handleLeaveGame() {
   boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
   updateInfo('');
   hideWinningPulse();
+  stopConfetti();
+  restartBtn.style.display = 'none';
   window.fadeOut(gameContainer);
   window.fadeIn(multiplayerScreen, 'flex');
 
@@ -491,7 +524,6 @@ function handleLeaveGame() {
 
 function endGameOpponentLeft(previousData) {
   if (previousData && previousData.status === "finished") {
-
     return;
   }
   gameActive = false;
@@ -501,10 +533,11 @@ function endGameOpponentLeft(previousData) {
   leaveGameBtn.classList.remove('hidden');
 }
 
+// safer, no mutation
 const unflattenBoard = (flatBoard) => {
   const newBoard = [];
-  while (flatBoard.length) {
-    newBoard.push(flatBoard.splice(0, COLS));
+  for (let r = 0; r < ROWS; r++) {
+    newBoard.push(flatBoard.slice(r * COLS, (r + 1) * COLS));
   }
   return newBoard;
 };
@@ -582,6 +615,9 @@ async function joinGame() {
 
     await updateDoc(doc(db, "games", gameId), { status: "playing" });
 
+    // Prepare clean UI BEFORE showing game container to avoid flicker
+    resetUIForNewOnlineGame();
+
     await window.fadeOut(multiplayerScreen);
     multiplayerStatus.textContent = "";
     await window.fadeIn(gameContainer, 'block');
@@ -613,8 +649,9 @@ async function backToStartFromMultiplayer() {
 }
 
 function startOnlineGame() {
-  gameActive = true;
-  drawBoard();
+  // Ensure a clean slate at the start of every new online game
+  resetUIForNewOnlineGame();
+
   updateInfo(`You are Player ${playerNumber}. Game started.`);
   subscribeToGame();
 }
@@ -630,7 +667,6 @@ function subscribeToGame() {
   unsubscribeGameListener = onSnapshot(gameRef, async (snapshot) => {
 
     if (!snapshot.exists()) {
-
       if (!iInitiatedLeave) {
         endGameOpponentLeft(lastGameData);
       }
@@ -640,12 +676,12 @@ function subscribeToGame() {
     const data = snapshot.data();
     lastGameData = data;
 
-    const receivedBoard = unflattenBoard([...data.board]);
+    const receivedBoard = unflattenBoard(data.board);
     const oldBoard = JSON.parse(JSON.stringify(boardState));
 
     let placedDiscIndex = -1;
     const oldFlat = oldBoard.flat();
-    const newFlat = data.board; 
+    const newFlat = data.board;
 
     for (let i = 0; i < newFlat.length; i++) {
       if (oldFlat[i] !== newFlat[i]) {
@@ -667,7 +703,7 @@ function subscribeToGame() {
       const winningCells = getWinningCells(winner);
       if (winningCells) {
         pulseWinningCells(winningCells);
-        startConfetti(); 
+        startConfetti();
       }
       updateInfo(`Player ${winner} wins!`);
       restartBtn.style.display = 'inline-block';
@@ -686,12 +722,9 @@ function subscribeToGame() {
       const placedCol = placedDiscIndex % COLS;
       const playerWhoMoved = newFlat[placedDiscIndex];
 
-      const mover = data.currentPlayer === 1 ? 2 : 1;
-
       const alreadyMatches = boardState[placedRow][placedCol] === playerWhoMoved;
 
       if (!alreadyMatches) {
-
         isAnimating = true;
         await createFallingDisc(placedCol, playerWhoMoved, placedRow);
         isAnimating = false;
@@ -701,7 +734,6 @@ function subscribeToGame() {
       drawBoard();
       hideWinningPulse();
     } else {
-
       if (JSON.stringify(oldBoard) !== JSON.stringify(receivedBoard)) {
         boardState = receivedBoard;
         drawBoard();
@@ -734,6 +766,10 @@ function waitForOpponent() {
         unsubscribeWaitListener();
         unsubscribeWaitListener = null;
       }
+
+      // Host: prep clean UI BEFORE showing container to avoid last-game flash
+      resetUIForNewOnlineGame();
+
       await window.fadeOut(multiplayerScreen);
       await window.fadeIn(gameContainer, 'block');
       startOnlineGame();
