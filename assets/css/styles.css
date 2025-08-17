@@ -604,60 +604,46 @@ h1 {
   display: none !important;
 }
 
-@media (min-width: 768px) and (max-width: 1024px) {
-  /* Tablets */
-  body {
-    padding: 40px;
+@media (min-width: 600px) and (max-width: 900px) {
+  :root {
+    --cell-size: clamp(50px, 8vw, 90px);
+    --button-font-size: clamp(1.2rem, 2.5vw, 1.6rem);
   }
-
-  #start-screen h1 {
-    font-size: clamp(3rem, 6vw, 5rem);
-  }
-
-  .start-screen-button,
-  .start-screen-button-disabled,
-  .restart-btn {
-    padding: 18px 60px;
-    font-size: clamp(1.4rem, 2.5vw, 1.8rem);
-  }
-
-  .board {
-    grid-gap: clamp(12px, 2vw, 16px);
-    padding: clamp(15px, 2.5vw, 20px);
-    max-width: 80vw;
-  }
-
-  .cell {
-    width: var(--cell-size);
-    height: var(--cell-size);
+  .start-screen-button, .start-screen-button-disabled, .restart-btn {
+    width: 70%;
+    max-width: 280px;
   }
 }
 
-@media (min-width: 1025px) {
-  /* Large monitors */
-  body {
-    padding: 60px;
+@media (min-width: 900px) and (max-width: 1200px) {
+  :root {
+    --cell-size: clamp(55px, 6vw, 95px);
+    --button-font-size: clamp(1.3rem, 2.5vw, 1.7rem);
   }
-
-  #start-screen h1 {
-    font-size: clamp(4rem, 5vw, 6rem);
+  .start-screen-button, .start-screen-button-disabled, .restart-btn {
+    width: 65%;
+    max-width: 300px;
   }
+}
 
-  .start-screen-button,
-  .start-screen-button-disabled,
-  .restart-btn {
-    padding: 20px 80px;
-    font-size: clamp(1.6rem, 2vw, 2rem);
+@media (min-width: 1200px) and (max-width: 1600px) {
+  :root {
+    --cell-size: clamp(60px, 5vw, 100px);
+    --button-font-size: clamp(1.4rem, 2vw, 1.8rem);
   }
-
-  .board {
-    grid-gap: clamp(16px, 1.5vw, 20px);
-    padding: clamp(20px, 2vw, 25px);
-    max-width: 70vw;
+  .start-screen-button, .start-screen-button-disabled, .restart-btn {
+    width: 60%;
+    max-width: 320px;
   }
+}
 
-  .cell {
-    width: clamp(60px, 8vw, 100px);
-    height: clamp(60px, 8vw, 100px);
+@media (min-width: 1600px) {
+  :root {
+    --cell-size: clamp(65px, 4vw, 110px);
+    --button-font-size: clamp(1.5rem, 1.8vw, 2rem);
+  }
+  .start-screen-button, .start-screen-button-disabled, .restart-btn {
+    width: 55%;
+    max-width: 350px;
   }
 }
