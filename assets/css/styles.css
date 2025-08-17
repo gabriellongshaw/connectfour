@@ -116,18 +116,11 @@ body {
   background-position: 50% 0;
 }
 
+.start-screen-button.hover,
 .start-screen-button:hover {
   transform: scale(1.05);
   background-position: 0 100%;
   box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
-}
-
-@media (pointer: fine) {
-  .start-screen-button {
-    transform: scale(1.05);
-    background-position: 0 100%;
-    box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
-  }
 }
 
 .start-screen-button:active {
@@ -377,16 +370,10 @@ h1 {
   background-position: 50% 0;
 }
 
-@media (pointer: fine) {
-  .restart-btn, #leaveGameBtn {
-    transform: scale(1.05);
-    background-position: 0 100%;
-    box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
-  }
-}
-
 .restart-btn:hover,
-#leaveGameBtn:hover{
+.restart-btn.hover,
+#leaveGameBtn:hover,
+#leaveGameBtn.hover {
   transform: scale(1.05);
   background-position: 0 100%;
   box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
@@ -590,14 +577,9 @@ h1 {
   transition: opacity 0.2s ease;
 }
 
-.back-button:hover {
+.back-button:hover,
+.back-button.hover {
   opacity: 0.3;
-}
-
-@media (point: fine) {
-  .back-button {
-    opacity: 0.3;
-  }
 }
 
 .hidden {
