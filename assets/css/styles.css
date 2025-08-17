@@ -362,8 +362,8 @@ h1 {
     45deg,
     var(--blue-start),
     var(--blue-end),
-    var(--hover-blue-start),
-    var(--hover-blue-end)
+    var(--blue-start),
+    var(--blue-end)
   );
   background-size: 300% 300%;
   background-position: 50% 0;
