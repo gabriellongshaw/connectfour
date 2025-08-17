@@ -347,7 +347,7 @@ h1 {
   color: var(--text-color);
 }
 
-.restart-btn, #leaveGameBtn {
+.restart-btn {
   padding: 12px 35px;
   font-size: clamp(1.2rem, 3vw, 1.6rem);
   font-weight: 600;
@@ -371,9 +371,7 @@ h1 {
 }
 
 .restart-btn:hover,
-.restart-btn.hover,
-#leaveGameBtn:hover,
-#leaveGameBtn.hover {
+.restart-btn.hover {
   transform: scale(1.05);
   background-position: 0 100%;
   box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
@@ -582,6 +580,84 @@ h1 {
   opacity: 0.3;
 }
 
+.leave-game {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  padding: 8px 12px;
+  background-color: transparent;
+  color: var(--text-color);
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.leave-game.hover,
+.leave-game:hover {
+  opacity: 0.5;
+}
+
 .hidden {
   display: none !important;
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Tablets */
+  body {
+    padding: 40px;
+  }
+
+  #start-screen h1 {
+    font-size: clamp(3rem, 6vw, 5rem);
+  }
+
+  .start-screen-button,
+  .start-screen-button-disabled,
+  .restart-btn {
+    padding: 18px 60px;
+    font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+  }
+
+  .board {
+    grid-gap: clamp(12px, 2vw, 16px);
+    padding: clamp(15px, 2.5vw, 20px);
+    max-width: 80vw;
+  }
+
+  .cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Large monitors */
+  body {
+    padding: 60px;
+  }
+
+  #start-screen h1 {
+    font-size: clamp(4rem, 5vw, 6rem);
+  }
+
+  .start-screen-button,
+  .start-screen-button-disabled,
+  .restart-btn {
+    padding: 20px 80px;
+    font-size: clamp(1.6rem, 2vw, 2rem);
+  }
+
+  .board {
+    grid-gap: clamp(16px, 1.5vw, 20px);
+    padding: clamp(20px, 2vw, 25px);
+    max-width: 70vw;
+  }
+
+  .cell {
+    width: clamp(60px, 8vw, 100px);
+    height: clamp(60px, 8vw, 100px);
+  }
 }

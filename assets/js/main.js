@@ -46,7 +46,7 @@ let unsubscribeGameListener = null;
 let lastGameData = null;
 
 let iInitiatedLeave = false;
-let onlineEventsBound = false; // prevent double-binding of buttons
+let onlineEventsBound = false; 
 
 const playerColors = {
   1: 'Red',
@@ -71,23 +71,20 @@ window.fadeIn = (element, displayType = 'flex', duration = 400) => {
   return new Promise(resolve => setTimeout(resolve, duration));
 };
 
-// === NEW: centralized reset to avoid old counters flashing ===
 function resetUIForNewOnlineGame() {
-  // state
+
   lastGameData = null;
-  gameActive = true;           // entering a playing state
+  gameActive = true;           
   isAnimating = false;
   currentPlayer = 1;
   boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 
-  // visuals
   hideWinningPulse();
   stopConfetti();
   updateInfo('');
   restartBtn.style.display = 'none';
   leaveGameBtn.classList.remove('hidden');
 
-  // draw a clean board immediately
   initBoard();
 }
 
@@ -101,8 +98,9 @@ function initGame(mode) {
 }
 
 function initOfflineGame() {
-  leaveGameBtn.classList.add('hidden');
+
   restartBtn.classList.remove('hidden');
+  leaveGameBtn.classList.remove('hidden');
   initBoard();
   updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
   boardDiv.classList.add('fade-in');
@@ -118,7 +116,7 @@ function initOnlineGame() {
 }
 
 function addOnlineEventListeners() {
-  if (onlineEventsBound) return; // prevent duplicate listeners
+  if (onlineEventsBound) return; 
   onlineEventsBound = true;
 
   createGameBtn.addEventListener('click', createGame);
@@ -498,17 +496,21 @@ leaveGameBtn.addEventListener('click', async () => {
     try {
       await deleteDoc(doc(db, "games", gameId));
     } catch (e) {
-      // ignore
+
     }
   }
   handleLeaveGame();
 });
 
 function handleLeaveGame() {
-  if (unsubscribeWaitListener) { unsubscribeWaitListener(); unsubscribeWaitListener = null; }
-  if (unsubscribeGameListener) { unsubscribeGameListener(); unsubscribeGameListener = null; }
-  gameId = null;
-  playerNumber = 0;
+  if (gameMode === 'online') {
+    if (unsubscribeWaitListener) { unsubscribeWaitListener(); unsubscribeWaitListener = null; }
+    if (unsubscribeGameListener) { unsubscribeGameListener(); unsubscribeGameListener = null; }
+    gameId = null;
+    playerNumber = 0;
+  }
+
+  gameMode = null; 
   gameActive = false;
   currentPlayer = 1;
   boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
@@ -516,8 +518,10 @@ function handleLeaveGame() {
   hideWinningPulse();
   stopConfetti();
   restartBtn.style.display = 'none';
+  leaveGameBtn.classList.add('hidden'); 
+
   window.fadeOut(gameContainer);
-  window.fadeIn(multiplayerScreen, 'flex');
+  window.fadeIn(startScreen, 'flex'); 
 
   setTimeout(() => { iInitiatedLeave = false; }, 0);
 }
@@ -533,7 +537,6 @@ function endGameOpponentLeft(previousData) {
   leaveGameBtn.classList.remove('hidden');
 }
 
-// safer, no mutation
 const unflattenBoard = (flatBoard) => {
   const newBoard = [];
   for (let r = 0; r < ROWS; r++) {
@@ -648,7 +651,7 @@ async function backToStartFromMultiplayer() {
 }
 
 function startOnlineGame() {
-  // Ensure a clean slate at the start of every new online game
+
   resetUIForNewOnlineGame();
 
   updateInfo(`You are Player ${playerNumber}. Game started.`);
@@ -766,7 +769,6 @@ function waitForOpponent() {
         unsubscribeWaitListener = null;
       }
 
-      // Host: prep clean UI BEFORE showing container to avoid last-game flash
       resetUIForNewOnlineGame();
 
       await window.fadeOut(multiplayerScreen);
