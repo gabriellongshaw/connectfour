@@ -122,6 +122,14 @@ body {
   box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
 }
 
+@media (pointer: fine) {
+  .start-screen-button {
+    transform: scale(1.05);
+    background-position: 0 100%;
+    box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
+  }
+}
+
 .start-screen-button:active {
   transform: scale(1.03);
 }
@@ -369,6 +377,14 @@ h1 {
   background-position: 50% 0;
 }
 
+@media (pointer: fine) {
+  .restart-btn, #leaveGameBtn {
+    transform: scale(1.05);
+    background-position: 0 100%;
+    box-shadow: 0 0 20px rgba(0, 123, 255, 0.8), 0 0 30px rgba(0, 198, 255, 0.6);
+  }
+}
+
 .restart-btn:hover,
 #leaveGameBtn:hover{
   transform: scale(1.05);
@@ -576,6 +592,12 @@ h1 {
 
 .back-button:hover {
   opacity: 0.3;
+}
+
+@media (point: fine) {
+  .back-button {
+    opacity: 0.3;
+  }
 }
 
 .hidden {
