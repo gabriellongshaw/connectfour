@@ -71,6 +71,21 @@ window.fadeIn = (element, displayType = 'flex', duration = 400) => {
   return new Promise(resolve => setTimeout(resolve, duration));
 };
 
+function fadeInButton(btn, display = 'inline-block', duration = 200) {
+  btn.style.display = display;
+  btn.style.opacity = 0;
+  btn.style.transition = `opacity ${duration}ms`;
+  // next frame -> fade to 1
+  requestAnimationFrame(() => { btn.style.opacity = 1; });
+}
+
+function hideButtonInstant(btn) {
+  btn.style.transition = 'none';
+  btn.style.opacity = 0;
+  btn.style.display = 'none';
+  btn.classList.add('hidden');
+}
+
 function resetUIForNewOnlineGame() {
   lastGameData = null;
   gameActive = true;           
@@ -711,24 +726,28 @@ function subscribeToGame() {
     const isDraw = data.status === "finished" && !winner;
 
     if (data.status === "finished") {
-      boardState = receivedBoard;
-      drawBoard();
-      gameActive = false;
-
-      if (winner) {
-        const winningCells = getWinningCells(winner);
-        if (winningCells) {
-          pulseWinningCells(winningCells);
-          startConfetti();
-        }
-        updateInfo(`Player ${winner} wins!`);
-      } else if (isDraw) {
-        updateInfo("It's a draw!");
-      }
-
-      restartBtn.classList.remove('hidden');
-      return;
+  boardState = receivedBoard;
+  drawBoard();
+  gameActive = false;
+  
+  if (winner) {
+    const winningCells = getWinningCells(winner);
+    if (winningCells) {
+      pulseWinningCells(winningCells);
+      startConfetti();
     }
+    updateInfo(`Player ${winner} wins!`);
+  } else if (isDraw) {
+    updateInfo("It's a draw!");
+  }
+  
+  restartBtn.classList.remove('hidden');
+restartBtn.style.display = 'inline-block';
+restartBtn.classList.remove('fade-in');
+void restartBtn.offsetWidth;
+restartBtn.classList.add('fade-in');
+  return;
+}
 
     if (data.status === "playing") {
         boardDiv.classList.remove('faded', 'shake');
