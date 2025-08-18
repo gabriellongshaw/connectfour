@@ -72,7 +72,6 @@ window.fadeIn = (element, displayType = 'flex', duration = 400) => {
 };
 
 function resetUIForNewOnlineGame() {
-
   lastGameData = null;
   gameActive = true;           
   isAnimating = false;
@@ -82,7 +81,10 @@ function resetUIForNewOnlineGame() {
   hideWinningPulse();
   stopConfetti();
   updateInfo('');
-  restartBtn.style.display = 'none';
+
+  restartBtn.style.display = 'block';
+  restartBtn.disabled = false;
+  restartBtn.style.opacity = "1";
   leaveGameBtn.classList.remove('hidden');
 
   initBoard();
@@ -98,8 +100,11 @@ function initGame(mode) {
 }
 
 function initOfflineGame() {
+  restartBtn.classList.remove('hidden'); 
+  restartBtn.style.display = 'block';
+  restartBtn.disabled = false;
+  restartBtn.style.opacity = "1";
 
-  restartBtn.classList.remove('hidden');
   leaveGameBtn.classList.remove('hidden');
   initBoard();
   updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
@@ -109,7 +114,12 @@ function initOfflineGame() {
 
 function initOnlineGame() {
   leaveGameBtn.classList.remove('hidden');
-  restartBtn.classList.add('hidden');
+
+  restartBtn.classList.remove('hidden');
+  restartBtn.style.display = 'block';
+  restartBtn.disabled = false;
+  restartBtn.style.opacity = "1";
+
   addOnlineEventListeners();
   multiplayerStatus.textContent = "";
   joinCodeInput.value = "";
@@ -465,6 +475,7 @@ restartBtn.addEventListener('click', async () => {
   isAnimating = true;
 
   if (gameMode === 'offline') {
+
     hideWinningPulse();
     updateInfo('');
     boardDiv.classList.add('shake', 'faded');
@@ -474,16 +485,52 @@ restartBtn.addEventListener('click', async () => {
     currentPlayer = 1;
     updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
     isAnimating = false;
-  } else if (gameMode === 'online' && !gameActive && gameId) {
+  } else if (gameMode === 'online' && gameId) {
     try {
-      await updateDoc(doc(db, "games", gameId), {
-        board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
-        currentPlayer: 1,
-        status: "playing",
-        winner: 0
+      const gameRef = doc(db, "games", gameId);
+      const snap = await getDoc(gameRef);
+      const data = snap.data() || {};
+
+      let newValue = playerNumber;
+      if ((data.restartRequest === 1 && playerNumber === 2) ||
+          (data.restartRequest === 2 && playerNumber === 1)) {
+        newValue = 3; 
+      }
+
+      await updateDoc(gameRef, {
+        restartRequest: newValue,
+        restartTimestamp: Date.now()
       });
+
+      restartBtn.disabled = true;
+      restartBtn.style.opacity = "0.5";
+      updateInfo("Waiting for other player to press restart…");
+
+      setTimeout(async () => {
+        try {
+          const s2 = await getDoc(gameRef);
+          if (!s2.exists()) return;
+          const d2 = s2.data();
+
+          if (d2.restartRequest !== 3) {
+            await updateDoc(gameRef, {
+              restartRequest: 0,
+              restartTimestamp: 0
+            });
+            restartBtn.disabled = false;
+            restartBtn.style.opacity = "1";
+            if (playerNumber === currentPlayer) {
+              updateInfo(`Your turn!`);
+            } else {
+              updateInfo(`Player ${currentPlayer}'s turn`);
+            }
+          }
+        } catch (e) {
+          console.error("Timeout cleanup error:", e);
+        }
+      }, 5000);
     } catch (err) {
-      console.error("Error restarting:", err);
+      console.error("Error requesting restart:", err);
     } finally {
       isAnimating = false;
     }
@@ -517,6 +564,7 @@ function handleLeaveGame() {
   updateInfo('');
   hideWinningPulse();
   stopConfetti();
+
   restartBtn.style.display = 'none';
   leaveGameBtn.classList.add('hidden'); 
 
@@ -533,6 +581,7 @@ function endGameOpponentLeft(previousData) {
   gameActive = false;
   updateInfo(`Opponent left the game. You win! 🎉`);
   startConfetti();
+
   restartBtn.style.display = 'none';
   leaveGameBtn.classList.remove('hidden');
 }
@@ -564,7 +613,10 @@ async function createGame() {
       board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
       currentPlayer: 1,
       status: "waiting",
-      winner: 0
+      winner: 0,
+
+      restartRequest: 0,
+      restartTimestamp: 0
     });
 
     gameId = newGameRef.id;
@@ -655,6 +707,12 @@ function startOnlineGame() {
   resetUIForNewOnlineGame();
 
   updateInfo(`You are Player ${playerNumber}. Game started.`);
+
+  restartBtn.classList.remove('hidden');
+  restartBtn.style.display = 'block';
+  restartBtn.disabled = false;
+  restartBtn.style.opacity = "1";
+
   subscribeToGame();
 }
 
@@ -677,6 +735,31 @@ function subscribeToGame() {
 
     const data = snapshot.data();
     lastGameData = data;
+
+    if (data.restartRequest && data.restartTimestamp) {
+      const now = Date.now();
+      if (now - data.restartTimestamp < 5000) {
+        if (data.restartRequest !== playerNumber && data.restartRequest !== 3) {
+          updateInfo(`Player ${data.restartRequest} requested to restart the game`);
+        }
+
+        if (data.restartRequest === 3) {
+
+          resetUIForNewOnlineGame();
+          await updateDoc(gameRef, {
+            restartRequest: 0,
+            restartTimestamp: 0,
+            board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
+            currentPlayer: 1,
+            status: "playing",
+            winner: 0
+          });
+
+          restartBtn.disabled = false;
+          restartBtn.style.opacity = "1";
+        }
+      }
+    }
 
     const receivedBoard = unflattenBoard(data.board);
     const oldBoard = JSON.parse(JSON.stringify(boardState));
@@ -708,7 +791,10 @@ function subscribeToGame() {
         startConfetti();
       }
       updateInfo(`Player ${winner} wins!`);
+
       restartBtn.style.display = 'inline-block';
+      restartBtn.disabled = false;
+      restartBtn.style.opacity = "1";
       return;
     } else if (isDraw) {
       boardState = receivedBoard;
@@ -716,6 +802,8 @@ function subscribeToGame() {
       gameActive = false;
       updateInfo("It's a draw!");
       restartBtn.style.display = 'inline-block';
+      restartBtn.disabled = false;
+      restartBtn.style.opacity = "1";
       return;
     }
 
@@ -743,7 +831,9 @@ function subscribeToGame() {
       hideWinningPulse();
     }
 
-    restartBtn.style.display = 'none';
+    restartBtn.classList.remove('hidden');
+    restartBtn.style.display = 'block';
+
     if (playerNumber === currentPlayer) {
       infoDiv.textContent = `Your turn!`;
     } else {
