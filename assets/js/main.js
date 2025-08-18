@@ -77,16 +77,13 @@ function resetUIForNewOnlineGame() {
   isAnimating = false;
   currentPlayer = 1;
   boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-
+  
   hideWinningPulse();
   stopConfetti();
   updateInfo('');
-
-  restartBtn.style.display = 'block';
-  restartBtn.disabled = false;
-  restartBtn.style.opacity = "1";
+  
+  restartBtn.style.display = 'none';
   leaveGameBtn.classList.remove('hidden');
-
   initBoard();
 }
 
@@ -100,26 +97,16 @@ function initGame(mode) {
 }
 
 function initOfflineGame() {
-  restartBtn.classList.remove('hidden'); 
-  restartBtn.style.display = 'block';
-  restartBtn.disabled = false;
-  restartBtn.style.opacity = "1";
-
+  restartBtn.style.display = 'inline-block';
+  restartBtn.classList.remove('hidden');
   leaveGameBtn.classList.remove('hidden');
-  initBoard();
+  window.fadeIn(boardDiv, 'grid');
   updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
-  boardDiv.classList.add('fade-in');
-  setTimeout(() => boardDiv.classList.remove('fade-in'), 500);
 }
 
 function initOnlineGame() {
   leaveGameBtn.classList.remove('hidden');
-
-  restartBtn.classList.remove('hidden');
-  restartBtn.style.display = 'block';
-  restartBtn.disabled = false;
-  restartBtn.style.opacity = "1";
-
+  restartBtn.classList.add('hidden');
   addOnlineEventListeners();
   multiplayerStatus.textContent = "";
   joinCodeInput.value = "";
@@ -475,7 +462,6 @@ restartBtn.addEventListener('click', async () => {
   isAnimating = true;
 
   if (gameMode === 'offline') {
-
     hideWinningPulse();
     updateInfo('');
     boardDiv.classList.add('shake', 'faded');
@@ -486,51 +472,20 @@ restartBtn.addEventListener('click', async () => {
     updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
     isAnimating = false;
   } else if (gameMode === 'online' && gameId) {
+    // Only reset if the game is finished.
+    // The button is only visible when the game is finished, so this is a safety check.
+    boardDiv.classList.add('shake', 'faded');
+    await new Promise(r => setTimeout(r, 700));
     try {
-      const gameRef = doc(db, "games", gameId);
-      const snap = await getDoc(gameRef);
-      const data = snap.data() || {};
-
-      let newValue = playerNumber;
-      if ((data.restartRequest === 1 && playerNumber === 2) ||
-          (data.restartRequest === 2 && playerNumber === 1)) {
-        newValue = 3; 
-      }
-
-      await updateDoc(gameRef, {
-        restartRequest: newValue,
-        restartTimestamp: Date.now()
+      await updateDoc(doc(db, "games", gameId), {
+        board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
+        currentPlayer: 1,
+        status: "playing",
+        winner: 0
       });
-
-      restartBtn.disabled = true;
-      restartBtn.style.opacity = "0.5";
-      updateInfo("Waiting for other player to press restart…");
-
-      setTimeout(async () => {
-        try {
-          const s2 = await getDoc(gameRef);
-          if (!s2.exists()) return;
-          const d2 = s2.data();
-
-          if (d2.restartRequest !== 3) {
-            await updateDoc(gameRef, {
-              restartRequest: 0,
-              restartTimestamp: 0
-            });
-            restartBtn.disabled = false;
-            restartBtn.style.opacity = "1";
-            if (playerNumber === currentPlayer) {
-              updateInfo(`Your turn!`);
-            } else {
-              updateInfo(`Player ${currentPlayer}'s turn`);
-            }
-          }
-        } catch (e) {
-          console.error("Timeout cleanup error:", e);
-        }
-      }, 5000);
+      restartBtn.style.display = 'none'; // Hide the button after a restart is requested
     } catch (err) {
-      console.error("Error requesting restart:", err);
+      console.error("Error restarting:", err);
     } finally {
       isAnimating = false;
     }
@@ -564,8 +519,7 @@ function handleLeaveGame() {
   updateInfo('');
   hideWinningPulse();
   stopConfetti();
-
-  restartBtn.style.display = 'none';
+  
   leaveGameBtn.classList.add('hidden'); 
 
   window.fadeOut(gameContainer);
@@ -581,7 +535,6 @@ function endGameOpponentLeft(previousData) {
   gameActive = false;
   updateInfo(`Opponent left the game. You win! 🎉`);
   startConfetti();
-
   restartBtn.style.display = 'none';
   leaveGameBtn.classList.remove('hidden');
 }
@@ -613,10 +566,7 @@ async function createGame() {
       board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
       currentPlayer: 1,
       status: "waiting",
-      winner: 0,
-
-      restartRequest: 0,
-      restartTimestamp: 0
+      winner: 0
     });
 
     gameId = newGameRef.id;
@@ -670,16 +620,14 @@ async function joinGame() {
 
     await updateDoc(doc(db, "games", gameId), { status: "playing" });
 
-    resetUIForNewOnlineGame();
-
     await window.fadeOut(multiplayerScreen);
     multiplayerStatus.textContent = "";
     await window.fadeIn(gameContainer, 'block');
-
+    resetUIForNewOnlineGame();
     startOnlineGame();
   } catch (err) {
-    console.error("Error joining game:", err);
-    multiplayerStatus.textContent = "Error joining game. Try again.";
+      console.error("Error joining game:", err);
+      multiplayerStatus.textContent = "Error joining game. Try again.";
   }
 }
 
@@ -703,16 +651,8 @@ async function backToStartFromMultiplayer() {
 }
 
 function startOnlineGame() {
-
-  resetUIForNewOnlineGame();
-
   updateInfo(`You are Player ${playerNumber}. Game started.`);
-
-  restartBtn.classList.remove('hidden');
-  restartBtn.style.display = 'block';
-  restartBtn.disabled = false;
-  restartBtn.style.opacity = "1";
-
+  window.fadeIn(boardDiv, 'grid');
   subscribeToGame();
 }
 
@@ -736,31 +676,6 @@ function subscribeToGame() {
     const data = snapshot.data();
     lastGameData = data;
 
-    if (data.restartRequest && data.restartTimestamp) {
-      const now = Date.now();
-      if (now - data.restartTimestamp < 5000) {
-        if (data.restartRequest !== playerNumber && data.restartRequest !== 3) {
-          updateInfo(`Player ${data.restartRequest} requested to restart the game`);
-        }
-
-        if (data.restartRequest === 3) {
-
-          resetUIForNewOnlineGame();
-          await updateDoc(gameRef, {
-            restartRequest: 0,
-            restartTimestamp: 0,
-            board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
-            currentPlayer: 1,
-            status: "playing",
-            winner: 0
-          });
-
-          restartBtn.disabled = false;
-          restartBtn.style.opacity = "1";
-        }
-      }
-    }
-
     const receivedBoard = unflattenBoard(data.board);
     const oldBoard = JSON.parse(JSON.stringify(boardState));
 
@@ -780,31 +695,28 @@ function subscribeToGame() {
     const winner = data.winner || 0;
     const isDraw = data.status === "finished" && !winner;
 
-    if (winner) {
-
+    if (data.status === "finished") {
       boardState = receivedBoard;
       drawBoard();
       gameActive = false;
-      const winningCells = getWinningCells(winner);
-      if (winningCells) {
-        pulseWinningCells(winningCells);
-        startConfetti();
+      
+      if (winner) {
+        const winningCells = getWinningCells(winner);
+        if (winningCells) {
+          pulseWinningCells(winningCells);
+          startConfetti();
+        }
+        updateInfo(`Player ${winner} wins!`);
+      } else if (isDraw) {
+        updateInfo("It's a draw!");
       }
-      updateInfo(`Player ${winner} wins!`);
 
       restartBtn.style.display = 'inline-block';
-      restartBtn.disabled = false;
-      restartBtn.style.opacity = "1";
       return;
-    } else if (isDraw) {
-      boardState = receivedBoard;
-      drawBoard();
-      gameActive = false;
-      updateInfo("It's a draw!");
-      restartBtn.style.display = 'inline-block';
-      restartBtn.disabled = false;
-      restartBtn.style.opacity = "1";
-      return;
+    }
+
+    if (data.status === "playing") {
+        boardDiv.classList.remove('faded', 'shake');
     }
 
     if (placedDiscIndex !== -1) {
@@ -831,9 +743,6 @@ function subscribeToGame() {
       hideWinningPulse();
     }
 
-    restartBtn.classList.remove('hidden');
-    restartBtn.style.display = 'block';
-
     if (playerNumber === currentPlayer) {
       infoDiv.textContent = `Your turn!`;
     } else {
@@ -859,10 +768,9 @@ function waitForOpponent() {
         unsubscribeWaitListener = null;
       }
 
-      resetUIForNewOnlineGame();
-
       await window.fadeOut(multiplayerScreen);
       await window.fadeIn(gameContainer, 'block');
+      resetUIForNewOnlineGame();
       startOnlineGame();
     }
   });
@@ -878,6 +786,9 @@ window.addEventListener('resize', () => {
 playOfflineBtn.addEventListener('click', async () => {
   await window.fadeOut(startScreen);
   await window.fadeIn(gameContainer, 'block');
+  
+  boardDiv.style.opacity = 0;
+  initBoard();
   initGame('offline');
 });
 
