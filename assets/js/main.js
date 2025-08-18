@@ -77,11 +77,11 @@ function resetUIForNewOnlineGame() {
   isAnimating = false;
   currentPlayer = 1;
   boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-  
+
   hideWinningPulse();
   stopConfetti();
   updateInfo('');
-  
+
   restartBtn.style.display = 'none';
   leaveGameBtn.classList.remove('hidden');
   initBoard();
@@ -125,11 +125,14 @@ function addOnlineEventListeners() {
   leaveGameBtn.addEventListener('click', leaveGame);
 }
 
+let firstInit = true; 
+
 function initBoard() {
   hideWinningPulse();
   boardDiv.innerHTML = '';
   boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
   boardDiv.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const cell = document.createElement('div');
@@ -137,8 +140,22 @@ function initBoard() {
       cell.dataset.row = r;
       cell.dataset.col = c;
       boardDiv.appendChild(cell);
+
+      if (firstInit) {
+
+        cell.style.opacity = 0;
+        setTimeout(() => {
+          cell.style.transition = 'opacity 0.3s ease';
+          cell.style.opacity = 1;
+        }, 10);
+      } else {
+
+        cell.style.opacity = 1;
+      }
     }
   }
+
+  firstInit = false; 
   gameActive = true;
 }
 
@@ -458,38 +475,36 @@ boardDiv.addEventListener('click', e => {
 });
 
 restartBtn.addEventListener('click', async () => {
-  if (isAnimating) return;
+  if (isAnimating) return; 
   isAnimating = true;
 
-  if (gameMode === 'offline') {
-    hideWinningPulse();
-    updateInfo('');
-    boardDiv.classList.add('shake', 'faded');
-    await new Promise(r => setTimeout(r, 700));
-    initBoard();
-    boardDiv.classList.remove('shake', 'faded');
-    currentPlayer = 1;
-    updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
-    isAnimating = false;
-  } else if (gameMode === 'online' && gameId) {
-    // Only reset if the game is finished.
-    // The button is only visible when the game is finished, so this is a safety check.
-    boardDiv.classList.add('shake', 'faded');
-    await new Promise(r => setTimeout(r, 700));
-    try {
-      await updateDoc(doc(db, "games", gameId), {
-        board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
-        currentPlayer: 1,
-        status: "playing",
-        winner: 0
-      });
-      restartBtn.style.display = 'none'; // Hide the button after a restart is requested
-    } catch (err) {
-      console.error("Error restarting:", err);
-    } finally {
-      isAnimating = false;
-    }
-  }
+  boardDiv.classList.add('shake');
+
+  boardDiv.style.transition = 'opacity 400ms';
+  boardDiv.style.opacity = 0.3;
+
+  setTimeout(() => {
+    document.querySelectorAll('.counter').forEach(c => {
+      c.style.transition = 'opacity 200ms';
+      c.style.opacity = 0;
+    });
+  }, 200);
+
+  await new Promise(r => setTimeout(r, 500));
+
+  initBoard();
+  gameActive = true;
+  currentPlayer = 1;
+  updateInfo("Player 1's turn");
+
+  boardDiv.style.opacity = 1;
+  document.querySelectorAll('.counter').forEach(c => {
+    c.style.opacity = 1;
+  });
+
+  setTimeout(() => boardDiv.classList.remove('shake'), 700);
+
+  isAnimating = false;
 });
 
 leaveGameBtn.addEventListener('click', async () => {
@@ -519,7 +534,7 @@ function handleLeaveGame() {
   updateInfo('');
   hideWinningPulse();
   stopConfetti();
-  
+
   leaveGameBtn.classList.add('hidden'); 
 
   window.fadeOut(gameContainer);
@@ -699,7 +714,7 @@ function subscribeToGame() {
       boardState = receivedBoard;
       drawBoard();
       gameActive = false;
-      
+
       if (winner) {
         const winningCells = getWinningCells(winner);
         if (winningCells) {
@@ -711,7 +726,7 @@ function subscribeToGame() {
         updateInfo("It's a draw!");
       }
 
-      restartBtn.style.display = 'inline-block';
+      restartBtn.classList.remove('hidden');
       return;
     }
 
@@ -786,7 +801,7 @@ window.addEventListener('resize', () => {
 playOfflineBtn.addEventListener('click', async () => {
   await window.fadeOut(startScreen);
   await window.fadeIn(gameContainer, 'block');
-  
+
   boardDiv.style.opacity = 0;
   initBoard();
   initGame('offline');
