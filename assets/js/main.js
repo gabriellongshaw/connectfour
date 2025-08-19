@@ -34,6 +34,7 @@ let gameActive = false;
 let isAnimating = false;
 let confettiParticles = [];
 let confettiActive = false;
+let isRestarting = false; 
 
 const db = window.firebaseDB;
 const gamesCollection = collection(db, "games");
@@ -71,19 +72,22 @@ window.fadeIn = (element, displayType = 'flex', duration = 400) => {
   return new Promise(resolve => setTimeout(resolve, duration));
 };
 
-function fadeInButton(btn, display = 'inline-block', duration = 200) {
-  btn.style.display = display;
-  btn.style.opacity = 0;
-  btn.style.transition = `opacity ${duration}ms`;
-  // next frame -> fade to 1
-  requestAnimationFrame(() => { btn.style.opacity = 1; });
+function showRestartButton() {
+  restartBtn.style.pointerEvents = "auto"; 
+  restartBtn.classList.remove("fade-out");
+  restartBtn.classList.add(gameMode === "online" ? "visible" : "offline");
+
+  requestAnimationFrame(() => restartBtn.classList.add("fade-in"));
 }
 
-function hideButtonInstant(btn) {
-  btn.style.transition = 'none';
-  btn.style.opacity = 0;
-  btn.style.display = 'none';
-  btn.classList.add('hidden');
+function hideRestartButton() {
+  restartBtn.classList.remove("fade-in");
+  restartBtn.classList.add("fade-out");
+
+  setTimeout(() => {
+    restartBtn.classList.remove("visible", "offline", "fade-out");
+    restartBtn.style.pointerEvents = "none"; 
+  }, 400); 
 }
 
 function resetUIForNewOnlineGame() {
@@ -97,7 +101,7 @@ function resetUIForNewOnlineGame() {
   stopConfetti();
   updateInfo('');
 
-  restartBtn.style.display = 'none';
+  restartBtn.classList.remove ('visible');
   leaveGameBtn.classList.remove('hidden');
   initBoard();
 }
@@ -121,7 +125,6 @@ function initOfflineGame() {
 
 function initOnlineGame() {
   leaveGameBtn.classList.remove('hidden');
-  restartBtn.classList.add('hidden');
   addOnlineEventListeners();
   multiplayerStatus.textContent = "";
   joinCodeInput.value = "";
@@ -140,7 +143,7 @@ function addOnlineEventListeners() {
   leaveGameBtn.addEventListener('click', leaveGame);
 }
 
-let firstInit = true; 
+let firstInit = true;
 
 function initBoard() {
   hideWinningPulse();
@@ -417,7 +420,6 @@ async function handleMove(col) {
   isAnimating = true;
 
   if (gameMode === 'offline') {
-
     await createFallingDisc(col, currentPlayer, row);
 
     boardState[row][col] = currentPlayer;
@@ -429,6 +431,7 @@ async function handleMove(col) {
       pulseWinningCells(winningCells);
       updateInfo(`Player ${currentPlayer} wins! 🎉`);
       startConfetti();
+
       gameActive = false;
     } else if (boardState.flat().every(cell => cell !== 0)) {
       updateInfo("It's a draw!");
@@ -437,9 +440,12 @@ async function handleMove(col) {
       currentPlayer = currentPlayer === 1 ? 2 : 1;
       updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
     }
-    isAnimating = false;
 
-  } else if (gameMode === 'online') {
+    isAnimating = false;
+    return;
+  }
+
+  if (gameMode === 'online') {
 
     const tempBoard = JSON.parse(JSON.stringify(boardState));
     tempBoard[row][col] = currentPlayer;
@@ -470,15 +476,53 @@ async function handleMove(col) {
       boardState[row][col] = 0;
       drawBoard();
     } finally {
-
       if (!(winner || isDraw)) {
+
         currentPlayer = newPlayer;
       } else {
+
         gameActive = false;
+
+        if (winner || isDraw) {
+    showRestartButton();
+  gameActive = false;
+}
       }
       isAnimating = false;
     }
   }
+}
+
+async function animateRestart() {
+  if (isAnimating) return;
+  isAnimating = true;
+
+  boardDiv.classList.add('shake');
+  boardDiv.style.transition = 'opacity 400ms';
+  boardDiv.style.opacity = 0.3;
+  document.querySelectorAll('.counter').forEach(c => {
+    c.style.transition = 'opacity 200ms';
+    c.style.opacity = 0;
+  });
+
+  await new Promise(r => setTimeout(r, 500));
+}
+
+async function handleGameRestart() {
+  await animateRestart();
+
+  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+  drawBoard();
+  currentPlayer = 1;
+  gameActive = true;
+  updateInfo("Player 1's turn");
+  stopConfetti();
+
+  boardDiv.style.opacity = 1;
+  document.querySelectorAll('.counter').forEach(c => c.style.opacity = 1);
+  setTimeout(() => boardDiv.classList.remove('shake'), 700);
+
+  isAnimating = false;
 }
 
 boardDiv.addEventListener('click', e => {
@@ -490,59 +534,42 @@ boardDiv.addEventListener('click', e => {
 });
 
 restartBtn.addEventListener('click', async () => {
-    if (isAnimating) return;
-    isAnimating = true;
+  if (isAnimating) return;
 
-    if (gameMode === 'offline') {
-        boardDiv.classList.add('shake');
-        boardDiv.style.transition = 'opacity 400ms';
-        boardDiv.style.opacity = 0.3;
+  if (gameMode === 'offline') {
+    if (isRestarting) return;
+    isRestarting = true;
 
-        setTimeout(() => {
-            document.querySelectorAll('.counter').forEach(c => {
-                c.style.transition = 'opacity 200ms';
-                c.style.opacity = 0;
-            });
-        }, 200);
+    await handleGameRestart();
 
-        await new Promise(r => setTimeout(r, 500));
+    setTimeout(() => {
+        isRestarting = false;
+    }, 800); 
 
-        initBoard();
-        gameActive = true;
-        currentPlayer = 1;
-        updateInfo("Player 1's turn");
-        stopConfetti();
+    return;
+  }
 
-        boardDiv.style.opacity = 1;
-        document.querySelectorAll('.counter').forEach(c => {
-            c.style.opacity = 1;
-        });
-
-        setTimeout(() => boardDiv.classList.remove('shake'), 700);
-
-    } else if (gameMode === 'online' && gameId) {
-        if (playerNumber !== 1) {
-            updateInfo("Only Player 1 can restart the game.");
-            isAnimating = false;
-            return;
-        }
-
-        try {
-            await updateDoc(doc(db, "games", gameId), {
-                board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
-                currentPlayer: 1,
-                status: "playing",
-                winner: 0
-            });
-            hideButtonInstant(restartBtn);
-        } catch (e) {
-            console.error("Error restarting online game:", e);
-            updateInfo("Could not restart the game. Try again.");
-        }
+  if (gameMode === 'online' && gameId) {
+    if (playerNumber !== 1) {
+      updateInfo("Only Player 1 can restart the game.");
+      return;
     }
-    isAnimating = false;
-});
 
+    try {
+      await updateDoc(doc(db, "games", gameId), {
+        board: Array(ROWS * COLS).fill(0),
+        currentPlayer: 1,
+        status: "playing",
+        winner: 0
+      });
+
+      hideRestartButton(restartBtn);
+    } catch (e) {
+      console.error("Error restarting online game:", e);
+      updateInfo("Could not restart the game. Try again.");
+    }
+  }
+});
 
 leaveGameBtn.addEventListener('click', async () => {
   iInitiatedLeave = true;
@@ -587,7 +614,7 @@ function endGameOpponentLeft(previousData) {
   gameActive = false;
   updateInfo(`Opponent left the game. You win! 🎉`);
   startConfetti();
-  restartBtn.style.display = 'none';
+  restartBtn.classList.remove('visible');
   leaveGameBtn.classList.remove('hidden');
 }
 
@@ -710,7 +737,7 @@ function startOnlineGame() {
 
 function subscribeToGame() {
   if (!gameId) return;
-
+hideRestartButton(restartBtn); 
   const gameRef = doc(db, "games", gameId);
   if (unsubscribeGameListener) {
     unsubscribeGameListener();
@@ -748,28 +775,25 @@ function subscribeToGame() {
     const isDraw = data.status === "finished" && !winner;
 
     if (data.status === "finished") {
-  boardState = receivedBoard;
-  drawBoard();
-  gameActive = false;
-  
-  if (winner) {
-    const winningCells = getWinningCells(winner);
-    if (winningCells) {
-      pulseWinningCells(winningCells);
-      startConfetti();
+      boardState = receivedBoard;
+      drawBoard();
+      gameActive = false;
+      if (winner) {
+        const winningCells = getWinningCells(winner);
+        if (winningCells) {
+          pulseWinningCells(winningCells);
+          startConfetti();
+        }
+        updateInfo(`Player ${winner} wins!`);
+      } else if (isDraw) {
+        updateInfo("It's a draw!");
+      }
+      showRestartButton();
     }
-    updateInfo(`Player ${winner} wins!`);
-  } else if (isDraw) {
-    updateInfo("It's a draw!");
-  }
-  
-  restartBtn.classList.remove('hidden');
-restartBtn.style.display = 'inline-block';
-restartBtn.classList.remove('fade-in');
-void restartBtn.offsetWidth;
-restartBtn.classList.add('fade-in');
-  return;
-}
+
+    if (data.board.every(cell => cell === 0) && data.status === "playing") {
+        await handleGameRestart();
+    }
 
     if (data.status === "playing") {
         boardDiv.classList.remove('faded', 'shake');
@@ -853,4 +877,3 @@ playOnlineBtn.addEventListener('click', async () => {
   await window.fadeIn(multiplayerScreen, 'flex');
   initGame('online');
 });
-
