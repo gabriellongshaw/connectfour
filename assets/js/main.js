@@ -788,13 +788,16 @@ hideRestartButton(restartBtn);
       } else if (isDraw) {
         updateInfo("It's a draw!");
       }
-      showRestartButton();
-    }
 
+      if (playerNumber === 1) {
+          showRestartButton();
+      }
+    }
+    
     if (data.board.every(cell => cell === 0) && data.status === "playing") {
         await handleGameRestart();
     }
-
+    
     if (data.status === "playing") {
         boardDiv.classList.remove('faded', 'shake');
     }
@@ -830,6 +833,7 @@ hideRestartButton(restartBtn);
     }
   });
 }
+
 
 function waitForOpponent() {
   if (!gameId) return;
