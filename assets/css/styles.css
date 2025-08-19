@@ -348,6 +348,7 @@ h1 {
 }
 
 .restart-btn {
+  display: inline-block;
   padding: 12px 35px;
   font-size: clamp(1.2rem, 3vw, 1.6rem);
   font-weight: 600;
@@ -368,7 +369,15 @@ h1 {
   );
   background-size: 300% 300%;
   background-position: 50% 0;
+  opacity: 0;
+  pointer-events: none
 }
+
+.restart-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 
 .restart-btn:hover,
 .restart-btn.hover {

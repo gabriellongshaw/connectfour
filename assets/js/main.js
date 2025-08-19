@@ -71,19 +71,18 @@ window.fadeIn = (element, displayType = 'flex', duration = 400) => {
   return new Promise(resolve => setTimeout(resolve, duration));
 };
 
-function fadeInButton(btn, display = 'inline-block', duration = 200) {
-  btn.style.display = display;
-  btn.style.opacity = 0;
-  btn.style.transition = `opacity ${duration}ms`;
-  // next frame -> fade to 1
-  requestAnimationFrame(() => { btn.style.opacity = 1; });
+// ===== helpers for restart button visibility =====
+function showRestartBtn() {
+  // make sure any "hidden" class from older code doesn't block it
+  restartBtn.classList.remove('hidden', 'fade-in');
+  // force reflow then add visible so the transition runs reliably
+  void restartBtn.offsetWidth;
+  restartBtn.classList.add('visible');
 }
 
-function hideButtonInstant(btn) {
-  btn.style.transition = 'none';
-  btn.style.opacity = 0;
-  btn.style.display = 'none';
-  btn.classList.add('hidden');
+function hideRestartBtn() {
+  // remove visible; keep element in DOM to avoid layout shift
+  restartBtn.classList.remove('visible', 'fade-in');
 }
 
 function resetUIForNewOnlineGame() {
@@ -97,7 +96,7 @@ function resetUIForNewOnlineGame() {
   stopConfetti();
   updateInfo('');
 
-  restartBtn.style.display = 'none';
+  restartBtn.classList.remove('visible');
   leaveGameBtn.classList.remove('hidden');
   initBoard();
 }
@@ -112,7 +111,7 @@ function initGame(mode) {
 }
 
 function initOfflineGame() {
-  restartBtn.style.display = 'inline-block';
+  restartBtn.classList.add('visible');
   restartBtn.classList.remove('hidden');
   leaveGameBtn.classList.remove('hidden');
   window.fadeIn(boardDiv, 'grid');
@@ -121,6 +120,7 @@ function initOfflineGame() {
 
 function initOnlineGame() {
   leaveGameBtn.classList.remove('hidden');
+  restartBtn.classList.remove('visible');
   restartBtn.classList.add('hidden');
   addOnlineEventListeners();
   multiplayerStatus.textContent = "";
@@ -406,6 +406,52 @@ function createFallingDisc(col, player, targetRow) {
   });
 }
 
+async function restartOnlineGame() {
+  if (!gameId) return;
+  
+  // Reset the board and game state in Firestore
+  await updateDoc(doc(gamesCollection, gameId), {
+    board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)),
+    currentPlayer: 1,
+    winner: null,
+    gameActive: true
+  });
+  
+  // Reset local state
+  resetUIForNewOnlineGame();
+  
+  // Hide restart button until next end
+  hideRestartBtn();
+}
+
+restartBtn.addEventListener('click', async () => {
+  if (isAnimating) return;
+  isAnimating = true;
+  
+  if (gameMode === 'online' && gameId) {
+    const gameRef = doc(db, "games", gameId);
+    
+    // Reset board and game state in Firestore
+    await updateDoc(gameRef, {
+      board: Array(ROWS * COLS).fill(0),
+      currentPlayer: 1,
+      status: "playing",
+      winner: 0
+    });
+    
+    // Reset local UI
+    resetUIForNewOnlineGame();
+  } else {
+    // Offline restart
+    initBoard();
+    gameActive = true;
+    currentPlayer = 1;
+    updateInfo("Player 1's turn");
+  }
+  
+  isAnimating = false;
+});
+
 async function handleMove(col) {
   if (!gameActive || isAnimating) return;
 
@@ -430,9 +476,11 @@ async function handleMove(col) {
       updateInfo(`Player ${currentPlayer} wins! 🎉`);
       startConfetti();
       gameActive = false;
+      fadeInButton(restartBtn);
     } else if (boardState.flat().every(cell => cell !== 0)) {
       updateInfo("It's a draw!");
       gameActive = false;
+      fadeInButton(restartBtn);
     } else {
       currentPlayer = currentPlayer === 1 ? 2 : 1;
       updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
@@ -474,6 +522,7 @@ async function handleMove(col) {
       if (!(winner || isDraw)) {
         currentPlayer = newPlayer;
       } else {
+        fadeInButton(restartBtn);
         gameActive = false;
       }
       isAnimating = false;
@@ -490,36 +539,56 @@ boardDiv.addEventListener('click', e => {
 });
 
 restartBtn.addEventListener('click', async () => {
-  if (isAnimating) return; 
+  if (isAnimating) return; // block if already running
   isAnimating = true;
-
+  
+  // Shake + fade
+  boardDiv.classList.remove('shake');
+  void boardDiv.offsetWidth; // reset shake
   boardDiv.classList.add('shake');
-
-  boardDiv.style.transition = 'opacity 400ms';
+  
+  boardDiv.style.transition = 'opacity 400ms ease';
   boardDiv.style.opacity = 0.3;
-
+  
+  // Fade out counters
   setTimeout(() => {
     document.querySelectorAll('.counter').forEach(c => {
-      c.style.transition = 'opacity 200ms';
+      c.style.transition = 'opacity 200ms ease';
       c.style.opacity = 0;
     });
   }, 200);
-
+  
   await new Promise(r => setTimeout(r, 500));
-
-  initBoard();
-  gameActive = true;
-  currentPlayer = 1;
-  updateInfo("Player 1's turn");
-
+  
+  // Reset board
+  if (gameMode === 'online' && gameId) {
+    const gameRef = doc(db, "games", gameId);
+    await updateDoc(gameRef, {
+      board: Array(ROWS * COLS).fill(0),
+      currentPlayer: 1,
+      status: "playing",
+      winner: 0
+    });
+    resetUIForNewOnlineGame();
+  } else {
+    initBoard();
+    gameActive = true;
+    currentPlayer = 1;
+    updateInfo("Player 1's turn");
+  }
+  
+  // Restore visuals
   boardDiv.style.opacity = 1;
   document.querySelectorAll('.counter').forEach(c => {
     c.style.opacity = 1;
   });
-
+  
   setTimeout(() => boardDiv.classList.remove('shake'), 700);
-
-  isAnimating = false;
+  
+  // 🔹 Add a short cooldown before restart can be pressed again
+  setTimeout(() => {
+    isAnimating = false;
+  }, 800); // lock for 0.8s (covers shake+fade)
 });
 
 leaveGameBtn.addEventListener('click', async () => {
@@ -695,6 +764,10 @@ function subscribeToGame() {
   }
 
   unsubscribeGameListener = onSnapshot(gameRef, async (snapshot) => {
+
+   if (data.restartRequested && (!lastGameData || data.restartTimestamp !== lastGameData.restartTimestamp)) {
+    resetUIForNewOnlineGame();
+  }
 
     if (!snapshot.exists()) {
       if (!iInitiatedLeave) {
