@@ -373,7 +373,8 @@ h1 {
   pointer-events: none
 }
 
-.restart-btn.visible {
+.restart-btn.visible,
+.restart-btn.offline {
   opacity: 1;
   pointer-events: auto;
 }
