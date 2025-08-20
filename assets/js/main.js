@@ -523,11 +523,10 @@ async function handleMove(col) {
 async function animateRestart() {
   if (isAnimating) return;
   isAnimating = true;
-  
+
   stopConfetti();
   hideWinningPulse();
-  
-  // Shake + fade
+
   boardDiv.classList.add('shake');
   boardDiv.style.transition = 'opacity 400ms';
   boardDiv.style.opacity = 0.3;
@@ -535,24 +534,13 @@ async function animateRestart() {
     c.style.transition = 'opacity 200ms';
     c.style.opacity = 0;
   });
-  
+
   await new Promise(r => setTimeout(r, 500));
-  
-  // Clear board UI & reset state
-  boardDiv.innerHTML = '';
-  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-  updateOnlineBoard();
-  
-  // Restore visuals
-  boardDiv.style.opacity = 1;
-  boardDiv.classList.remove('shake');
-  
-  isAnimating = false;
 }
 
 async function handleGameRestart() {
   await animateRestart();
-  
+
   boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
   updateOnlineBoard();
   currentPlayer = 1;
@@ -583,16 +571,15 @@ async function handleOnlineRestart() {
     updateInfo("Only Player 1 can restart the game.");
     return;
   }
-  
+
   try {
     await updateDoc(doc(db, "games", gameId), {
-      restart: true, // <-- NEW
+      restart: true,
       board: Array(ROWS * COLS).fill(0),
       currentPlayer: 1,
       status: "playing",
       winner: 0
     });
-    
     hideRestartButton();
   } catch (e) {
     console.error("Error restarting online game:", e);
@@ -782,7 +769,7 @@ function startOnlineGame() {
 
 function subscribeToGame() {
   if (!gameId) return;
-  hideRestartButton(); 
+  hideRestartButton();
 
   const gameRef = doc(db, "games", gameId);
   if (unsubscribeGameListener) {
@@ -790,97 +777,103 @@ function subscribeToGame() {
   }
 
   unsubscribeGameListener = onSnapshot(gameRef, async (snapshot) => {
-  if (!snapshot.exists()) {
-    if (!iInitiatedLeave) {
-      endGameOpponentLeft(lastGameData);
+    if (!snapshot.exists()) {
+      if (!iInitiatedLeave) {
+        endGameOpponentLeft(lastGameData);
+      }
+      return;
     }
-    return;
+
+    const data = snapshot.data();
+    const oldData = lastGameData;
+    lastGameData = data;
+
+    const receivedBoard = unflattenBoard(data.board);
+    const oldFlat = oldData ? oldData.board : [];
+    const newFlat = data.board;
+
+if (data.restart === true) {
+  if (playerNumber === 2) {
+    showRestartMessage();
   }
-  
-  const data = snapshot.data();
-  const oldData = lastGameData;
-  lastGameData = data;
-  
-  const receivedBoard = unflattenBoard(data.board);
-  
-  // 🔥 Handle restart explicitly
-  if (data.restart) {
-    if (playerNumber === 2) {
-      showRestartMessage();
-    }
-    
-    await animateRestart(); // both players run shake/fade
-    boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-    updateOnlineBoard();
-    currentPlayer = 1;
-    gameActive = true;
-    updateInfo("Player 1's turn");
-    
+
+  await animateRestart(); 
+
+  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+  updateOnlineBoard();
+  currentPlayer = 1;
+  gameActive = true;
+  updateInfo("Player 1's turn");
+
+  setTimeout(() => {
     boardDiv.style.opacity = 1;
-    setTimeout(() => boardDiv.classList.remove('shake'), 700);
-    
-    // Reset restart flag in Firestore so it doesn’t loop
-    if (playerNumber === 1) {
+    document.querySelectorAll('.counter').forEach(c => c.style.opacity = 1);
+    boardDiv.classList.remove('shake'); 
+    isAnimating = false; 
+  }, 700);
+
+  if (playerNumber === 1) {
+    try {
       await updateDoc(doc(db, "games", gameId), { restart: false });
+    } catch (e) {
+      console.error("Failed to clear restart flag:", e);
     }
-    return;
   }
-  
-  hideWinningPulse();
-  
-  if (data.status === 'finished') {
+  return;
+}
+
+    hideWinningPulse();
+
+    if (data.status === 'finished') {
+      boardState = receivedBoard;
+      updateOnlineBoard();
+      gameActive = false;
+
+      if (data.winner) {
+        const winningCells = getWinningCells(data.winner);
+        if (winningCells) {
+          pulseWinningCells(winningCells);
+          startConfetti();
+        }
+        updateInfo(`Player ${data.winner} wins! 🎉`);
+      } else {
+        updateInfo("It's a draw!");
+      }
+
+      if (playerNumber === 1) showRestartButton();
+      return;
+    }
+
+    currentPlayer = data.currentPlayer;
+    gameActive = true;
+
+    let placedDiscIndex = -1;
+    for (let i = 0; i < newFlat.length; i++) {
+      if (oldFlat[i] !== newFlat[i]) {
+        placedDiscIndex = i;
+        break;
+      }
+    }
+
+    if (placedDiscIndex !== -1) {
+      const placedRow = Math.floor(placedDiscIndex / COLS);
+      const placedCol = placedDiscIndex % COLS;
+      const playerWhoMoved = newFlat[placedDiscIndex];
+
+      if (boardState[placedRow][placedCol] !== playerWhoMoved) {
+        isAnimating = true;
+        await createFallingDisc(placedCol, playerWhoMoved, placedRow);
+        isAnimating = false;
+      }
+    }
+
     boardState = receivedBoard;
     updateOnlineBoard();
-    gameActive = false;
-    
-    if (data.winner) {
-      const winningCells = getWinningCells(data.winner);
-      if (winningCells) {
-        pulseWinningCells(winningCells);
-        startConfetti();
-      }
-      updateInfo(`Player ${data.winner} wins! 🎉`);
-    } else {
-      updateInfo("It's a draw!");
-    }
-    
-    if (playerNumber === 1) showRestartButton();
-    return;
-  }
-  
-  currentPlayer = data.currentPlayer;
-  gameActive = true;
-  
-  const oldFlat = oldData ? oldData.board : [];
-  const newFlat = data.board;
-  
-  let placedDiscIndex = -1;
-  for (let i = 0; i < newFlat.length; i++) {
-    if (oldFlat[i] !== newFlat[i]) {
-      placedDiscIndex = i;
-      break;
-    }
-  }
-  
-  if (placedDiscIndex !== -1) {
-    const placedRow = Math.floor(placedDiscIndex / COLS);
-    const placedCol = placedDiscIndex % COLS;
-    const playerWhoMoved = newFlat[placedDiscIndex];
-    
-    if (boardState[placedRow][placedCol] !== playerWhoMoved) {
-      isAnimating = true;
-      await createFallingDisc(placedCol, playerWhoMoved, placedRow);
-      isAnimating = false;
-    }
-  }
-  
-  boardState = receivedBoard;
-  updateOnlineBoard();
-  
-  infoDiv.textContent = (playerNumber === currentPlayer) ?
-    'Your turn!' :
-    `Player ${currentPlayer}'s turn`;
-});
+
+    infoDiv.textContent = (playerNumber === currentPlayer) ?
+      'Your turn!' :
+      `Player ${currentPlayer}'s turn`;
+  });
 }
 
 function waitForOpponent() {
@@ -929,4 +922,3 @@ playOnlineBtn.addEventListener('click', async () => {
   await window.fadeIn(multiplayerScreen, 'flex');
   initGame('online');
 });
-
