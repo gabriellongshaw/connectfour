@@ -524,11 +524,11 @@ async function runRestartSequence(showMessage = false) {
   if (isAnimating) return;
   isAnimating = true;
   
-  // Cancel winner animation state
-  gameActive = true; // allow animations again
-  winner = 0; // reset winner if you track one
-  hideWinningLine?.(); // if you draw a line, clear it
-  clearTimeout(winTimeout); // if you use a timeout, clear it
+  // Cancel winner state if one was active
+  gameActive = true;
+  winner = 0;
+  hideWinningLine?.();
+  clearTimeout(winTimeout);
   
   if (showMessage) {
     showRestartMessage();
@@ -539,9 +539,10 @@ async function runRestartSequence(showMessage = false) {
   boardDiv.style.transition = 'opacity 400ms';
   boardDiv.style.opacity = 0.3;
   
-  await new Promise(r => setTimeout(r, 500)); // wait for animation
+  // Wait for shake/fade to finish
+  await new Promise(r => setTimeout(r, 600));
   
-  // Step 2: reset state + rebuild board
+  // Step 2: clear + rebuild board AFTER animation
   boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
   initBoard();
   
@@ -549,9 +550,11 @@ async function runRestartSequence(showMessage = false) {
   gameActive = true;
   updateInfo("Player 1's turn");
   
-  // Step 3: restore
+  // Step 3: fade back in
   boardDiv.style.opacity = 1;
-  setTimeout(() => boardDiv.classList.remove('shake'), 700);
+  
+  // Step 4: remove shake class once done
+  setTimeout(() => boardDiv.classList.remove('shake'), 400);
   
   isAnimating = false;
 }
@@ -854,7 +857,34 @@ function subscribeToGame() {
 
     const boardReset = data.board.every(v => v === 0) && oldFlat.some(v => v !== 0) && data.status === 'playing';
 if (boardReset) {
-  await runRestartSequence(playerNumber === 2);
+  isAnimating = true;
+  
+  // Show restart message only to Player 2
+  if (playerNumber === 2) showRestartMessage();
+  
+  // Step 1: animate board
+  boardDiv.classList.add('shake');
+  boardDiv.style.transition = 'opacity 400ms';
+  boardDiv.style.opacity = 0.3;
+  
+  await new Promise(r => setTimeout(r, 500)); // wait for shake/fade
+  
+  // Step 2: rebuild board immediately
+  boardState = unflattenBoard(data.board);
+  initBoard();
+  
+  // Reset game state
+  currentPlayer = 1;
+  gameActive = true;
+  updateInfo("Player 1's turn");
+  
+  // Step 3: restore opacity, remove shake
+  boardDiv.style.opacity = 1;
+  setTimeout(() => boardDiv.classList.remove('shake'), 700);
+  
+  isAnimating = false;
+  
+  // Return here so nothing else runs this update
   return;
 }
 
