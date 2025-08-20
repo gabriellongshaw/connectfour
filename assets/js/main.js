@@ -520,6 +520,36 @@ async function handleMove(col) {
   }
 }
 
+async function runRestartSequence(showMessage = false) {
+  if (isAnimating) return;
+  isAnimating = true;
+  
+  if (showMessage) {
+    showRestartMessage();
+  }
+  
+  // Step 1: animate shake + fade
+  boardDiv.classList.add('shake');
+  boardDiv.style.transition = 'opacity 400ms';
+  boardDiv.style.opacity = 0.3;
+  
+  await new Promise(r => setTimeout(r, 500)); // wait for animation
+  
+  // Step 2: reset state + rebuild board
+  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+  initBoard();
+  
+  currentPlayer = 1;
+  gameActive = true;
+  updateInfo("Player 1's turn");
+  
+  // Step 3: restore
+  boardDiv.style.opacity = 1;
+  setTimeout(() => boardDiv.classList.remove('shake'), 700);
+  
+  isAnimating = false;
+}
+
 async function animateRestart() {
   if (isAnimating) return;
   isAnimating = true;
@@ -529,7 +559,7 @@ async function animateRestart() {
   boardDiv.classList.add('shake');
   boardDiv.style.transition = 'opacity 400ms';
   boardDiv.style.opacity = 0.3;
-  document.querySelectorAll('.cell').forEach(c => {
+  document.querySelectorAll('.counter').forEach(c => {
     c.style.transition = 'opacity 200ms';
     c.style.opacity = 0;
   });
@@ -549,7 +579,7 @@ async function handleGameRestart() {
   updateInfo("Player 1's turn");
 
   boardDiv.style.opacity = 1;
-  document.querySelectorAll('.cell').forEach(c => c.style.opacity = 1);
+  document.querySelectorAll('.counter').forEach(c => c.style.opacity = 1);
   setTimeout(() => boardDiv.classList.remove('shake'), 700);
 
   isAnimating = false;
@@ -567,25 +597,26 @@ async function handleOfflineRestart() {
 }
 
 async function handleOnlineRestart() {
-    if (isAnimating) return;
-    if (playerNumber !== 1) {
-      updateInfo("Only Player 1 can restart the game.");
-      return;
-    }
-
-    try {
-      await updateDoc(doc(db, "games", gameId), {
-        board: Array(ROWS * COLS).fill(0),
-        currentPlayer: 1,
-        status: "playing",
-        winner: 0
-      });
-
-      hideRestartButton(restartBtn);
-    } catch (e) {
-      console.error("Error restarting online game:", e);
-      updateInfo("Could not restart the game. Try again.");
-    }
+  if (isAnimating) return;
+  if (playerNumber !== 1) {
+    updateInfo("Only Player 1 can restart the game.");
+    return;
+  }
+  
+  try {
+    await updateDoc(doc(db, "games", gameId), {
+      board: Array(ROWS * COLS).fill(0),
+      currentPlayer: 1,
+      status: "playing",
+      winner: 0
+    });
+    
+    hideRestartButton();
+    await runRestartSequence(false); // Player 1 runs restart immediately
+  } catch (e) {
+    console.error("Error restarting online game:", e);
+    updateInfo("Could not restart the game. Try again.");
+  }
 }
 
 restartBtn.addEventListener('click', () => {
@@ -816,11 +847,11 @@ function subscribeToGame() {
     }
 
     const boardReset = data.board.every(v => v === 0) && oldFlat.some(v => v !== 0) && data.status === 'playing';
-    if (boardReset) {
-      if (playerNumber === 2) showRestartMessage();
-      await handleGameRestart();
-      return;
-    }
+if (boardReset) {
+  // Player 2 sees restart
+  await runRestartSequence(playerNumber === 2);
+  return;
+}
 
     currentPlayer = data.currentPlayer;
     gameActive = true;
