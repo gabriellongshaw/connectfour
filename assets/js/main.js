@@ -523,36 +523,19 @@ async function handleMove(col) {
 async function animateRestart() {
   if (isAnimating) return;
   isAnimating = true;
-  
+
   stopConfetti();
   hideWinningPulse();
-  
+
+  boardDiv.classList.add('shake');
+  boardDiv.style.transition = 'opacity 400ms';
+  boardDiv.style.opacity = 0.3;
   document.querySelectorAll('.counter').forEach(c => {
     c.style.transition = 'opacity 200ms';
     c.style.opacity = 0;
   });
-  
-  boardDiv.style.transition = 'opacity 400ms';
-  boardDiv.style.opacity = 0.3;
-  
-  await new Promise(r => setTimeout(r, 10));
-  
-  boardDiv.classList.add('shake');
-  
-  await new Promise(r => setTimeout(r, 700));
-  
-  boardDiv.innerHTML = '';
-  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-  updateOnlineBoard();
-  
 
-  boardDiv.style.opacity = 1;
-  boardDiv.classList.remove('shake');
-  document.querySelectorAll('.counter').forEach(c => {
-    c.style.opacity = 1;
-  });
-  
-  isAnimating = false;
+  await new Promise(r => setTimeout(r, 500));
 }
 
 async function handleGameRestart() {
