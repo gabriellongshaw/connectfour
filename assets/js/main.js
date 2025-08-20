@@ -520,50 +520,12 @@ async function handleMove(col) {
   }
 }
 
-async function runRestartSequence(showMessage = false) {
-  if (isAnimating) return;
-  isAnimating = true;
-  
-  // Cancel winner state if one was active
-  gameActive = true;
-  winner = 0;
-  hideWinningLine?.();
-  clearTimeout(winTimeout);
-  
-  if (showMessage) {
-    showRestartMessage();
-  }
-  
-  // Step 1: animate shake + fade
-  boardDiv.classList.add('shake');
-  boardDiv.style.transition = 'opacity 400ms';
-  boardDiv.style.opacity = 0.3;
-  
-  // Wait for shake/fade to finish
-  await new Promise(r => setTimeout(r, 600));
-  
-  // Step 2: clear + rebuild board AFTER animation
-  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-  initBoard();
-  
-  currentPlayer = 1;
-  gameActive = true;
-  updateInfo("Player 1's turn");
-  
-  // Step 3: fade back in
-  boardDiv.style.opacity = 1;
-  
-  // Step 4: remove shake class once done
-  setTimeout(() => boardDiv.classList.remove('shake'), 400);
-  
-  isAnimating = false;
-}
-
 async function animateRestart() {
   if (isAnimating) return;
   isAnimating = true;
 
   stopConfetti();
+  hideWinningPulse();
 
   boardDiv.classList.add('shake');
   boardDiv.style.transition = 'opacity 400ms';
@@ -578,9 +540,7 @@ async function animateRestart() {
 
 async function handleGameRestart() {
   await animateRestart();
-  hideWinningPulse();
-  stopConfetti();
-
+  
   boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
   updateOnlineBoard();
   currentPlayer = 1;
@@ -617,11 +577,10 @@ async function handleOnlineRestart() {
       board: Array(ROWS * COLS).fill(0),
       currentPlayer: 1,
       status: "playing",
-      winner: 0
+      winner: 0,
+      restartTriggered: firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    hideRestartButton();
-    await runRestartSequence(false); // Player 1 runs restart immediately
   } catch (e) {
     console.error("Error restarting online game:", e);
     updateInfo("Could not restart the game. Try again.");
@@ -826,16 +785,35 @@ function subscribeToGame() {
     }
 
     const data = snapshot.data();
+    const oldData = lastGameData;
     lastGameData = data;
 
-    const oldBoard = JSON.parse(JSON.stringify(boardState));
-    const oldFlat = oldBoard.flat();
-
-    const receivedBoard = unflattenBoard(data.board);
+    // Check for restart signal
+    if (data.restartTriggered && oldData && data.restartTriggered.seconds > oldData.restartTriggered?.seconds) {
+      if (playerNumber === 2) {
+        showRestartMessage();
+      }
+      
+      await animateRestart();
+      
+      boardState = unflattenBoard(data.board);
+      updateOnlineBoard();
+      
+      currentPlayer = data.currentPlayer;
+      gameActive = true;
+      updateInfo((playerNumber === currentPlayer) ? 'Your turn!' : `Player ${currentPlayer}'s turn`);
+      
+      boardDiv.style.opacity = 1;
+      document.querySelectorAll('.counter').forEach(c => c.style.opacity = 1);
+      setTimeout(() => boardDiv.classList.remove('shake'), 700);
+      isAnimating = false;
+      return;
+    }
 
     hideWinningPulse();
 
     if (data.status === 'finished') {
+      const receivedBoard = unflattenBoard(data.board);
       boardState = receivedBoard;
       updateOnlineBoard();
       gameActive = false;
@@ -855,57 +833,27 @@ function subscribeToGame() {
       return; 
     }
 
-    const boardReset = data.board.every(v => v === 0) && oldFlat.some(v => v !== 0) && data.status === 'playing';
-if (boardReset) {
-  isAnimating = true;
-  
-  // Show restart message only to Player 2
-  if (playerNumber === 2) showRestartMessage();
-  
-  // Step 1: animate board
-  boardDiv.classList.add('shake');
-  boardDiv.style.transition = 'opacity 400ms';
-  boardDiv.style.opacity = 0.3;
-  
-  await new Promise(r => setTimeout(r, 500)); // wait for shake/fade
-  
-  // Step 2: rebuild board immediately
-  boardState = unflattenBoard(data.board);
-  initBoard();
-  
-  // Reset game state
-  currentPlayer = 1;
-  gameActive = true;
-  updateInfo("Player 1's turn");
-  
-  // Step 3: restore opacity, remove shake
-  boardDiv.style.opacity = 1;
-  setTimeout(() => boardDiv.classList.remove('shake'), 700);
-  
-  isAnimating = false;
-  
-  // Return here so nothing else runs this update
-  return;
-}
+    const oldBoard = oldData ? unflattenBoard(oldData.board) : [];
+    const receivedBoard = unflattenBoard(data.board);
 
     currentPlayer = data.currentPlayer;
     gameActive = true;
 
+    // Detect the dropped disc and animate
     let placedDiscIndex = -1;
-    const newFlat = data.board;
-    for (let i = 0; i < newFlat.length; i++) {
-      if (oldFlat[i] !== newFlat[i]) {
-        placedDiscIndex = i;
-        break;
-      }
+    for (let i = 0; i < data.board.length; i++) {
+        if (oldData && oldData.board[i] !== data.board[i]) {
+            placedDiscIndex = i;
+            break;
+        }
     }
 
     if (placedDiscIndex !== -1) {
       const placedRow = Math.floor(placedDiscIndex / COLS);
       const placedCol = placedDiscIndex % COLS;
-      const playerWhoMoved = newFlat[placedDiscIndex];
+      const playerWhoMoved = data.board[placedDiscIndex];
 
-      if (oldBoard[placedRow][placedCol] !== playerWhoMoved) {
+      if (oldBoard.flat()[placedDiscIndex] !== playerWhoMoved) {
         isAnimating = true;
         await createFallingDisc(placedCol, playerWhoMoved, placedRow);
         isAnimating = false;
@@ -965,3 +913,4 @@ playOnlineBtn.addEventListener('click', async () => {
   await window.fadeIn(multiplayerScreen, 'flex');
   initGame('online');
 });
+
