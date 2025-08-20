@@ -529,7 +529,7 @@ async function animateRestart() {
   boardDiv.classList.add('shake');
   boardDiv.style.transition = 'opacity 400ms';
   boardDiv.style.opacity = 0.3;
-  document.querySelectorAll('.counter').forEach(c => {
+  document.querySelectorAll('.cell').forEach(c => {
     c.style.transition = 'opacity 200ms';
     c.style.opacity = 0;
   });
@@ -549,7 +549,7 @@ async function handleGameRestart() {
   updateInfo("Player 1's turn");
 
   boardDiv.style.opacity = 1;
-  document.querySelectorAll('.counter').forEach(c => c.style.opacity = 1);
+  document.querySelectorAll('.cell').forEach(c => c.style.opacity = 1);
   setTimeout(() => boardDiv.classList.remove('shake'), 700);
 
   isAnimating = false;
