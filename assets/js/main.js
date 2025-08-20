@@ -523,10 +523,11 @@ async function handleMove(col) {
 async function animateRestart() {
   if (isAnimating) return;
   isAnimating = true;
-
+  
   stopConfetti();
   hideWinningPulse();
-
+  
+  // Shake + fade
   boardDiv.classList.add('shake');
   boardDiv.style.transition = 'opacity 400ms';
   boardDiv.style.opacity = 0.3;
@@ -534,8 +535,19 @@ async function animateRestart() {
     c.style.transition = 'opacity 200ms';
     c.style.opacity = 0;
   });
-
+  
   await new Promise(r => setTimeout(r, 500));
+  
+  // Clear board UI & reset state
+  boardDiv.innerHTML = '';
+  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+  updateOnlineBoard();
+  
+  // Restore visuals
+  boardDiv.style.opacity = 1;
+  boardDiv.classList.remove('shake');
+  
+  isAnimating = false;
 }
 
 async function handleGameRestart() {
@@ -573,8 +585,8 @@ async function handleOnlineRestart() {
   }
   
   try {
-    // Only update the database with the new state
     await updateDoc(doc(db, "games", gameId), {
+      restart: true, // <-- NEW
       board: Array(ROWS * COLS).fill(0),
       currentPlayer: 1,
       status: "playing",
@@ -582,7 +594,6 @@ async function handleOnlineRestart() {
     });
     
     hideRestartButton();
-    // The onSnapshot listener will now handle the animation for both players
   } catch (e) {
     console.error("Error restarting online game:", e);
     updateInfo("Could not restart the game. Try again.");
@@ -779,83 +790,97 @@ function subscribeToGame() {
   }
 
   unsubscribeGameListener = onSnapshot(gameRef, async (snapshot) => {
-    if (!snapshot.exists()) {
-      if (!iInitiatedLeave) {
-        endGameOpponentLeft(lastGameData);
-      }
-      return;
+  if (!snapshot.exists()) {
+    if (!iInitiatedLeave) {
+      endGameOpponentLeft(lastGameData);
     }
-
-    const data = snapshot.data();
-    const oldData = lastGameData;
-    lastGameData = data;
-
-    const receivedBoard = unflattenBoard(data.board);
-
-    // Check for a full board reset
-    const oldFlat = oldData ? oldData.board : [];
-    const newFlat = data.board;
-    const boardReset = newFlat.every(v => v === 0) && oldFlat.some(v => v !== 0) && data.status === 'playing';
-
-    if (boardReset) {
-      if (playerNumber === 2) {
-        showRestartMessage();
-      }
-      
-      await handleGameRestart(); // This function now handles all the animation and UI resetting
-      return;
+    return;
+  }
+  
+  const data = snapshot.data();
+  const oldData = lastGameData;
+  lastGameData = data;
+  
+  const receivedBoard = unflattenBoard(data.board);
+  
+  // 🔥 Handle restart explicitly
+  if (data.restart) {
+    if (playerNumber === 2) {
+      showRestartMessage();
     }
-
-    hideWinningPulse();
-
-    if (data.status === 'finished') {
-      boardState = receivedBoard;
-      updateOnlineBoard();
-      gameActive = false;
-
-      if (data.winner) {
-        const winningCells = getWinningCells(data.winner);
-        if (winningCells) {
-          pulseWinningCells(winningCells);
-          startConfetti();
-        }
-        updateInfo(`Player ${data.winner} wins! 🎉`);
-      } else {
-        updateInfo("It's a draw!");
-      }
-
-      if (playerNumber === 1) showRestartButton();
-      return; 
-    }
-
-    currentPlayer = data.currentPlayer;
+    
+    await animateRestart(); // both players run shake/fade
+    boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+    updateOnlineBoard();
+    currentPlayer = 1;
     gameActive = true;
-
-    let placedDiscIndex = -1;
-    for (let i = 0; i < newFlat.length; i++) {
-      if (oldFlat[i] !== newFlat[i]) {
-        placedDiscIndex = i;
-        break;
-      }
+    updateInfo("Player 1's turn");
+    
+    boardDiv.style.opacity = 1;
+    setTimeout(() => boardDiv.classList.remove('shake'), 700);
+    
+    // Reset restart flag in Firestore so it doesn’t loop
+    if (playerNumber === 1) {
+      await updateDoc(doc(db, "games", gameId), { restart: false });
     }
-
-    if (placedDiscIndex !== -1) {
-      const placedRow = Math.floor(placedDiscIndex / COLS);
-      const placedCol = placedDiscIndex % COLS;
-      const playerWhoMoved = newFlat[placedDiscIndex];
-
-      if (boardState[placedRow][placedCol] !== playerWhoMoved) {
-        isAnimating = true;
-        await createFallingDisc(placedCol, playerWhoMoved, placedRow);
-        isAnimating = false;
-      }
-    }
-
+    return;
+  }
+  
+  hideWinningPulse();
+  
+  if (data.status === 'finished') {
     boardState = receivedBoard;
     updateOnlineBoard();
-
-    infoDiv.textContent = (playerNumber === currentPlayer) ? 'Your turn!' : `Player ${currentPlayer}'s turn`;
-  });
+    gameActive = false;
+    
+    if (data.winner) {
+      const winningCells = getWinningCells(data.winner);
+      if (winningCells) {
+        pulseWinningCells(winningCells);
+        startConfetti();
+      }
+      updateInfo(`Player ${data.winner} wins! 🎉`);
+    } else {
+      updateInfo("It's a draw!");
+    }
+    
+    if (playerNumber === 1) showRestartButton();
+    return;
+  }
+  
+  currentPlayer = data.currentPlayer;
+  gameActive = true;
+  
+  const oldFlat = oldData ? oldData.board : [];
+  const newFlat = data.board;
+  
+  let placedDiscIndex = -1;
+  for (let i = 0; i < newFlat.length; i++) {
+    if (oldFlat[i] !== newFlat[i]) {
+      placedDiscIndex = i;
+      break;
+    }
+  }
+  
+  if (placedDiscIndex !== -1) {
+    const placedRow = Math.floor(placedDiscIndex / COLS);
+    const placedCol = placedDiscIndex % COLS;
+    const playerWhoMoved = newFlat[placedDiscIndex];
+    
+    if (boardState[placedRow][placedCol] !== playerWhoMoved) {
+      isAnimating = true;
+      await createFallingDisc(placedCol, playerWhoMoved, placedRow);
+      isAnimating = false;
+    }
+  }
+  
+  boardState = receivedBoard;
+  updateOnlineBoard();
+  
+  infoDiv.textContent = (playerNumber === currentPlayer) ?
+    'Your turn!' :
+    `Player ${currentPlayer}'s turn`;
+});
 }
 
 function waitForOpponent() {
