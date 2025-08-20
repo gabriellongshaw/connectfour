@@ -524,6 +524,12 @@ async function runRestartSequence(showMessage = false) {
   if (isAnimating) return;
   isAnimating = true;
   
+  // Cancel winner animation state
+  gameActive = true; // allow animations again
+  winner = 0; // reset winner if you track one
+  hideWinningLine?.(); // if you draw a line, clear it
+  clearTimeout(winTimeout); // if you use a timeout, clear it
+  
   if (showMessage) {
     showRestartMessage();
   }
@@ -848,7 +854,6 @@ function subscribeToGame() {
 
     const boardReset = data.board.every(v => v === 0) && oldFlat.some(v => v !== 0) && data.status === 'playing';
 if (boardReset) {
-  // Player 2 sees restart
   await runRestartSequence(playerNumber === 2);
   return;
 }
