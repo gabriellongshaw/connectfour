@@ -573,14 +573,16 @@ async function handleOnlineRestart() {
   }
   
   try {
+    // Only update the database with the new state
     await updateDoc(doc(db, "games", gameId), {
       board: Array(ROWS * COLS).fill(0),
       currentPlayer: 1,
       status: "playing",
-      winner: 0,
-      restartTriggered: firebase.firestore.FieldValue.serverTimestamp()
+      winner: 0
     });
     
+    hideRestartButton();
+    // The onSnapshot listener will now handle the animation for both players
   } catch (e) {
     console.error("Error restarting online game:", e);
     updateInfo("Could not restart the game. Try again.");
@@ -788,32 +790,25 @@ function subscribeToGame() {
     const oldData = lastGameData;
     lastGameData = data;
 
-    // Check for restart signal
-    if (data.restartTriggered && oldData && data.restartTriggered.seconds > oldData.restartTriggered?.seconds) {
+    const receivedBoard = unflattenBoard(data.board);
+
+    // Check for a full board reset
+    const oldFlat = oldData ? oldData.board : [];
+    const newFlat = data.board;
+    const boardReset = newFlat.every(v => v === 0) && oldFlat.some(v => v !== 0) && data.status === 'playing';
+
+    if (boardReset) {
       if (playerNumber === 2) {
         showRestartMessage();
       }
       
-      await animateRestart();
-      
-      boardState = unflattenBoard(data.board);
-      updateOnlineBoard();
-      
-      currentPlayer = data.currentPlayer;
-      gameActive = true;
-      updateInfo((playerNumber === currentPlayer) ? 'Your turn!' : `Player ${currentPlayer}'s turn`);
-      
-      boardDiv.style.opacity = 1;
-      document.querySelectorAll('.counter').forEach(c => c.style.opacity = 1);
-      setTimeout(() => boardDiv.classList.remove('shake'), 700);
-      isAnimating = false;
+      await handleGameRestart(); // This function now handles all the animation and UI resetting
       return;
     }
 
     hideWinningPulse();
 
     if (data.status === 'finished') {
-      const receivedBoard = unflattenBoard(data.board);
       boardState = receivedBoard;
       updateOnlineBoard();
       gameActive = false;
@@ -833,27 +828,23 @@ function subscribeToGame() {
       return; 
     }
 
-    const oldBoard = oldData ? unflattenBoard(oldData.board) : [];
-    const receivedBoard = unflattenBoard(data.board);
-
     currentPlayer = data.currentPlayer;
     gameActive = true;
 
-    // Detect the dropped disc and animate
     let placedDiscIndex = -1;
-    for (let i = 0; i < data.board.length; i++) {
-        if (oldData && oldData.board[i] !== data.board[i]) {
-            placedDiscIndex = i;
-            break;
-        }
+    for (let i = 0; i < newFlat.length; i++) {
+      if (oldFlat[i] !== newFlat[i]) {
+        placedDiscIndex = i;
+        break;
+      }
     }
 
     if (placedDiscIndex !== -1) {
       const placedRow = Math.floor(placedDiscIndex / COLS);
       const placedCol = placedDiscIndex % COLS;
-      const playerWhoMoved = data.board[placedDiscIndex];
+      const playerWhoMoved = newFlat[placedDiscIndex];
 
-      if (oldBoard.flat()[placedDiscIndex] !== playerWhoMoved) {
+      if (boardState[placedRow][placedCol] !== playerWhoMoved) {
         isAnimating = true;
         await createFallingDisc(placedCol, playerWhoMoved, placedRow);
         isAnimating = false;
