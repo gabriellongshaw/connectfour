@@ -66,7 +66,19 @@
     </div>
   </div>
   
+  <dialog id="modal" class="dialog">
+  <div class="modal-header">
+    <h2>Browser</h2>
+    <p>When you create an online game, you get a unique code. If you open this website within an app to share that code with a friend, your session will be reset, giving you a different code when you open the website again. To avoid this, we recommend opening the website in an external browser like Chrome or Safari.</p>
+  </div>
+  <div class="modal-actions">
+  <button id="close-settings" class="button primary-button">Close</button>
+</div>
+</div>
+</dialog>
+  
   <canvas id="confetti-canvas"></canvas>
+  <div id="backdrop" class="backdrop hidden"></div>
   
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
@@ -90,5 +102,6 @@
 
   <script src="assets/js/main.js" type="module"></script>
   <script src="assets/js/hover-on-touch-screen.js" type="module"></script>
+  <script src="assets/js/dialog.js" type="module"></script>
 </body>
 </html>
