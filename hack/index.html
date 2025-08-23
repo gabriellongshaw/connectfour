@@ -20,6 +20,7 @@
     line-height: 1.2em;
     white-space: pre;
     animation: matrixFall linear infinite;
+    transition: opacity 0.3s, filter 0.3s;
   }
 
   @keyframes matrixFall {
@@ -40,32 +41,55 @@
     text-align: left;
     white-space: pre-wrap;
     font-size: 16px;
-    opacity: 1;
-    transition: opacity 0.8s, transform 0.8s;
     box-shadow: 0 0 2px lime;
     border-radius: 8px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.5s, max-height 0.5s;
+  }
+
+  .messages-box-active {
+    opacity: 1;
+    max-height: 300px;
+  }
+
+  .disappear {
+    opacity: 0 !important;
+    transform: translateY(20px) scale(0.9) !important;
+    filter: blur(5px) !important;
   }
 
   .final-message {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    width: 90%;
+    transform: translate(-50%, -50%) scale(0.9) skewX(-5deg);
+    filter: blur(5px);
     color: red;
     text-align: center;
     opacity: 0;
-    transition: opacity 1s;
+    transition: opacity 0.5s, transform 0.5s, filter 0.5s;
+  }
+
+  .final-message-active {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) skewX(0deg);
+    filter: blur(0px);
   }
 
   .final-message h1 {
     font-size: 4em;
-    margin: 0;
-    text-shadow: 0 0 10px red;
+    margin: 0 0 20px 0;
   }
 
   .final-message p {
     font-size: 1.5em;
-    margin: 10px 0 0;
+    margin: 10px auto;
+    line-height: 1.6em;
+    max-width: 600px; 
+    word-wrap: pre-wrap;
   }
 </style>
 </head>
@@ -75,7 +99,7 @@
 
 <div class="final-message" id="final-message">
   <h1>ACCESS GRANTED</h1>
-  <p>System Compromised.</p>
+  <p>You have been hacked.</p>
 </div>
 
 <script>
@@ -92,6 +116,8 @@ const messages = [
   "Overwriting system logs...",
   "Hack complete..."
 ];
+
+const accessGrantedSound = new Audio('your_sound.mp3');
 
 for (let i = 0; i < columns; i++) {
   const col = document.createElement('div');
@@ -112,32 +138,28 @@ let messageIndex = 0;
 const messageInterval = setInterval(() => {
   if (messageIndex < messages.length) {
     messageBox.textContent = messages[messageIndex];
+    if (messageIndex === 0) messageBox.classList.add('messages-box-active');
     messageIndex++;
   } else {
     clearInterval(messageInterval);
+
+    const allColumns = document.querySelectorAll('.matrix-column');
+    allColumns.forEach(col => col.classList.add('disappear'));
+    messageBox.classList.add('disappear');
+
+    setTimeout(() => {
+      finalMessage.classList.add('final-message-active');
+      if (typeof accessGrantedSound.play === 'function') {
+        accessGrantedSound.play().catch(e => console.error("Sound play failed:", e));
+      }
+      if ("vibrate" in navigator) navigator.vibrate(500);
+    }, 500); 
   }
 }, 1000);
 
-setTimeout(() => {
-  const allColumns = document.querySelectorAll('.matrix-column');
-
-  allColumns.forEach(col => {
-    col.style.transition = 'opacity 1s';
-    col.style.opacity = 0;
-  });
-
-  setTimeout(() => {
-    allColumns.forEach(col => col.remove());
-
-    messageBox.style.opacity = 0;
-    messageBox.style.transform = 'translateY(20px)';
-
-    setTimeout(() => {
-      finalMessage.style.opacity = 1;
-    }, 800);
-  }, 1000); 
-}, 5000); 
+window.addEventListener('beforeunload', (event) => {
+  event.returnValue = '';
+});
 </script>
-
 </body>
 </html>
