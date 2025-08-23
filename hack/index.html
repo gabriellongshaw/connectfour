@@ -3,38 +3,141 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hacked!</title>
+<title>The Matrix Hack</title>
 <style>
   body {
-    background-color: black;
+    margin: 0;
+    background: black;
+    overflow: hidden;
+    font-family: monospace;
+    color: lime;
+  }
+
+  .matrix-column {
+    position: absolute;
+    top: -100%;
+    font-size: 16px;
+    line-height: 1.2em;
+    white-space: pre;
+    animation: matrixFall linear infinite;
+  }
+
+  @keyframes matrixFall {
+    0% { top: -100%; opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  .messages-box {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    color: lime;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 20px;
+    border: 2px solid lime;
+    text-align: left;
+    white-space: pre-wrap;
+    font-size: 16px;
+    opacity: 1;
+    transition: opacity 0.8s, transform 0.8s;
+    box-shadow: 0 0 20px lime;
+    border-radius: 8px;
+  }
+
+  .final-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     color: red;
-    font-family: 'Courier New', Courier, monospace;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
     text-align: center;
-    animation: flicker 0.2s infinite;
+    opacity: 0;
+    transition: opacity 1s;
   }
 
-  @keyframes flicker {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-
-  h1 {
+  .final-message h1 {
     font-size: 4em;
+    margin: 0;
+    text-shadow: 0 0 10px red;
   }
 
-  p {
+  .final-message p {
     font-size: 1.5em;
+    margin: 10px 0 0;
   }
 </style>
 </head>
 <body>
-  <div>
-    <h1>YOU'VE BEEN HACKED!</h1>
-    <p>I  now have full access to all your data</p>
-  </div>
+
+<div class="messages-box" id="messages-box"></div>
+
+<div class="final-message" id="final-message">
+  <h1>ACCESS GRANTED</h1>
+  <p>System Compromised.</p>
+</div>
+
+<script>
+const columns = 40;
+const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+const messageBox = document.getElementById('messages-box');
+const finalMessage = document.getElementById('final-message');
+const messages = [
+  "Establishing connection...",
+  "Bypassing firewall...",
+  "Injecting virus payload...",
+  "Extracting user data...",
+  "Decrypting passwords...",
+  "Overwriting system logs...",
+  "Hack complete..."
+];
+
+for (let i = 0; i < columns; i++) {
+  const col = document.createElement('div');
+  col.className = 'matrix-column';
+  col.style.left = (i * 25) + 'px';
+  col.style.animationDuration = (3 + Math.random() * 5) + 's';
+  col.style.animationDirection = Math.random() > 0.5 ? 'normal' : 'reverse';
+
+  let columnText = '';
+  for (let j = 0; j < 50; j++) {
+    columnText += chars[Math.floor(Math.random() * chars.length)] + '\n';
+  }
+  col.textContent = columnText;
+  document.body.appendChild(col);
+}
+
+let messageIndex = 0;
+const messageInterval = setInterval(() => {
+  if (messageIndex < messages.length) {
+    messageBox.textContent = messages[messageIndex];
+    messageIndex++;
+  } else {
+    clearInterval(messageInterval);
+  }
+}, 1000);
+
+setTimeout(() => {
+  const allColumns = document.querySelectorAll('.matrix-column');
+
+  allColumns.forEach(col => {
+    col.style.transition = 'opacity 1s';
+    col.style.opacity = 0;
+  });
+
+  setTimeout(() => {
+    allColumns.forEach(col => col.remove());
+
+    messageBox.style.opacity = 0;
+    messageBox.style.transform = 'translateY(20px)';
+
+    setTimeout(() => {
+      finalMessage.style.opacity = 1;
+    }, 800);
+  }, 1000); 
+}, 5000); 
+</script>
+
 </body>
 </html>
