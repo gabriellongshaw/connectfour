@@ -632,7 +632,7 @@ h1 {
   display: none !important;
 }
 
-dialog {
+.dialog {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -656,14 +656,14 @@ dialog {
   flex-direction: column;
 }
 
-dialog[open],
-dialog.open {
+
+.dialog.open {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
   pointer-events: auto;
 }
 
-dialog.closing {
+.dialog.closing {
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.92);
   pointer-events: none;
@@ -704,6 +704,7 @@ dialog.closing {
 }
 
 .button {
+  color: var(--button-text);
   background: none;
   border: none;
   font-family: 'Roboto', sans-serif;
@@ -722,25 +723,19 @@ dialog.closing {
   transform: scale(0.98);
 }
 
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+.dialog .primary-button:hover {
+  background-color: var(--button-hover-bg);
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.05);
   opacity: 0;
-  z-index: 998;
   transition: opacity 250ms ease;
-  pointer-events: none;
 }
 
-.backdrop.show {
+/* Add an open state for the backdrop */
+dialog[open]::backdrop {
   opacity: 1;
-  pointer-events: auto;
-}
-
-.backdrop.hidden {
-  display: none;
-  opacity: 0;
-  pointer-events: none;
 }
 
 @media (min-width: 600px) and (max-width: 900px) {

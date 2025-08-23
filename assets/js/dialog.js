@@ -1,56 +1,37 @@
-// Get the dialog and close button elements from the DOM
-const settingsModal = document.getElementById('modal');
-const closeButton = settingsModal ? settingsModal.querySelector('.button.primary-button') : null;
-const backdrop = document.getElementById('backdrop');
-
-function _openDialogInternal() {
-  if (!settingsModal || !backdrop) {
-    console.error("Required elements not found.");
-    return;
-  }
-  
-  // Display the backdrop and dialog
-  backdrop.classList.remove('hidden');
-  requestAnimationFrame(() => {
-    backdrop.classList.add('show');
-  });
-
-  // Check if the dialog is not already open before showing it
-  if (!settingsModal.open) {
-    settingsModal.showModal();
-    // Use requestAnimationFrame to apply the 'open' class after showModal()
-    requestAnimationFrame(() => {
-      settingsModal.classList.add('open');
-      settingsModal.classList.remove('closing');
-    });
-  }
-}
-
-function _closeDialogInternal() {
-  if (!settingsModal || !backdrop) {
-    console.error("Required elements not found.");
-    return;
-  }
-  
-  // Add 'closing' class to trigger the CSS animation
-  settingsModal.classList.remove('open');
-  settingsModal.classList.add('closing');
-  backdrop.classList.remove('show');
-  
-  // Wait for the animation to finish before closing the dialog
-  setTimeout(() => {
-    settingsModal.close();
-    backdrop.classList.add('hidden');
-    settingsModal.classList.remove('closing');
-  }, 250); // The timeout duration should match the CSS transition duration
-}
-
-// Open the dialog on page load
 document.addEventListener('DOMContentLoaded', () => {
-  _openDialogInternal();
+  const modal = document.getElementById('modal');
+  const closeModalBtn = document.getElementById('close-modal');
+  
+  if (modal && typeof modal.showModal === 'function') {
+    
+    modal.showModal();
+    
+    setTimeout(() => {
+      modal.classList.add('open');
+    }, 10);
+    
+    closeModalBtn.addEventListener('click', () => {
+      
+      modal.classList.add('closing');
+      modal.classList.remove('open');
+      
+      modal.addEventListener('transitionend', () => {
+        
+        modal.close();
+        modal.classList.remove('closing');
+      }, { once: true });
+    });
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.close();
+        modal.classList.remove('open');
+      }
+    });
+    
+  } else {
+    
+    console.warn('The <dialog> element is not supported in this browser.');
+    
+  }
 });
-
-// Close the dialog when the close button is clicked
-if (closeButton) {
-  closeButton.addEventListener('click', _closeDialogInternal);
-}
