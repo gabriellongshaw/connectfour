@@ -1,13 +1,13 @@
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/assets/css/styles.css',
-  '/assets/js/main.js',
-  '/assets/js/hover-on-touch-screen.js',
-  '/assets/js/dialog.js',
-  '/assets/images/favicon/manifest.json',
-  '/assets/images/favicon/favicon-192x192.png',
-  '/assets/images/favicon/android-icon-512x512.png'
+  '../../index.html',
+  '../css/styles.css',
+  'main.js',
+  'hover-on-touch-screen.js',
+  'dialog.js',
+  '../images/favicon/manifest.json',
+  '../images/favicon/favicon-192x192.png',
+  '../images/favicon/android-icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
