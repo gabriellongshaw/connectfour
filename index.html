@@ -17,7 +17,7 @@
 <meta name="twitter:title" content="Connect Four">
 <meta name="twitter:description" content="Play Connect Four offline or online with friends!">
 <meta name="twitter:image" content="assets/images/og-image.png">
-<link src="assets/images/favicon/manifest.json">
+<link rel="manifest" href="assets/images/favicon/manifest.json">
 </head>
 <body>
   <div id="start-screen" class="screen active fade">
@@ -105,5 +105,18 @@
   <script src="assets/js/main.js" type="module"></script>
   <script src="assets/js/hover-on-touch-screen.js" type="module"></script>
   <script src="assets/js/dialog.js" type="module"></script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('assets/js/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service Worker registration failed:', error);
+        });
+    });
+  }
+</script>
 </body>
 </html>
