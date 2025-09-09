@@ -656,7 +656,6 @@ h1 {
   flex-direction: column;
 }
 
-
 .dialog.open {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
@@ -733,51 +732,95 @@ dialog::backdrop {
   transition: opacity 250ms ease;
 }
 
-/* Add an open state for the backdrop */
 dialog[open]::backdrop {
   opacity: 1;
 }
 
-@media (min-width: 600px) and (max-width: 900px) {
+@media (min-width: 600px) and (max-width: 899px) {
   :root {
     --cell-size: clamp(50px, 8vw, 90px);
     --button-font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+    --info-font-size: clamp(1rem, 2.5vw, 1.2rem);
+    --board-gap: clamp(10px, 1.5vw, 14px);
   }
-  .start-screen-button, .start-screen-button-disabled, .restart-btn {
+  .start-screen-button,
+  .start-screen-button-disabled,
+  .restart-btn {
     width: 70%;
     max-width: 280px;
   }
 }
 
-@media (min-width: 900px) and (max-width: 1200px) {
+@media (min-width: 900px) and (max-width: 1199px) {
   :root {
     --cell-size: clamp(55px, 6vw, 95px);
-    --button-font-size: clamp(1.3rem, 2.5vw, 1.7rem);
+    --button-font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+    --info-font-size: clamp(1.1rem, 2.2vw, 1.3rem);
+    --board-gap: clamp(12px, 1.5vw, 16px);
   }
-  .start-screen-button, .start-screen-button-disabled, .restart-btn {
+  .start-screen-button,
+  .start-screen-button-disabled,
+  .restart-btn {
     width: 65%;
     max-width: 300px;
   }
 }
 
-@media (min-width: 1200px) and (max-width: 1600px) {
+@media (min-width: 1200px) and (max-width: 1599px) {
   :root {
     --cell-size: clamp(60px, 5vw, 100px);
     --button-font-size: clamp(1.4rem, 2vw, 1.8rem);
+    --info-font-size: clamp(1.2rem, 2vw, 1.4rem);
+    --board-gap: clamp(14px, 1.2vw, 18px);
   }
-  .start-screen-button, .start-screen-button-disabled, .restart-btn {
+  .start-screen-button,
+  .start-screen-button-disabled,
+  .restart-btn {
     width: 60%;
     max-width: 320px;
   }
 }
 
-@media (min-width: 1600px) {
+@media (min-width: 1600px) and (max-width: 1999px) {
   :root {
-    --cell-size: clamp(65px, 4vw, 110px);
+    --cell-size: clamp(65px, 4.5vw, 110px);
     --button-font-size: clamp(1.5rem, 1.8vw, 2rem);
+    --info-font-size: clamp(1.3rem, 1.8vw, 1.5rem);
+    --board-gap: clamp(16px, 1.2vw, 20px);
   }
-  .start-screen-button, .start-screen-button-disabled, .restart-btn {
+  .start-screen-button,
+  .start-screen-button-disabled,
+  .restart-btn {
     width: 55%;
     max-width: 350px;
+  }
+}
+
+@media (min-width: 2000px) {
+  :root {
+    --cell-size: clamp(75px, 4vw, 130px);
+    --button-font-size: clamp(1.6rem, 1.5vw, 2.2rem);
+    --info-font-size: clamp(1.4rem, 1.5vw, 1.6rem);
+    --board-gap: clamp(18px, 1vw, 24px);
+  }
+  .start-screen-button,
+  .start-screen-button-disabled,
+  .restart-btn {
+    width: 50%;
+    max-width: 400px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .board {
+    max-width: 1200px;
+    grid-gap: var(--board-gap);
+  }
+  .info {
+    font-size: var(--info-font-size);
+  }
+  .cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
   }
 }
