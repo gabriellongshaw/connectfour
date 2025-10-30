@@ -225,7 +225,7 @@ h1 {
   grid-template-rows: repeat(6, 1fr);
   grid-gap: clamp(8px, 1.5vw, 12px);
   background: var(--board-background);
-  max-width: 300px;
+  max-width: 500px;
   margin: 0 auto;
   place-items: center;
   justify-content: center;
@@ -748,7 +748,7 @@ dialog[open]::backdrop {
 
 @media (min-width: 900px) {
   :root {
-    --cell-size: 100px; 
+    --cell-size: 50px; 
     --button-font-size: 1rem;
     --info-font-size: 1rem;
     --board-gap: 16px;
