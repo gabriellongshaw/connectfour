@@ -25,7 +25,7 @@
   --button-text: #4285F4;
   --button-hover-bg: rgba(66, 133, 244, 0.08);
   --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --cell-size: clamp(48px, 7.5vw, 80px);
+  --cell-size: clamp(40px, 7.5vw, 80px);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -50,7 +50,6 @@
     --dialog-secondary-text: #B0B0B0;
     --button-text: #8AB4F8;
     --button-hover-bg: rgba(138, 180, 248, 0.1);
-    --cell-size: clamp(48px, 7.5vw, 80px);
   }
 }
 
@@ -97,14 +96,14 @@ body {
 #start-screen h1 {
   font-size: clamp(2.5rem, 5vw, 2rem);
   font-weight: 700;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   color: var(--header-color);
   text-shadow: none;
 }
 
 .start-screen-button {
-  padding: 15px 50px;
-  font-size: clamp(1.2rem, 3vw, 1.3rem);
+  padding: 0.7rem 1.5rem;
+  font-size: clamp(1rem, 3vw, 1.3rem);
   font-weight: 600;
   border: none;
   border-radius: 50px;
@@ -140,7 +139,7 @@ body {
 
 .start-screen-button-disabled {
   padding: 15px 50px;
-  font-size: clamp(1.2rem, 3vw, 1.3rem);
+  font-size: clamp(1rem, 3vw, 1.3rem);
   font-weight: 600;
   border: none;
   border-radius: 50px;
@@ -159,6 +158,8 @@ body {
   position: fixed;
   bottom: 20px;
   left: 50%;
+  width: 100%;
+  font-size: 0.9rem;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -203,6 +204,7 @@ body {
   align-items: center;
   justify-content: center;
   width: 100%;
+  margin: 0 auto;
   max-width: none;
   position: relative;
 }
@@ -219,13 +221,13 @@ h1 {
 .board {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(7, var(--cell-size));
-  grid-template-rows: repeat(6, var(--cell-size));
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
   grid-gap: clamp(8px, 1.5vw, 12px);
   background: var(--board-background);
   max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
+  place-items: center;
   justify-content: center;
   align-items: center;
   padding: clamp(10px, 2vw, 15px);
@@ -274,6 +276,8 @@ h1 {
   background: var(--cell-background);
   width: var(--cell-size);
   height: var(--cell-size);
+  place-self: center;
+  margin: 0 auto;
   border-radius: 50%;
   aspect-ratio: 1 / 1;
   position: relative;
@@ -366,8 +370,8 @@ h1 {
 
 .restart-btn {
   display: inline-block;
-  padding: 12px 35px;
-  font-size: clamp(1.2rem, 3vw, 1.3rem);
+  padding: 0.7rem 1.5rem;
+  font-size: clamp(1rem, 3vw, 1.3rem);
   font-weight: 600;
   border: none;
   border-radius: 50px;
