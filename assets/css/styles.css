@@ -102,7 +102,7 @@ body {
 }
 
 .start-screen-button {
-  padding: 0.7rem 1.5rem;
+  padding: 0.8rem 1.5rem;
   font-size: clamp(1rem, 3vw, 1.3rem);
   font-weight: 600;
   border: none;
@@ -138,7 +138,7 @@ body {
 }
 
 .start-screen-button-disabled {
-  padding: 15px 50px;
+  padding: 0.8rem 1.5rem;
   font-size: clamp(1rem, 3vw, 1.3rem);
   font-weight: 600;
   border: none;
@@ -478,7 +478,7 @@ h1 {
 
 .mode-btn {
   flex: 1;
-  padding: 12px 0;
+  padding: 0.8rem 1.5rem;
   background: var(--button-background);
   border: none;
   border-radius: 30px;
@@ -720,7 +720,7 @@ h1 {
   font-weight: 500;
   font-size: 0.95rem;
   cursor: pointer;
-  padding: 10px 12px;
+  padding: 0.8rem 1.5rem;
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease-out;
   border-radius: 50px;
   outline: none;
@@ -744,6 +744,33 @@ dialog::backdrop {
 
 dialog[open]::backdrop {
   opacity: 1;
+}
+
+/* =============================== */
+/* === FONT AWESOME ICON FIX === */
+/* =============================== */
+
+/* This rule explicitly tells the browser to use the Font Awesome font
+   for all elements with the 'fa-solid' class, ensuring the symbols appear. */
+.fa-solid {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-style: normal;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+.start-screen-button i,
+.back-button i,
+.restart-btn i,
+.leave-game i {
+    margin-right: 3px;
+    margin-top: 3px;
+    vertical-align: middle; 
+}
+
+.start-screen-button i {
+  margin-bottom: 5px;
 }
 
 @media (min-width: 900px) {

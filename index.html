@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Play Connect Four offline or online with friends! Created by Gabe Mods and fixed by bocajthomas.">
 <meta name="keywords" content="Connect Four, Gabe Mods, play Connect Four, four in a row">
 <meta name="author" content="Gabe Mods, bocajthomas">
 <title>Connect Four</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 <link rel="stylesheet" href="assets/css/styles.css">
 <meta name="google-site-verification" content="HihCOsgH0UVQPbqo7pMEgDNXIXR16hIm907pXZPI3w8" />
 <meta name="theme-color" content="#ff0000">
 <meta property="og:title" content="Connect Four">
 <meta property="og:description" content="Play Connect Four offline or online with friends!">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://gabemods.github.io/connectfour/">
+<meta property="og:url" content="https://gabriellongshaw.github.io/connectfour/">
 <meta property="og:image" content="assets/images/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Connect Four">
@@ -23,8 +25,10 @@
 <body>
   <div id="start-screen" class="screen active fade">
     <h1>Connect Four</h1>
-    <button id="play-offline" class="start-screen-button">Play Offline</button>
-    <button id="play-online" class="start-screen-button">Play Online</button>
+    <button id="play-offline" class="start-screen-button"><i class="fa-solid fa-user"></i> Play Offline</button>
+    <button id="play-online" class="start-screen-button">
+    <i class="fa-solid fa-user-group"></i> Play Online
+    </button>
     <div class="credits-container">
   <p class="credits created-by">
     Created by <a class="credits-link" target="_blank" href="https://www.gabriellongshaw.co.uk">Gabriel Longshaw</a>
@@ -38,14 +42,14 @@
   <div id="multiplayer-screen" class="screen" style="display:none;">
     <h1>Online Multiplayer</h1>
     <div id="multiplayer-options">
-      <button id="create-game-btn" class="start-screen-button">Create New Game</button>
-      <button id="show-join-screen-btn" class="start-screen-button">Join Game</button>
+      <button id="create-game-btn" class="start-screen-button"><i class="fa-solid fa-square-plus"></i> Create New Game</button>
+      <button id="show-join-screen-btn" class="start-screen-button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Game</button>
       <button id="back-to-start-from-multiplayer" class="back-button">Back to Start</button>
     </div>
 
     <div id="join-input-section" style="display:none;">
       <input type="text" id="join-code-input" placeholder="Enter Room Code" class="text-input">
-      <button id="join-game-btn" class="start-screen-button">Join Game</button>
+      <button id="join-game-btn" class="start-screen-button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Game</button>
       <button id="back-to-options-btn" class="back-button">Back to Options</button>
     </div>
 
@@ -63,7 +67,7 @@
     <div id="board" class="board" aria-label="Connect Four board" role="grid"></div>
     <div id="info" class="info">Player 1's turn (Red)</div>
     <div class="gamebutton-container">
-      <button id="restartBtn" class="restart-btn">Restart</button>
+      <button id="restartBtn" class="restart-btn"><i class="fa-solid fa-redo"></i> Restart</button>
       <button id="leaveGameBtn" class="leave-game">Leave Game</button>
     </div>
   </div>
