@@ -5,9 +5,9 @@
   --header-color: #000000;
   --card-background: #ffffff;
   --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  --button-background: #0388fc;
-  --button-text: white;
-  --button-hover-background: #146dba;
+  --button-text: #4285F4;
+  --button-bg: #e8f0fe;
+  --button-hover-bg: rgba(66, 133, 244, 0.08);
   --board-background: #ffffff;
   --cell-background: #d4e0e9;
   --cell-hover-background: #a9c6d6;
@@ -22,8 +22,7 @@
   --dialog-text: #1F1F1F;
   --dialog-secondary-text: #616161;
   --select-bg: #F0F0F0;
-  --button-text: #4285F4;
-  --button-hover-bg: rgba(66, 133, 244, 0.08);
+  --border: #ddd;
   --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --cell-size: clamp(40px, 7.5vw, 80px);
 }
@@ -36,9 +35,9 @@
     --credits-link-color: #ffffff;
     --card-background: #2c2c2c;
     --card-shadow: 0 0px 18px rgba(0, 0, 0, 0.2);
-    --button-background: #0388fc;
-    --button-text: white;
-    --button-hover-background: #146dba;
+    --button-text: #8AB4F8;
+    --button-bg: #2d2e30;
+    --button-hover-bg: #262729;
     --board-background: #1f1f1f;
     --cell-background: #3c3c3c;
     --cell-hover-background: #4a4a4a;
@@ -48,8 +47,7 @@
     --dialog-bg: #202020;
     --dialog-text: #E0E0E0;
     --dialog-secondary-text: #B0B0B0;
-    --button-text: #8AB4F8;
-    --button-hover-bg: rgba(138, 180, 248, 0.1);
+    --border: #333;
   }
 }
 
@@ -649,21 +647,21 @@ h1 {
   transform: translate(-50%, -50%) scale(0.92);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1), transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 999;
   border: none;
   padding: 0;
   margin: 0;
-  max-height: 90vh;
-  overflow: auto;
   width: 90vw;
-  max-width: 500px;
-  border-radius: 20px;
+  max-width: 480px;
+  border-radius: 28px;
   background-color: var(--dialog-bg);
   color: var(--dialog-text);
   font-family: 'Roboto', sans-serif;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .dialog.open {
@@ -680,64 +678,78 @@ h1 {
 
 .modal-header {
   display: flex;
-  flex-direction: column;
-  align-items: left;
+  align-items: center;
+  gap: 12px;
   padding: 24px 24px 8px;
 }
 
+.modal-icon {
+  font-size: 28px;
+  color: var(--button-text);
+  background: var(--button-bg);
+  border-radius: 12px;
+  padding: 8px;
+}
+
 .modal-header h2 {
-  margin-bottom: 10px;
-  font-weight: 500;
-  font-size: 1.5rem;
-  color: inherit;
+  font-weight: 600;
+  font-size: 1.4rem;
+  color: var(--dialog-text);
 }
 
 .modal-body {
-  padding: 0 24px 0px;
-  text-align: center;
+  padding: 0 24px 20px;
 }
 
-.modal-body p {
-  margin-top: 0;
-  margin-bottom: 20px;
+.modal-body-text {
   font-size: 0.95rem;
+  line-height: 1.5;
   color: var(--dialog-secondary-text);
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  padding: 0 15px 15px;
-  margin-top: 0px;
-  gap: 0px;
+  align-items: center;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border);
+  gap: 8px;
 }
 
 .button {
-  color: var(--button-text);
-  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: none;
-  font-family: 'Roboto', sans-serif;
+  background: none;
+  color: var(--button-text);
   font-weight: 500;
   font-size: 0.95rem;
+  border-radius: 100px;
   cursor: pointer;
-  padding: 0.8rem 1.5rem;
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease-out;
-  border-radius: 50px;
-  outline: none;
-  text-transform: none;
-  letter-spacing: 0.01em;
+  padding: 10px 18px;
+  transition: background-color 0.25s ease, transform 0.2s ease;
 }
 
 .button:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
-.dialog .primary-button:hover {
+.primary-button {
+  background-color: var(--button-bg);
+}
+
+.primary-button:hover {
   background-color: var(--button-hover-bg);
 }
 
+.primary-button span {
+  font-size: 20px;
+}
+
 dialog::backdrop {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.3);
   opacity: 0;
   transition: opacity 250ms ease;
 }
@@ -746,12 +758,11 @@ dialog[open]::backdrop {
   opacity: 1;
 }
 
-/* =============================== */
-/* === FONT AWESOME ICON FIX === */
-/* =============================== */
+.material-symbols-rounded {
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+}
 
-/* This rule explicitly tells the browser to use the Font Awesome font
-   for all elements with the 'fa-solid' class, ensuring the symbols appear. */
 .fa-solid {
     font-family: "Font Awesome 6 Free";
     font-weight: 900;

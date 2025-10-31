@@ -32,6 +32,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" id="ios-status-bar-meta">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24..48,400,0,0&display=swap" rel="stylesheet"> 
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:FILL,GRAD,wght,opsz@1,0,500,24" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
@@ -84,15 +87,21 @@
     </div>
   </div>
   
-  <dialog id="modal" class="dialog">
+<dialog id="modal" class="dialog">
   <div class="modal-header">
+    <span class="material-symbols-rounded modal-icon">language</span>
     <h2>Browser</h2>
-    <p>
+  </div>
+  <div class="modal-body">
+    <p class="modal-body-text">
       When you create an online game, you get a unique code. If you open this website within an app to share that code with a friend, your session will be reset, giving you a different code when you open the website again. To avoid this, we recommend opening the website in an external browser like Chrome or Safari.
     </p>
   </div>
   <div class="modal-actions">
-    <button id="close-modal" class="button primary-button">Close</button>
+    <button id="close-modal" class="button primary-button">
+      <span class="material-symbols-rounded">close</span>
+      Close
+    </button>
   </div>
 </dialog>
 
