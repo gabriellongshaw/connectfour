@@ -1,16 +1,17 @@
 :root {
-  --background-color: #ffffff;
+  --bg: #ffffff;
+  --secondary-bg: #fefefe;
   --text-color: #000000;
   --credits-link-color: #ffffff;
   --header-color: #000000;
-  --card-background: #ffffff;
-  --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --card-bg: #eee;
+  --card-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   --button-text: #4285F4;
   --button-bg: #e8f0fe;
   --button-hover-bg: rgba(66, 133, 244, 0.08);
-  --board-background: #ffffff;
-  --cell-background: #d4e0e9;
-  --cell-hover-background: #a9c6d6;
+  --board-bg: #fefefe;
+  --cell-bg: #d4e0e9;
+  --cell-hover-bg: #a9c6d6;
   --winning-glow: #f1c40f;
   --player1-color: #f55a5a;
   --player2-color: #f1c40f;
@@ -29,18 +30,19 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background-color: #1a1a1a;
+    --bg: #1a1a1a;
+    --secondary-bg: #202020;
     --text-color: #ffffff;
     --header-color: #ffffff;
     --credits-link-color: #ffffff;
-    --card-background: #2c2c2c;
-    --card-shadow: 0 0px 18px rgba(0, 0, 0, 0.2);
+    --card-bg: #2c2c2c;
+    --card-shadow: 0 0px 20px rgba(150, 150, 150, 0.1);
     --button-text: #8AB4F8;
     --button-bg: #2d2e30;
     --button-hover-bg: #262729;
-    --board-background: #1f1f1f;
-    --cell-background: #3c3c3c;
-    --cell-hover-background: #4a4a4a;
+    --board-bg: #1f1f1f;
+    --cell-bg: #3c3c3c;
+    --cell-hover-bg: #4a4a4a;
     --winning-glow: #f1c40f;
     --player1-color: #f55a5a;
     --player2-color: #f1c40f;
@@ -59,7 +61,7 @@
 
 body {
   font-family: var(--font-family);
-  background: var(--background-color);
+  background: var(--bg);
   color: var(--text-color);
   display: flex;
   justify-content: center;
@@ -80,7 +82,7 @@ body {
 #start-screen {
   position: fixed;
   inset: 0;
-  background: var(--background-color);
+  background: var(--bg);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -92,7 +94,7 @@ body {
 }
 
 #start-screen h1 {
-  font-size: clamp(2.5rem, 5vw, 2rem);
+  font-size: clamp(2.5rem, 5vw, 3rem);
   font-weight: 700;
   margin-bottom: 20px;
   color: var(--header-color);
@@ -222,7 +224,7 @@ h1 {
   grid-template-columns: repeat(7, 1fr);
   grid-template-rows: repeat(6, 1fr);
   grid-gap: clamp(8px, 1.5vw, 12px);
-  background: var(--board-background);
+  background: var(--board-bg);
   max-width: 500px;
   margin: 0 auto;
   place-items: center;
@@ -271,7 +273,7 @@ h1 {
 }
 
 .cell {
-  background: var(--cell-background);
+  background: var(--cell-bg);
   width: var(--cell-size);
   height: var(--cell-size);
   place-self: center;
@@ -285,7 +287,7 @@ h1 {
 }
 
 .cell:hover {
-  background: var(--cell-hover-background);
+  background: var(--cell-hover-bg);
 }
 
 .cell[data-player="1"]::before,
@@ -477,7 +479,7 @@ h1 {
 .mode-btn {
   flex: 1;
   padding: 0.8rem 1.5rem;
-  background: var(--button-background);
+  background: var(--button-bg);
   border: none;
   border-radius: 30px;
   color: var(--button-text);
@@ -491,7 +493,7 @@ h1 {
 
 .mode-btn.active,
 .mode-btn:hover {
-  background: var(--button-hover-background);
+  background: var(--button-hover-bg);
   box-shadow: var(--card-shadow);
   transform: scale(1.02);
   color: #fff;
@@ -500,7 +502,7 @@ h1 {
 #multiplayer-screen {
   position: fixed;
   inset: 0;
-  background: var(--background-color);
+  background: var(--bg);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -538,12 +540,13 @@ h1 {
 
 .text-input {
   width: 100%;
+  max-width: 700px;
   padding: 12px 20px;
   margin-bottom: 10px;
   font-size: 1rem;
-  border: 2px solid var(--cell-background);
+  border: 1px solid var(--border);
   border-radius: 50px;
-  background: var(--card-background);
+  background: var(--secondary-bg);
   color: var(--text-color);
   box-shadow: var(--card-shadow);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -555,8 +558,7 @@ h1 {
 
 .text-input:focus {
   outline: none;
-  border-color: var(--button-background);
-  box-shadow: 0 0 0 3px rgba(3, 136, 252, 0.2);
+  box-shadow: 0 0 10px var(--border);
 }
 
 .status-message {
@@ -574,7 +576,7 @@ h1 {
   gap: 10px;
   margin-top: 20px;
   padding: 15px;
-  background: var(--card-background);
+  background: var(--secondary-bg);
   border-radius: 15px;
   box-shadow: var(--card-shadow);
   width: 80%;
@@ -591,8 +593,9 @@ h1 {
   font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 700;
   letter-spacing: 2px;
-  background: var(--board-background);
+  background: var(--card-bg);
   color: var(--header-color);
+  border: 1px solid var(--border);
   padding: 10px 20px;
   border-radius: 10px;
   cursor: pointer;
@@ -606,7 +609,7 @@ h1 {
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  margin-top: 30px;
+  margin-top: 10px;
   padding: 10px;
   transition: opacity 0.2s ease;
 }
