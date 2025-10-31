@@ -739,6 +739,11 @@ h1 {
   transform: scale(0.96);
 }
 
+.button:focus {
+  border: none;
+  outline: none;
+}
+
 .primary-button:hover {
   background-color: var(--button-hover-bg);
 }
