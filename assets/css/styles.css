@@ -786,6 +786,10 @@ dialog[open]::backdrop {
     --board-gap: 16px;
   }
 
+  #start-screen h1 {
+  font-size: 2rem;
+}
+
   .start-screen-button,
   .start-screen-button-disabled,
   .restart-btn {
