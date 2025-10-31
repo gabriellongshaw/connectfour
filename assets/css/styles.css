@@ -773,6 +773,11 @@ dialog[open]::backdrop {
   margin-bottom: 5px;
 }
 
+.restart-btn i {
+  margin-right: 3px;
+  margin-bottom: 3px;
+}
+
 @media (min-width: 900px) {
   :root {
     --cell-size: 50px; 
