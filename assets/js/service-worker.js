@@ -1,3 +1,5 @@
+const CACHE_NAME = 'connect-four-v4'; 
+
 const urlsToCache = [
   '/',
   '../../index.html',

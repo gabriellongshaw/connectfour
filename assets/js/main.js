@@ -38,6 +38,7 @@ let confettiActive = false;
 let isRestarting = false; 
 
 const db = window.firebaseDB;
+const auth = window.firebaseAuth;
 const gamesCollection = collection(db, "games");
 
 let gameId = null;
@@ -77,6 +78,8 @@ function showRestartButton() {
   restartBtn.style.pointerEvents = "auto"; 
   restartBtn.classList.remove("fade-out");
   restartBtn.classList.add(gameMode === "online" ? "visible" : "offline");
+  restartBtn.style.display = 'inline-block';
+  restartBtn.style.visibility = 'visible';
 
   requestAnimationFrame(() => restartBtn.classList.add("fade-in"));
 }
@@ -88,6 +91,8 @@ function hideRestartButton() {
   setTimeout(() => {
     restartBtn.classList.remove("visible", "offline", "fade-out");
     restartBtn.style.pointerEvents = "none"; 
+    restartBtn.style.display = 'none';
+    restartBtn.style.visibility = 'hidden';
   }, 400); 
 }
 
@@ -126,6 +131,7 @@ function initGame(mode) {
 
 function initOfflineGame() {
   restartBtn.style.display = 'inline-block';
+  restartBtn.style.visibility = 'visible';
   restartBtn.classList.remove('visible', 'fade-in', 'fade-out');
   restartBtn.classList.add('offline');
   restartBtn.style.pointerEvents = "auto"; 
@@ -137,7 +143,6 @@ function initOfflineGame() {
 
 function initOnlineGame() {
   leaveGameBtn.classList.remove('hidden');
-  addOnlineEventListeners();
   multiplayerStatus.textContent = "";
   joinCodeInput.value = "";
 }
@@ -185,23 +190,6 @@ function initBoard() {
 
   firstInit = false; 
   gameActive = true;
-}
-
-function drawBoard() {
-  boardDiv.innerHTML = '';
-  boardDiv.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
-  boardState.forEach((row, r) => {
-    row.forEach((cell, c) => {
-      const cellDiv = document.createElement('div');
-      cellDiv.classList.add('cell');
-      cellDiv.dataset.row = r;
-      cellDiv.dataset.col = c;
-      if (cell !== 0) {
-        cellDiv.dataset.player = cell;
-      }
-      boardDiv.appendChild(cellDiv);
-    });
-  });
 }
 
 function updateOnlineBoard() {
@@ -444,7 +432,6 @@ function createFallingDisc(col, player, targetRow) {
 
 async function handleMove(col) {
   if (!gameActive || isAnimating) return;
-
   if (gameMode === 'online' && (playerNumber !== currentPlayer || !gameId)) return;
 
   const row = getAvailableRow(col);
@@ -465,9 +452,11 @@ async function handleMove(col) {
       updateInfo(`Player ${currentPlayer} wins! 🎉`);
       startConfetti();
       gameActive = false;
+      showRestartButton(); 
     } else if (boardState.flat().every(cell => cell !== 0)) {
       updateInfo("It's a draw!");
       gameActive = false;
+      showRestartButton(); 
     } else {
       currentPlayer = currentPlayer === 1 ? 2 : 1;
       updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
@@ -668,18 +657,24 @@ function generateRoomCode(length = 7) {
 }
 
 async function createGame() {
+  if (!auth.currentUser) {
+    multiplayerStatus.textContent = "Error: Please wait, establishing connection (or sign in is required).";
+    return;
+  }
+  
   multiplayerStatus.textContent = "";
   try {
     const shortCode = generateRoomCode(7);
 
     const newGameRef = await addDoc(gamesCollection, {
       shortCode: shortCode,
+      player1: auth.currentUser.uid,
       board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
       currentPlayer: 1,
       status: "waiting",
       winner: 0
     });
-
+    
     gameId = newGameRef.id;
     playerNumber = 1;
 
@@ -706,6 +701,11 @@ async function joinGame() {
     multiplayerStatus.textContent = "Please enter a game ID.";
     return;
   }
+  
+  if (!auth.currentUser) {
+    multiplayerStatus.textContent = "Error: Please wait, establishing connection (or sign in is required).";
+    return;
+  }
 
   try {
     multiplayerStatus.textContent = "Joining game...";
@@ -721,15 +721,18 @@ async function joinGame() {
     const docSnap = querySnapshot.docs[0];
     const data = docSnap.data();
 
-    if (!data || data.status !== "waiting") {
-      multiplayerStatus.textContent = "Game not found or already started.";
+    if (!data || data.status !== "waiting" || data.player1 === auth.currentUser.uid) {
+      multiplayerStatus.textContent = "Game not available, or you are already Player 1.";
       return;
     }
 
     gameId = docSnap.id;
     playerNumber = 2;
 
-    await updateDoc(doc(db, "games", gameId), { status: "playing" });
+    await updateDoc(doc(db, "games", gameId), { 
+        player2: auth.currentUser.uid, 
+        status: "playing" 
+    });
 
     await window.fadeOut(multiplayerScreen);
     multiplayerStatus.textContent = "";
@@ -749,6 +752,15 @@ async function backToOptions() {
 }
 
 async function backToStartFromRoomCode() {
+    if (gameId && playerNumber === 1) {
+        try {
+            await deleteDoc(doc(db, "games", gameId));
+        } catch(e) { }
+    }
+  if (unsubscribeWaitListener) { unsubscribeWaitListener(); unsubscribeWaitListener = null; }
+  gameId = null;
+  playerNumber = 0;
+
   await window.fadeOut(roomCodeDisplay);
   multiplayerStatus.textContent = "";
   await window.fadeIn(multiplayerOptions, 'flex');
@@ -805,20 +817,27 @@ if (data.restart === true) {
   gameActive = true;
   updateInfo("Player 1's turn");
 
-  setTimeout(() => {
+  setTimeout(async () => {
     boardDiv.style.opacity = 1;
     document.querySelectorAll('.counter').forEach(c => c.style.opacity = 1);
     boardDiv.classList.remove('shake'); 
     isAnimating = false; 
+
+    if (playerNumber === 1) {
+      try {
+        await updateDoc(doc(db, "games", gameId), { 
+            restart: false,
+            board: Array(ROWS * COLS).fill(0),
+            currentPlayer: 1,
+            status: "playing",
+            winner: 0
+        });
+      } catch (e) {
+        console.error("Failed to clear restart flag:", e);
+      }
+    }
   }, 700);
 
-  if (playerNumber === 1) {
-    try {
-      await updateDoc(doc(db, "games", gameId), { restart: false });
-    } catch (e) {
-      console.error("Failed to clear restart flag:", e);
-    }
-  }
   return;
 }
 
@@ -908,17 +927,19 @@ window.addEventListener('resize', () => {
   }
 });
 
-playOfflineBtn.addEventListener('click', async () => {
-  await window.fadeOut(startScreen);
-  await window.fadeIn(gameContainer, 'block');
+window.onAuthReady = function() {
+    playOfflineBtn.addEventListener('click', async () => {
+      await window.fadeOut(startScreen);
+      await window.fadeIn(gameContainer, 'block');
 
-  boardDiv.style.opacity = 0;
-  initBoard();
-  initGame('offline');
-});
+      initBoard();
+      initGame('offline');
+    });
 
-playOnlineBtn.addEventListener('click', async () => {
-  await window.fadeOut(startScreen);
-  await window.fadeIn(multiplayerScreen, 'flex');
-  initGame('online');
-});
+    playOnlineBtn.addEventListener('click', async () => {
+      await window.fadeOut(startScreen);
+      await window.fadeIn(multiplayerScreen, 'flex');
+      addOnlineEventListeners(); 
+      initGame('online');
+    });
+};

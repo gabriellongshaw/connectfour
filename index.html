@@ -110,7 +110,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-    
+    import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyB18M9FSegBBx8ZJnQmXVuWOE_GtAYT1D0",
       authDomain: "connect-four-ea92e.firebaseapp.com",
@@ -123,10 +124,13 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
     
     window.firebaseDB = db;
+    window.firebaseAuth = auth;
   </script>
 
+  <script src="assets/js/firebase-auth.js" type="module"></script>
   <script src="assets/js/main.js" type="module"></script>
   <script src="assets/js/hover-on-touch-screen.js" type="module"></script>
   <script src="assets/js/dialog.js" type="module"></script>
