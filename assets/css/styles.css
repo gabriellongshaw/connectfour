@@ -606,6 +606,7 @@ h1 {
   border-radius: 10px;
   cursor: pointer;
   user-select: all;
+  -webkit-user-select: all;
 }
 
 .back-button {
