@@ -728,8 +728,20 @@ async function joinGame() {
       multiplayerStatus.textContent = "Error: You are already the creator of this game (Player 1).";
       return;
     }
+
+    if (data.player2 === auth.currentUser.uid) {
+         gameId = docSnap.id;
+         playerNumber = 2;
+         
+         await window.fadeOut(multiplayerScreen);
+         multiplayerStatus.textContent = "";
+         await window.fadeIn(gameContainer, 'block');
+         resetUIForNewOnlineGame();
+         startOnlineGame();
+         return;
+    }
     
-    if (data.player2 && data.player2 !== auth.currentUser.uid) {
+    if (data.player2) {
          multiplayerStatus.textContent = "Error: A second player has already joined this game.";
          return;
     }
