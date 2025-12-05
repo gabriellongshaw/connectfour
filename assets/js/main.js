@@ -709,26 +709,33 @@ async function joinGame() {
 
   try {
     multiplayerStatus.textContent = "Joining game...";
-
     const q = query(gamesCollection, where("shortCode", "==", code));
     const querySnapshot = await getDocs(q);
-
     if (querySnapshot.empty) {
-      multiplayerStatus.textContent = "Game not found or already started.";
+      multiplayerStatus.textContent = "Error: Game not found. Check the code and try again.";
       return;
     }
 
     const docSnap = querySnapshot.docs[0];
     const data = docSnap.data();
 
-    if (!data || data.status !== "waiting" || data.player1 === auth.currentUser.uid) {
-      multiplayerStatus.textContent = "Game not available, or you are already Player 1.";
+    if (data.status !== "waiting") {
+      multiplayerStatus.textContent = "Error: This game has already started or is finished.";
       return;
+    }
+
+    if (data.player1 === auth.currentUser.uid) {
+      multiplayerStatus.textContent = "Error: You are already the creator of this game (Player 1).";
+      return;
+    }
+    
+    if (data.player2 && data.player2 !== auth.currentUser.uid) {
+         multiplayerStatus.textContent = "Error: A second player has already joined this game.";
+         return;
     }
 
     gameId = docSnap.id;
     playerNumber = 2;
-
     await updateDoc(doc(db, "games", gameId), { 
         player2: auth.currentUser.uid, 
         status: "playing" 
@@ -739,9 +746,10 @@ async function joinGame() {
     await window.fadeIn(gameContainer, 'block');
     resetUIForNewOnlineGame();
     startOnlineGame();
+
   } catch (err) {
       console.error("Error joining game:", err);
-      multiplayerStatus.textContent = "Error joining game. Try again.";
+      multiplayerStatus.textContent = "An unexpected error occurred while joining. Try again.";
   }
 }
 
