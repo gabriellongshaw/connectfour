@@ -546,7 +546,7 @@ h1 {
 
 .text-input {
   width: 100%;
-  max-width: 700px;
+  max-width: 500px;
   padding: 12px 20px;
   margin-bottom: 10px;
   font-size: 1rem;
@@ -554,7 +554,6 @@ h1 {
   border-radius: 50px;
   background: var(--secondary-bg);
   color: var(--text-color);
-  box-shadow: var(--card-shadow);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -579,12 +578,11 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   margin-top: 20px;
-  padding: 15px;
+  padding: 1rem;
   background: var(--secondary-bg);
-  border-radius: 15px;
-  box-shadow: var(--card-shadow);
+  border-radius: 20px;
   width: 80%;
   max-width: 300px;
 }
@@ -592,7 +590,7 @@ h1 {
 .room-code-section p {
   font-size: 1.1rem;
   font-weight: 500;
-  margin: 0;
+  margin: 0 0 1rem;
 }
 
 #room-code {
@@ -601,9 +599,8 @@ h1 {
   letter-spacing: 2px;
   background: var(--card-bg);
   color: var(--header-color);
-  border: 1px solid var(--border);
-  padding: 10px 20px;
-  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
   cursor: pointer;
   user-select: all;
   -webkit-user-select: all;
@@ -616,8 +613,8 @@ h1 {
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  margin-top: 10px;
-  padding: 10px;
+  margin-top: 0.5rem;
+  padding: 1rem;
   transition: opacity 0.2s ease;
 }
 
@@ -631,7 +628,7 @@ h1 {
   top: 10px;
   left: 10px;
   z-index: 1000;
-  padding: 8px 12px;
+  padding: 0.5rem 1rem;
   background-color: transparent;
   color: var(--text-color);
   border: none;
