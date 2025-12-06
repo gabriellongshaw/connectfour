@@ -1,4 +1,4 @@
-import {doc, getDoc, updateDoc, onSnapshot, collection, addDoc, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {doc, getDoc, updateDoc, onSnapshot, collection, addDoc, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 
 const startScreen = document.getElementById('start-screen');
 const multiplayerScreen = document.getElementById('multiplayer-screen');
@@ -598,7 +598,7 @@ leaveGameBtn.addEventListener('click', async () => {
     try {
       await deleteDoc(doc(db, "games", gameId));
     } catch (e) {
-
+      console.error("Error deleting game on leave:", e);
     }
   }
   handleLeaveGame();
@@ -719,7 +719,7 @@ async function joinGame() {
     const docSnap = querySnapshot.docs[0];
     const data = docSnap.data();
 
-    if (data.status !== "waiting") {
+    if (data.status !== "waiting" && data.player2 !== auth.currentUser.uid) {
       multiplayerStatus.textContent = "Error: This game has already started or is finished.";
       return;
     }
@@ -775,7 +775,9 @@ async function backToStartFromRoomCode() {
     if (gameId && playerNumber === 1) {
         try {
             await deleteDoc(doc(db, "games", gameId));
-        } catch(e) { }
+        } catch(e) { 
+            console.error("Error deleting game on back to start:", e);
+        }
     }
   if (unsubscribeWaitListener) { unsubscribeWaitListener(); unsubscribeWaitListener = null; }
   gameId = null;
@@ -962,4 +964,34 @@ window.onAuthReady = function() {
       addOnlineEventListeners(); 
       initGame('online');
     });
+};
+
+window.leaveGame = async function() {
+  if (!gameId) return;
+  
+  try {
+    const gameRef = doc(db, "games", gameId);
+    const snap = await getDoc(gameRef);
+    
+    if (snap.exists()) {
+      const data = snap.data();
+      
+      if (data.player1 === auth.currentUser.uid) {
+        await deleteDoc(gameRef);
+      } else if (data.player2 === auth.currentUser.uid) {
+        await updateDoc(gameRef, {
+          player2: null,
+          status: "waiting"
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Leave game error", err);
+  }
+  
+  gameId = null;
+  playerNumber = null;
+  
+  await window.fadeOut(gameContainer);
+  await window.fadeIn(multiplayerScreen, "block");
 };
