@@ -1,0 +1,54 @@
+:root {
+  --bg: #ffffff;
+  --secondary-bg: #fefefe;
+  --text-color: #000000;
+  --credits-link-color: #ffffff;
+  --header-color: #000000;
+  --card-bg: #eee;
+  --card-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  --button-text: #4285F4;
+  --button-bg: #e8f0fe;
+  --button-hover-bg: rgba(66, 133, 244, 0.08);
+  --board-bg: #fefefe;
+  --cell-bg: #d4e0e9;
+  --cell-hover-bg: #a9c6d6;
+  --winning-glow: #f1c40f;
+  --player1-color: #f55a5a;
+  --player2-color: #f1c40f;
+  --blue-start: #007bff;
+  --blue-end: #00c6ff;
+  --hover-blue-start: #0056b3;
+  --hover-blue-end: #00a0d4;
+  --dialog-bg: #FFFFFF;
+  --dialog-text: #1F1F1F;
+  --dialog-secondary-text: #616161;
+  --select-bg: #F0F0F0;
+  --border: #ddd;
+  --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --cell-size: clamp(40px, 7.5vw, 80px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --secondary-bg: #202020;
+    --text-color: #ffffff;
+    --header-color: #ffffff;
+    --credits-link-color: #ffffff;
+    --card-bg: #2c2c2c;
+    --card-shadow: 0 0px 20px rgba(150, 150, 150, 0.1);
+    --button-text: #8AB4F8;
+    --button-bg: #2d2e30;
+    --button-hover-bg: #262729;
+    --board-bg: #1f1f1f;
+    --cell-bg: #3c3c3c;
+    --cell-hover-bg: #4a4a4a;
+    --winning-glow: #f1c40f;
+    --player1-color: #f55a5a;
+    --player2-color: #f1c40f;
+    --dialog-bg: #202020;
+    --dialog-text: #E0E0E0;
+    --dialog-secondary-text: #B0B0B0;
+    --border: #333;
+  }
+}

@@ -1,0 +1,73 @@
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes boardShake {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  20%, 60% {
+    transform: translateX(-15px) rotate(-5deg);
+  }
+  40%, 80% {
+    transform: translateX(15px) rotate(5deg);
+  }
+}
+
+@keyframes fadeInBoard {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulseWin {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 15px 5px var(--winning-glow);
+  }
+  100% {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px 10px var(--winning-glow);
+  }
+}
+
+@keyframes dropDisc {
+  0% {
+    transform: translate(Y(calc(-100% - var(--cell-size))));
+  }
+  100% {
+    transform: translate(0);
+  }
+}
+
+@media (min-width: 900px) {
+  :root {
+    --cell-size: 50px; 
+    --button-font-size: 1rem;
+    --info-font-size: 1rem;
+    --board-gap: 16px;
+  }
+  #start-screen h1 {
+    font-size: 2rem;
+  }
+  .start-screen-button,
+  .start-screen-button-disabled,
+  .restart-btn {
+    width: 50%;
+    max-width: 350px;
+  }
+  .start-screen-button i,
+  .back-button i,
+  .restart-btn i,
+  .leave-game i {
+    margin-right: 3px;
+    margin-top: 0px;
+    vertical-align: middle;
+  }
+}
