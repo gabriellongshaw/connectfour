@@ -129,8 +129,10 @@
   opacity: 0.3;
 }
 
+/* ... (rest of your CSS) */
+
 .restart-btn {
-  display: inline-block;
+  display: none; /* Default state: hidden */
   padding: 0.7rem 1.5rem;
   font-size: clamp(1rem, 3vw, 1.3rem);
   font-weight: 600;
@@ -141,7 +143,7 @@
   margin: 10px 0;
   box-shadow: var(--card-shadow);
   transition: transform 0.4s ease, background-position 0.4s ease,
-    box-shadow 0.4s ease, opacity 0.4s ease;
+    box-shadow 0.4s ease, opacity 0.4s ease-in-out; 
   background: linear-gradient(
     45deg,
     var(--blue-start),
@@ -156,9 +158,16 @@
 }
 
 .restart-btn.visible,
-.restart-btn.offline {
+.restart-btn.offline,
+.restart-btn.fade-in {
   opacity: 1;
   pointer-events: auto;
+  display: inline-block; 
+}
+
+.restart-btn.fade-out {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .restart-btn:hover,
