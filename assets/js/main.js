@@ -78,26 +78,19 @@ function showRestartButton() {
   restartBtn.style.pointerEvents = "auto"; 
   restartBtn.classList.remove("fade-out");
   
-  // FIX 1: Set display to block/inline-block immediately to enable the transition
   restartBtn.style.display = 'inline-block';
   restartBtn.style.visibility = 'visible';
 
-  // Ensure the correct class is set for styling/targeting (e.g., setting the final opacity)
   restartBtn.classList.add(gameMode === "online" ? "visible" : "offline"); 
   
-  // FIX 2: Use requestAnimationFrame to ensure the browser registers the display change 
-  // before applying the final opacity class, triggering the smooth transition.
   requestAnimationFrame(() => restartBtn.classList.add("fade-in"));
 }
 
 function hideRestartButton() {
-  // Start fade out transition
   restartBtn.classList.remove("fade-in");
   restartBtn.classList.add("fade-out");
 
-  // FIX 3: Set display to 'none' only AFTER the opacity transition completes (400ms)
   setTimeout(() => {
-    // Remove all visibility classes and disable interaction after transition
     restartBtn.classList.remove("visible", "offline", "fade-out");
     restartBtn.style.pointerEvents = "none"; 
     restartBtn.style.display = 'none';
@@ -124,7 +117,6 @@ function resetUIForNewOnlineGame() {
   stopConfetti();
   updateInfo('');
 
-  // Use the function to ensure smooth hiding
   hideRestartButton(); 
   leaveGameBtn.classList.remove('hidden');
   initBoard();
@@ -140,7 +132,6 @@ function initGame(mode) {
 }
 
 function initOfflineGame() {
-  // *** THE FIX: Ensure button is visible immediately in offline mode ***
   showRestartButton(); 
   restartBtn.classList.add('offline');
 
@@ -460,11 +451,9 @@ async function handleMove(col) {
       updateInfo(`Player ${currentPlayer} wins! 🎉`);
       startConfetti();
       gameActive = false;
-      // Button is already visible, no need to call showRestartButton()
     } else if (boardState.flat().every(cell => cell !== 0)) {
       updateInfo("It's a draw!");
       gameActive = false;
-      // Button is already visible, no need to call showRestartButton()
     } else {
       currentPlayer = currentPlayer === 1 ? 2 : 1;
       updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
@@ -505,7 +494,6 @@ async function handleMove(col) {
     } finally {
       if ((winner || isDraw)) {
         gameActive = false;
-        // End-game UI handled by listener
       } else {
         currentPlayer = newPlayer;
       }
@@ -518,10 +506,8 @@ async function animateRestart() {
   if (isAnimating) return;
   isAnimating = true;
 
-  // Stop confetti
   stopConfetti(); 
   
-  // Only hide the button if we are in online mode, as offline mode requires it to stay visible
   if (gameMode === 'online') {
       hideRestartButton(); 
   }
@@ -554,8 +540,6 @@ async function handleGameRestart() {
 
   isAnimating = false;
   
-  // Ensure the button is hidden only if we are transitioning out of a win/draw 
-  // in Online mode, otherwise it remains visible (Offline mode is handled by animateRestart)
   if (gameMode === 'online') {
       hideRestartButton(); 
   }
@@ -565,7 +549,6 @@ async function handleOfflineRestart() {
     if (isRestarting) return;
     isRestarting = true;
 
-    // Reset board and animation, button remains visible due to fix in animateRestart
     await handleGameRestart();
     
     setTimeout(() => {
@@ -581,7 +564,6 @@ async function handleOnlineRestart() {
   }
 
   try {
-    // Player 1 sets the restart flag
     await updateDoc(doc(db, "games", gameId), {
       restart: true,
       board: Array(ROWS * COLS).fill(0),
@@ -589,7 +571,6 @@ async function handleOnlineRestart() {
       status: "playing",
       winner: 0
     });
-    // Button is hidden instantly, the restart animation and final reset are handled by subscribeToGame
     hideRestartButton(); 
   } catch (e) {
     console.error("Error restarting online game:", e);
@@ -622,10 +603,10 @@ leaveGameBtn.addEventListener('click', async () => {
       console.error("Error deleting game on leave:", e);
     }
   }
-  handleLeaveGame();
+  await handleLeaveGame();
 });
 
-function handleLeaveGame() {
+async function handleLeaveGame() {
   if (gameMode === 'online') {
     if (unsubscribeWaitListener) { unsubscribeWaitListener(); unsubscribeWaitListener = null; }
     if (unsubscribeGameListener) { unsubscribeGameListener(); unsubscribeGameListener = null; }
@@ -642,11 +623,10 @@ function handleLeaveGame() {
   stopConfetti();
 
   leaveGameBtn.classList.add('hidden'); 
-  // Always hide button when leaving to ensure it's gone on the start screen
   hideRestartButton(); 
 
-  window.fadeOut(gameContainer);
-  window.fadeIn(startScreen, 'flex'); 
+  await window.fadeOut(gameContainer);
+  await window.fadeIn(startScreen, 'flex'); 
 
   setTimeout(() => { iInitiatedLeave = false; }, 0);
 }
@@ -658,7 +638,6 @@ function endGameOpponentLeft(previousData) {
   gameActive = false;
   updateInfo(`Opponent left the game. You win! 🎉`);
   startConfetti();
-  // Only Player 1 can restart online games
   if (playerNumber === 1) {
       showRestartButton();
   } else {
@@ -701,7 +680,7 @@ async function createGame() {
       currentPlayer: 1,
       status: "waiting",
       winner: 0,
-      restart: false // Initialize restart flag
+      restart: false 
     });
     
     gameId = newGameRef.id;
@@ -801,7 +780,6 @@ async function backToOptions() {
 }
 
 async function backToStartFromRoomCode() {
-    // If Player 1 leaves while waiting, delete the game
     if (gameId && playerNumber === 1) {
         try {
             await deleteDoc(doc(db, "games", gameId));
@@ -857,14 +835,12 @@ function subscribeToGame() {
     const newFlat = data.board;
 
 if (data.restart === true) {
-  // P2 gets the message, all players handle the animation and reset
   if (playerNumber === 2) {
     showRestartMessage();
   }
 
   await handleGameRestart(); 
 
-  // Only Player 1 clears the flag after reset is visually complete
   if (playerNumber === 1) {
     try {
       await updateDoc(doc(db, "games", gameId), { 
@@ -893,17 +869,14 @@ if (data.restart === true) {
         const winningCells = getWinningCells(data.winner);
         if (winningCells) {
           pulseWinningCells(winningCells);
-          // All players start confetti
           startConfetti();
         }
         updateInfo(`Player ${data.winner} wins! 🎉`);
       } else {
         updateInfo("It's a draw!");
-        // All players start confetti on draw
         startConfetti();
       }
 
-      // Only show restart button for Player 1
       if (playerNumber === 1) {
         showRestartButton();
       } else {
