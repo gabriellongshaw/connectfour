@@ -45,19 +45,16 @@
   <div id="start-screen" class="screen active fade">
     <h1>Connect Four</h1>
     <button id="play-offline" class="start-screen-button"><i class="fa-solid fa-user"></i> Play Offline</button>
-    <button id="play-online" class="start-screen-button">
-    <i class="fa-solid fa-user-group"></i> Play Online
-    </button>
+    <button id="play-online" class="start-screen-button"><i class="fa-solid fa-user-group"></i> Play Online</button>
     <div class="credits-container">
-  <p class="credits created-by">
-    Created by <a class="credits-link" target="_blank" href="https://www.gabriellongshaw.co.uk">Gabriel Longshaw</a>
-  </p>
-  <p class="credits created-by">
-    & <a class="credits-link" target="_blank" href="https://www.bocajsolutions.co.uk">bocajthomas</a>
-  </p>
-</div>
+      <p class="credits created-by">
+        Created by <a class="credits-link" target="_blank" href="https://www.gabriellongshaw.co.uk">Gabriel Longshaw</a>
+      </p>
+      <p class="credits created-by">
+        & <a class="credits-link" target="_blank" href="https://www.bocajsolutions.co.uk">bocajthomas</a>
+      </p>
+    </div>
   </div>
-  
   <div id="multiplayer-screen" class="screen" style="display:none;">
     <h1>Online Multiplayer</h1>
     <div id="multiplayer-options">
@@ -91,22 +88,23 @@
     </div>
   </div>
   
-<dialog id="modal" class="dialog">
-  <div class="modal-header">
-    <span class="material-symbols-rounded modal-icon">language</span>
-    <h2>Browser</h2>
-  </div>
-  <div class="modal-body">
-    <p class="modal-body-text">
-      When you create an online game, you get a unique code. If you open this website within an app to share that code with a friend, your session will be reset, giving you a different code when you open the website again. To avoid this, we recommend opening the website in an external browser like Chrome or Safari.
-    </p>
-  </div>
-  <div class="modal-actions">
-    <button id="close-modal" class="button primary-button">
-      Close
-    </button>
-  </div>
-</dialog>
+  <dialog id="modal" class="dialog">
+    <div class="modal-header">
+      <span class="material-symbols-rounded modal-icon">language</span>
+      <h2>Browser</h2>
+    </div>
+    
+    <div class="modal-body">
+      <p class="modal-body-text">
+        When you create an online game, you get a unique code. If you open this website within an app to share that code with a friend, your session will be reset, giving you a different code when you open the website again. To avoid this, we recommend opening the website in an external browser like Chrome or Safari.
+      </p>
+    </div>
+    <div class="modal-actions">
+      <button id="close-modal" class="button primary-button">
+        Close
+      </button>
+    </div>
+  </dialog>
 
   <canvas id="confetti-canvas"></canvas>
   <div id="backdrop" class="backdrop"></div>
@@ -150,6 +148,6 @@
         });
     });
   }
-</script>
+  </script>
 </body>
 </html>

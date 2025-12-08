@@ -156,7 +156,7 @@ function addOnlineEventListeners() {
   backToOptionsBtn.addEventListener('click', backToOptions);
   backToStartBtn.addEventListener('click', backToStartFromRoomCode);
   backToStartFromMultiplayerBtn.addEventListener('click', backToStartFromMultiplayer);
-  leaveGameBtn.addEventListener('click', leaveGame);
+  leaveGameBtn.addEventListener('click', leaveGameBtn);
 }
 
 let firstInit = true;
