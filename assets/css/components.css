@@ -129,10 +129,8 @@
   opacity: 0.3;
 }
 
-/* ... (rest of your CSS) */
-
 .restart-btn {
-  display: none; /* Default state: hidden */
+  display: none;
   padding: 0.7rem 1.5rem;
   font-size: clamp(1rem, 3vw, 1.3rem);
   font-weight: 600;

@@ -1,69 +1,54 @@
 :root {
-  /* General UI */
-  --bg: #f8f9fa; /* Lighter background */
-  --secondary-bg: #ffffff; /* Card/Input background */
-  --text-color: #212529; /* Dark text */
+  --bg: #ffffff;
+  --secondary-bg: #f9f9f9;
+  --text-color: #000000;
+  --credits-link-color: #ffffff;
   --header-color: #000000;
-  --credits-link-color: #495057;
-  --card-bg: #e9ecef; /* Light gray card */
-  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --border: #dee2e6; /* Light border */
-  --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-
-  /* Buttons (Standard) */
-  --button-text: #007bff; /* Blue text */
+  --card-bg: #eee;
+  --card-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  --button-text: #4285F4;
   --button-bg: #e8f0fe;
-  --button-hover-bg: rgba(0, 123, 255, 0.1);
-
-  /* Gradient Buttons (Primary) */
-  --blue-start: #007bff; /* Vibrant Blue */
-  --blue-end: #00c6ff; /* Cyan */
-  --hover-blue-start: #0056b3; 
+  --button-hover-bg: rgba(66, 133, 244, 0.08);
+  --board-bg: #fefefe;
+  --cell-bg: #d4e0e9;
+  --cell-hover-bg: #a9c6d6;
+  --winning-glow: #f1c40f;
+  --player1-color: #f55a5a;
+  --player2-color: #f1c40f;
+  --blue-start: #007bff;
+  --blue-end: #00c6ff;
+  --hover-blue-start: #0056b3;
   --hover-blue-end: #00a0d4;
-
-  /* Dialogs */
   --dialog-bg: #FFFFFF;
   --dialog-text: #1F1F1F;
-  --dialog-secondary-text: #6c757d; /* Muted gray text */
-
-  /* Connect 4 Board */
-  --board-bg: #ced4da; /* Slightly darker board background */
-  --cell-bg: #ffffff; /* White cell background for contrast */
-  --cell-hover-bg: #f1f3f5;
-  --winning-glow: #ffc107; /* Amber/Gold glow */
-  --player1-color: #dc3545; /* Red */
-  --player2-color: #ffc107; /* Yellow */
+  --dialog-secondary-text: #616161;
+  --select-bg: #F0F0F0;
+  --border: #ddd;
+  --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --cell-size: clamp(40px, 7.5vw, 80px);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* General UI - Dark Mode */
-    --bg: #121212; /* Deep background */
-    --secondary-bg: #1e1e1e; /* Card/Input background */
-    --text-color: #e0e0e0; /* Light text */
+    --bg: #1a1a1a;
+    --secondary-bg: #202020;
+    --text-color: #ffffff;
     --header-color: #ffffff;
-    --credits-link-color: #bdbdbd;
+    --credits-link-color: #ffffff;
     --card-bg: #2c2c2c;
-    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --border: #333333;
-
-    /* Buttons (Standard) - Dark Mode */
-    --button-text: #8ab4f8;
+    --card-shadow: 0 0px 20px rgba(150, 150, 150, 0.1);
+    --button-text: #8AB4F8;
     --button-bg: #2d2e30;
-    --button-hover-bg: #3c4043;
-
-    /* Dialogs - Dark Mode */
-    --dialog-bg: #1e1e1e;
+    --button-hover-bg: #262729;
+    --board-bg: #1f1f1f;
+    --cell-bg: #3c3c3c;
+    --cell-hover-bg: #4a4a4a;
+    --winning-glow: #f1c40f;
+    --player1-color: #f55a5a;
+    --player2-color: #f1c40f;
+    --dialog-bg: #202020;
     --dialog-text: #E0E0E0;
     --dialog-secondary-text: #B0B0B0;
-
-    /* Connect 4 Board - Dark Mode */
-    --board-bg: #1f1f1f; /* Dark blue/gray for board */
-    --cell-bg: #3c3c3c; /* Cell background */
-    --cell-hover-bg: #4a4a4a;
-    --winning-glow: #ffc107;
-    --player1-color: #dc3545;
-    --player2-color: #ffc107;
+    --border: #333;
   }
 }
