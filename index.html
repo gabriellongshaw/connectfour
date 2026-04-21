@@ -68,16 +68,13 @@
       <button id="join-game-btn" class="start-screen-button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Game</button>
       <button id="back-to-options-btn" class="back-button">Back to Options</button>
     </div>
-
     <p id="multiplayer-status" class="status-message"></p>
-
     <div id="room-code-display" class="room-code-section" style="display: none">
       <p>Share this code with a friend:</p>
       <span id="room-code"></span>
       <button id="back-to-start-btn" class="back-button">Back</button>
     </div>
   </div>
-  
   <div id="game-container" class="game-container" style="display: none">
     <h1>Connect Four</h1>
     <div id="board" class="board" aria-label="Connect Four board" role="grid"></div>
@@ -87,13 +84,11 @@
       <button id="leaveGameBtn" class="leave-game">Leave Game</button>
     </div>
   </div>
-  
   <dialog id="modal" class="dialog">
     <div class="modal-header">
       <span class="material-symbols-rounded modal-icon">language</span>
       <h2>Browser</h2>
     </div>
-    
     <div class="modal-body">
       <p class="modal-body-text">
         When you create an online game, you get a unique code. If you open this website within an app to share that code with a friend, your session will be reset, giving you a different code when you open the website again. To avoid this, we recommend opening the website in an external browser like Chrome or Safari.
@@ -105,10 +100,8 @@
       </button>
     </div>
   </dialog>
-
   <canvas id="confetti-canvas"></canvas>
   <div id="backdrop" class="backdrop"></div>
-  
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
@@ -131,7 +124,6 @@
     window.firebaseDB = db;
     window.firebaseAuth = auth;
   </script>
-
   <script src="assets/js/firebase-auth.js" type="module"></script>
   <script src="assets/js/main.js" type="module"></script>
   <script src="assets/js/hover-on-touch-screen.js" type="module"></script>
