@@ -1,0 +1,96 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html {
+  width: 100%;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 120, 120, 0.4) transparent;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--bg);
+  color: var(--text);
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+  transition: background 0.2s, color 0.2s;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: rgba(120, 120, 120, 0.4); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(120, 120, 120, 0.65); }
+
+h1 {
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--header-color);
+  font-size: clamp(1.7rem, 7vw, 3rem);
+  margin-bottom: 20px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#confetti-canvas {
+  position: fixed;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10001;
+  display: none;
+}
+
+.start-screen-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.85rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--font-family);
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  color: #ffffff;
+  margin: 8px 0;
+  width: 80%;
+  max-width: 300px;
+  background: linear-gradient(45deg, #007bff, #00c6ff, #007bff, #00c6ff);
+  background-size: 300% 300%;
+  background-position: 50% 0;
+  box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3);
+  transition: transform 0.25s ease, background-position 0.4s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.start-screen-button:hover,
+.start-screen-button.hover {
+  transform: scale(1.05);
+  background-position: 0 100%;
+  box-shadow: 0 0 20px rgba(0, 123, 255, 0.6), 0 0 30px rgba(0, 198, 255, 0.4);
+}
+
+.start-screen-button:active {
+  transform: scale(0.97);
+}

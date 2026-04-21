@@ -1,997 +1,247 @@
-import {doc, getDoc, updateDoc, onSnapshot, collection, addDoc, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { applySystemTheme } from './core/theme.js';
+import { fadeIn, fadeOut, showInstant, hideInstant } from './core/utils.js';
+import { waitForAuth } from './core/firebase.js';
+import { initConfetti, resizeConfetti, stopConfetti } from './components/confetti.js';
+import { initOfflineRefs, startOfflineGame, handleOfflineMove, restartOfflineGame } from './components/offline.js';
+import {
+  initOnlineRefs, createGame, joinGame, handleOnlineMove,
+  requestOnlineRestart, leaveOnlineGame, cancelWaiting
+} from './components/online.js';
 
-const startScreen = document.getElementById('start-screen');
-const multiplayerScreen = document.getElementById('multiplayer-screen');
-const gameContainer = document.getElementById('game-container');
-const playOfflineBtn = document.getElementById('play-offline');
-const playOnlineBtn = document.getElementById('play-online');
-const multiplayerOptions = document.getElementById('multiplayer-options');
-const joinInputSection = document.getElementById('join-input-section');
-const roomCodeDisplay = document.getElementById('room-code-display');
-const multiplayerStatus = document.getElementById('multiplayer-status');
-const createGameBtn = document.getElementById('create-game-btn');
-const showJoinScreenBtn = document.getElementById('show-join-screen-btn');
-const joinCodeInput = document.getElementById('join-code-input');
-const joinGameBtn = document.getElementById('join-game-btn');
-const backToOptionsBtn = document.getElementById('back-to-options-btn');
-const backToStartBtn = document.getElementById('back-to-start-btn');
-const backToStartFromMultiplayerBtn = document.getElementById('back-to-start-from-multiplayer');
-const boardDiv = document.getElementById('board');
-const infoDiv = document.getElementById('info');
-const restartBtn = document.getElementById('restartBtn');
-const leaveGameBtn = document.getElementById('leaveGameBtn');
-const roomCodeSpan = document.getElementById('room-code');
-const confettiCanvas = document.getElementById('confetti-canvas');
-const confettiCtx = confettiCanvas.getContext('2d');
-const restartMessage = document.getElementById('restart-message');
+const $ = id => document.getElementById(id);
 
-const ROWS = 6;
-const COLS = 7;
+const startScreen       = $('start-screen');
+const multiplayerScreen = $('multiplayer-screen');
+const gameContainer     = $('game-container');
 
-let gameMode = null;
-let currentPlayer = 1;
-let boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-let gameActive = false;
-let isAnimating = false;
-let confettiParticles = [];
-let confettiActive = false;
-let isRestarting = false; 
+const playOfflineBtn    = $('play-offline');
+const playOnlineBtn     = $('play-online');
 
-const db = window.firebaseDB;
-const auth = window.firebaseAuth;
-const gamesCollection = collection(db, "games");
+const mpOptions         = $('multiplayer-options');
+const joinSection       = $('join-section');
+const roomCodeDisplay   = $('room-code-display');
 
-let gameId = null;
-let playerNumber = 0;
-let unsubscribeWaitListener = null;
-let unsubscribeGameListener = null;
+const createGameBtn     = $('create-game-btn');
+const showJoinBtn       = $('show-join-btn');
+const joinGameBtn       = $('join-game-btn');
+const joinCodeInput     = $('join-code-input');
 
-let lastGameData = null;
+const backFromMpBtn     = $('back-from-mp');
+const backToOptionsBtn  = $('back-to-options');
+const backFromWaitBtn   = $('back-from-wait');
 
-let iInitiatedLeave = false;
-let onlineEventsBound = false; 
+const boardEl           = $('board');
+const infoEl            = $('info');
+const restartBtn        = $('restart-btn');
+const leaveBtn          = $('leave-btn');
+const statusEl          = $('multiplayer-status');
+const roomCodeSpan      = $('room-code');
+const modal             = $('browser-modal');
+const closeModalBtn     = $('close-modal');
+const backdrop          = $('backdrop');
 
-const playerColors = {
-  1: 'Red',
-  2: 'Yellow'
-};
+let gameMode  = null;
+let authReady = false;
 
-window.fadeOut = (element, duration = 400) => {
-  element.style.transition = `opacity ${duration}ms`;
-  element.style.opacity = 0;
-  return new Promise(resolve => setTimeout(() => {
-    element.style.display = 'none';
-    resolve();
-  }, duration));
-};
+function init() {
+  applySystemTheme();
+  initConfetti();
 
-window.fadeIn = (element, displayType = 'flex', duration = 400) => {
-  element.style.opacity = 0;
-  element.style.display = displayType;
-  element.style.transition = `opacity ${duration}ms`;
-  void element.offsetWidth;
-  element.style.opacity = 1;
-  return new Promise(resolve => setTimeout(resolve, duration));
-};
+  // Set initial visibility — start screen visible, everything else hidden
+  showInstant(startScreen);
+  hideInstant(multiplayerScreen);
+  hideInstant(gameContainer);
+  hideInstant(joinSection);
+  hideInstant(roomCodeDisplay);
 
-function showRestartButton() {
-  restartBtn.style.pointerEvents = "auto"; 
-  restartBtn.classList.remove("fade-out");
-  
-  restartBtn.style.display = 'inline-block';
-  restartBtn.style.visibility = 'visible';
+  initOfflineRefs({ boardEl, infoEl, restartBtn });
+  initOnlineRefs({ boardEl, infoEl, restartBtn, leaveBtn, statusEl });
 
-  restartBtn.classList.add(gameMode === "online" ? "visible" : "offline"); 
-  
-  requestAnimationFrame(() => restartBtn.classList.add("fade-in"));
+  bindEvents();
+  showModal();
+
+  waitForAuth()
+    .then(() => { authReady = true; })
+    .catch(err => console.error('Auth failed:', err));
 }
 
-function hideRestartButton() {
-  restartBtn.classList.remove("fade-in");
-  restartBtn.classList.add("fade-out");
+function bindEvents() {
+  playOfflineBtn.addEventListener('click', async () => {
+    gameMode = 'offline';
+    await fadeOut(startScreen);
+    showInstant(gameContainer);
+    startOfflineGame();
+    showLeaveBtn();
+    await fadeIn(gameContainer);
+  });
 
-  setTimeout(() => {
-    restartBtn.classList.remove("visible", "offline", "fade-out");
-    restartBtn.style.pointerEvents = "none"; 
-    restartBtn.style.display = 'none';
-    restartBtn.style.visibility = 'hidden';
-  }, 400); 
+  playOnlineBtn.addEventListener('click', async () => {
+    if (!authReady) {
+      if (statusEl) statusEl.textContent = 'Connecting… please wait.';
+      return;
+    }
+    gameMode = 'online';
+    await fadeOut(startScreen);
+    showMpOptions();
+    showInstant(multiplayerScreen);
+    await fadeIn(multiplayerScreen);
+  });
+
+  createGameBtn.addEventListener('click', async () => {
+    if (!authReady) { if (statusEl) statusEl.textContent = 'Connecting… please wait.'; return; }
+    await fadeOut(mpOptions);
+    showInstant(roomCodeDisplay);
+    await fadeIn(roomCodeDisplay);
+    createGame(
+      code => { roomCodeSpan.textContent = code; },
+      async () => {
+        await fadeOut(multiplayerScreen);
+        showInstant(gameContainer);
+        startOnlineGameUI();
+        await fadeIn(gameContainer);
+      }
+    );
+  });
+
+  showJoinBtn.addEventListener('click', async () => {
+    await fadeOut(mpOptions);
+    showInstant(joinSection);
+    await fadeIn(joinSection);
+  });
+
+  joinGameBtn.addEventListener('click', async () => {
+    if (!authReady) { if (statusEl) statusEl.textContent = 'Connecting… please wait.'; return; }
+    joinCodeInput.value = joinCodeInput.value.trim().toUpperCase();
+    await joinGame(joinCodeInput.value, async () => {
+      await fadeOut(multiplayerScreen);
+      showInstant(gameContainer);
+      startOnlineGameUI();
+      await fadeIn(gameContainer);
+    });
+  });
+
+  joinCodeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') joinGameBtn.click();
+  });
+
+  backFromMpBtn.addEventListener('click', async () => {
+    await fadeOut(multiplayerScreen);
+    resetMpUI();
+    showInstant(startScreen);
+    await fadeIn(startScreen);
+  });
+
+  backToOptionsBtn.addEventListener('click', async () => {
+    await fadeOut(joinSection);
+    hideInstant(joinSection);
+    showInstant(mpOptions);
+    await fadeIn(mpOptions);
+    if (statusEl) statusEl.textContent = '';
+  });
+
+  backFromWaitBtn.addEventListener('click', async () => {
+    await cancelWaiting();
+    await fadeOut(roomCodeDisplay);
+    hideInstant(roomCodeDisplay);
+    showInstant(mpOptions);
+    await fadeIn(mpOptions);
+    if (statusEl) statusEl.textContent = '';
+  });
+
+  boardEl.addEventListener('click', e => {
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    const col = Number(cell.dataset.col);
+    if (gameMode === 'offline') handleOfflineMove(col);
+    else if (gameMode === 'online') handleOnlineMove(col);
+  });
+
+  restartBtn.addEventListener('click', () => {
+    if (gameMode === 'offline') restartOfflineGame();
+    else if (gameMode === 'online') requestOnlineRestart();
+  });
+
+  leaveBtn.addEventListener('click', async () => {
+    if (gameMode === 'online') await leaveOnlineGame();
+    await returnToStart();
+  });
+
+  closeModalBtn?.addEventListener('click', closeModal);
+  backdrop?.addEventListener('click', closeModal);
+
+  window.addEventListener('resize', resizeConfetti);
+
+  addTouchHover('.start-screen-button, .btn-ghost, #leave-btn, #restart-btn');
 }
 
-function showRestartMessage() {
-  restartMessage.textContent = "Player 1 restarted the game.";
-  restartMessage.classList.add('visible');
-  setTimeout(() => {
-      restartMessage.classList.remove('visible');
-  }, 2000); 
+function startOnlineGameUI() {
+  showLeaveBtn();
 }
 
-function resetUIForNewOnlineGame() {
-  lastGameData = null;
-  gameActive = true;           
-  isAnimating = false;
-  currentPlayer = 1;
-  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-
-  hideWinningPulse();
+async function returnToStart() {
   stopConfetti();
-  updateInfo('');
+  restartBtn.style.display = 'none';
+  leaveBtn.style.display = 'none';
+  boardEl.style.display = 'none';
+  gameMode = null;
 
-  hideRestartButton(); 
-  leaveGameBtn.classList.remove('hidden');
-  initBoard();
+  const fromGame = !gameContainer.classList.contains('is-hidden');
+  const fromMp   = !multiplayerScreen.classList.contains('is-hidden');
+
+  if (fromGame) await fadeOut(gameContainer);
+  if (fromMp)   await fadeOut(multiplayerScreen);
+
+  resetMpUI();
+  showInstant(startScreen);
+  await fadeIn(startScreen);
 }
 
-function initGame(mode) {
-  gameMode = mode;
-  if (gameMode === 'offline') {
-    initOfflineGame();
-  } else if (gameMode === 'online') {
-    initOnlineGame();
-  }
+function showMpOptions() {
+  showInstant(mpOptions);
+  hideInstant(joinSection);
+  hideInstant(roomCodeDisplay);
+  if (statusEl) statusEl.textContent = '';
+  joinCodeInput.value = '';
 }
 
-function initOfflineGame() {
-  showRestartButton(); 
-  restartBtn.classList.add('offline');
-
-  leaveGameBtn.classList.remove('hidden');
-  window.fadeIn(boardDiv, 'grid');
-  updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
+function resetMpUI() {
+  showInstant(mpOptions);
+  hideInstant(joinSection);
+  hideInstant(roomCodeDisplay);
+  if (statusEl) statusEl.textContent = '';
+  joinCodeInput.value = '';
+  roomCodeSpan.textContent = '';
 }
 
-function initOnlineGame() {
-  leaveGameBtn.classList.remove('hidden');
-  multiplayerStatus.textContent = "";
-  joinCodeInput.value = "";
+function showLeaveBtn() {
+  leaveBtn.style.display = 'block';
 }
 
-function addOnlineEventListeners() {
-  if (onlineEventsBound) return; 
-  onlineEventsBound = true;
-
-  createGameBtn.addEventListener('click', createGame);
-  showJoinScreenBtn.addEventListener('click', showJoinScreen);
-  joinGameBtn.addEventListener('click', joinGame);
-  backToOptionsBtn.addEventListener('click', backToOptions);
-  backToStartBtn.addEventListener('click', backToStartFromRoomCode);
-  backToStartFromMultiplayerBtn.addEventListener('click', backToStartFromMultiplayer);
-  leaveGameBtn.addEventListener('click', leaveGameBtn);
+function showModal() {
+  if (!modal) return;
+  modal.showModal();
+  setTimeout(() => modal.classList.add('open'), 10);
+  backdrop.classList.add('visible');
 }
 
-let firstInit = true;
-
-function initBoard() {
-  hideWinningPulse();
-  boardDiv.innerHTML = '';
-  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-  boardDiv.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
-
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const cell = document.createElement('div');
-      cell.classList.add('cell');
-      cell.dataset.row = r;
-      cell.dataset.col = c;
-      boardDiv.appendChild(cell);
-
-      if (firstInit) {
-        cell.style.opacity = 0;
-        setTimeout(() => {
-          cell.style.transition = 'opacity 0.3s ease';
-          cell.style.opacity = 1;
-        }, 10);
-      } else {
-        cell.style.opacity = 1;
-      }
-    }
-  }
-
-  firstInit = false; 
-  gameActive = true;
+function closeModal() {
+  modal.classList.add('closing');
+  modal.classList.remove('open');
+  backdrop.classList.remove('visible');
+  modal.addEventListener('transitionend', () => {
+    modal.close();
+    modal.classList.remove('closing');
+  }, { once: true });
 }
 
-function updateOnlineBoard() {
-  boardState.forEach((row, r) => {
-    row.forEach((cell, c) => {
-      const cellDiv = boardDiv.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
-      if (cellDiv) {
-        if (cell !== 0) {
-          cellDiv.dataset.player = cell;
-        } else {
-          cellDiv.removeAttribute('data-player');
-        }
-      }
-    });
+function addTouchHover(selector) {
+  document.querySelectorAll(selector).forEach(el => {
+    el.addEventListener('touchstart', () => el.classList.add('hover'), { passive: true });
+    const rem = () => el.classList.remove('hover');
+    el.addEventListener('touchend', rem, { passive: true });
+    el.addEventListener('touchcancel', rem, { passive: true });
+    el.addEventListener('touchmove', rem, { passive: true });
   });
 }
 
-function getAvailableRow(col) {
-  for (let r = ROWS - 1; r >= 0; r--) {
-    if (boardState[r][col] === 0) return r;
-  }
-  return -1;
-}
-
-function updateInfo(text) {
-  infoDiv.style.opacity = 0;
-  setTimeout(() => {
-    infoDiv.textContent = text;
-    infoDiv.style.opacity = 1;
-  }, 200);
-}
-
-function checkWin(board, player, lastRow, lastCol) {
-  const directions = [
-    { dr: 0, dc: 1 },
-    { dr: 1, dc: 0 },
-    { dr: 1, dc: 1 },
-    { dr: 1, dc: -1 }
-  ];
-
-  for (const { dr, dc } of directions) {
-    let count = 1;
-    let r = lastRow + dr;
-    let c = lastCol + dc;
-    while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
-      count++;
-      r += dr;
-      c += dc;
-    }
-
-    r = lastRow - dr;
-    c = lastCol - dc;
-    while (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
-      count++;
-      r -= dr;
-      c -= dc;
-    }
-
-    if (count >= 4) return true;
-  }
-  return false;
-}
-
-function getWinningCells(player) {
-  const directions = [
-    { r: 0, c: 1 },
-    { r: 1, c: 0 },
-    { r: 1, c: 1 },
-    { r: 1, c: -1 },
-  ];
-
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (boardState[r][c] !== player) continue;
-      for (const { r: dr, c: dc } of directions) {
-        let count = 1;
-        let rr = r + dr;
-        let cc = c + dc;
-        const winningCells = [[r, c]];
-
-        while (
-          rr >= 0 && rr < ROWS &&
-          cc >= 0 && cc < COLS &&
-          boardState[rr][cc] === player
-        ) {
-          winningCells.push([rr, cc]);
-          count++;
-          rr += dr;
-          cc += dc;
-        }
-
-        if (count >= 4) return winningCells;
-      }
-    }
-  }
-  return null;
-}
-
-function pulseWinningCells(cells) {
-  cells.forEach(([r, c]) => {
-    const cell = boardDiv.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
-    if (cell) {
-      cell.classList.add('winning');
-    }
-  });
-}
-
-function hideWinningPulse() {
-  boardDiv.querySelectorAll('.cell.winning').forEach(cell => {
-    cell.classList.remove('winning');
-  });
-}
-
-function startConfetti() {
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
-  confettiCanvas.style.display = 'block';
-  confettiCanvas.style.opacity = '1';
-
-  confettiParticles = [];
-  const count = 100;
-
-  for (let i = 0; i < count; i++) {
-    confettiParticles.push({
-      x: Math.random() * confettiCanvas.width,
-      y: Math.random() * confettiCanvas.height - confettiCanvas.height,
-      size: 7 + Math.random() * 5,
-      speedY: 2 + Math.random() * 3,
-      speedX: (Math.random() - 0.5) * 2,
-      rotation: Math.random() * 360,
-      rotationSpeed: (Math.random() - 0.5) * 10,
-      color: `hsl(${Math.floor(Math.random() * 360)}, 90%, 60%)`,
-      opacity: 1,
-      life: 300,
-    });
-  }
-  confettiActive = true;
-  requestAnimationFrame(confettiLoop);
-}
-
-function stopConfetti() {
-  if (!confettiActive) return;
-
-  confettiCanvas.style.transition = 'opacity 0.5s ease-out';
-  confettiCanvas.style.opacity = '0';
-
-  setTimeout(() => {
-    confettiActive = false;
-    confettiParticles = [];
-    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-    confettiCanvas.style.display = 'none';
-  }, 500);
-}
-
-function confettiLoop() {
-  if (!confettiActive) return;
-
-  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-
-  confettiParticles.forEach(p => {
-    p.x += p.speedX;
-    p.y += p.speedY;
-    p.rotation += p.rotationSpeed;
-    p.life--;
-
-    if (p.life < 20) {
-      p.opacity = p.life / 20;
-    }
-
-    confettiCtx.save();
-    confettiCtx.translate(p.x, p.y);
-    confettiCtx.rotate((p.rotation * Math.PI) / 180);
-    confettiCtx.fillStyle = p.color;
-    confettiCtx.globalAlpha = p.opacity;
-
-    confettiCtx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
-    confettiCtx.restore();
-  });
-
-  confettiParticles = confettiParticles.filter(p => p.life > 0);
-
-  if (confettiParticles.length === 0) {
-    confettiCanvas.style.display = 'none';
-    confettiActive = false;
-  } else {
-    requestAnimationFrame(confettiLoop);
-  }
-}
-
-function createFallingDisc(col, player, targetRow) {
-  return new Promise((resolve) => {
-    const disc = document.createElement('div');
-    disc.classList.add('falling-disc', player === 1 ? 'red' : 'yellow');
-    boardDiv.appendChild(disc);
-
-    const cell = boardDiv.querySelector(`.cell[data-row="${targetRow}"][data-col="${col}"]`);
-    if (!cell) {
-      disc.remove();
-      resolve();
-      return;
-    }
-    const boardRect = boardDiv.getBoundingClientRect();
-    const cellRect = cell.getBoundingClientRect();
-
-    const startX = cellRect.left - boardRect.left;
-    const startY = -cellRect.height * 1.5;
-    const endY = cellRect.top - boardRect.top;
-
-    disc.style.left = `${startX}px`;
-    disc.style.top = `${startY}px`;
-
-    const duration = 300;
-    let startTime = null;
-
-    function easeOutQuad(t) {
-      return t * (2 - t);
-    }
-
-    function animate(time) {
-      if (!startTime) startTime = time;
-      let elapsed = time - startTime;
-      if (elapsed > duration) elapsed = duration;
-      let progress = elapsed / duration;
-      let easedProgress = easeOutQuad(progress);
-
-      let currentY = startY + (endY - startY) * easedProgress;
-      disc.style.top = `${currentY}px`;
-
-      if (elapsed < duration) {
-        requestAnimationFrame(animate);
-      } else {
-        disc.remove();
-        resolve();
-      }
-    }
-
-    requestAnimationFrame(animate);
-  });
-}
-
-async function handleMove(col) {
-  if (!gameActive || isAnimating) return;
-  if (gameMode === 'online' && (playerNumber !== currentPlayer || !gameId)) return;
-
-  const row = getAvailableRow(col);
-  if (row === -1) return;
-
-  isAnimating = true;
-
-  if (gameMode === 'offline') {
-    await createFallingDisc(col, currentPlayer, row);
-
-    boardState[row][col] = currentPlayer;
-    const cell = boardDiv.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-    if (cell) cell.dataset.player = currentPlayer;
-
-    const winningCells = getWinningCells(currentPlayer);
-    if (winningCells) {
-      pulseWinningCells(winningCells);
-      updateInfo(`Player ${currentPlayer} wins! 🎉`);
-      startConfetti();
-      gameActive = false;
-    } else if (boardState.flat().every(cell => cell !== 0)) {
-      updateInfo("It's a draw!");
-      gameActive = false;
-    } else {
-      currentPlayer = currentPlayer === 1 ? 2 : 1;
-      updateInfo(`Player ${currentPlayer}'s turn (${playerColors[currentPlayer]})`);
-    }
-
-    isAnimating = false;
-    return;
-  }
-
-  if (gameMode === 'online') {
-    const tempBoard = JSON.parse(JSON.stringify(boardState));
-    tempBoard[row][col] = currentPlayer;
-
-    const gameRef = doc(db, "games", gameId);
-    const newPlayer = currentPlayer === 1 ? 2 : 1;
-
-    const winner = checkWin(tempBoard, currentPlayer, row, col);
-    const isDraw = tempBoard.flat().every(cell => cell !== 0);
-
-    const updateData = {
-      board: tempBoard.flat(),
-      currentPlayer: (winner || isDraw) ? currentPlayer : newPlayer,
-      status: (winner || isDraw) ? "finished" : "playing",
-      winner: winner ? currentPlayer : 0
-    };
-
-    await createFallingDisc(col, currentPlayer, row);
-
-    boardState[row][col] = currentPlayer;
-    updateOnlineBoard();
-
-    try {
-      await updateDoc(gameRef, updateData);
-    } catch (err) {
-      console.error("Error updating game after move:", err);
-      boardState[row][col] = 0;
-      updateOnlineBoard();
-    } finally {
-      if ((winner || isDraw)) {
-        gameActive = false;
-      } else {
-        currentPlayer = newPlayer;
-      }
-      isAnimating = false;
-    }
-  }
-}
-
-async function animateRestart() {
-  if (isAnimating) return;
-  isAnimating = true;
-
-  stopConfetti(); 
-  
-  if (gameMode === 'online') {
-      hideRestartButton(); 
-  }
-
-  hideWinningPulse();
-
-  boardDiv.classList.add('shake');
-  boardDiv.style.transition = 'opacity 400ms';
-  boardDiv.style.opacity = 0.3;
-  document.querySelectorAll('.counter').forEach(c => {
-    c.style.transition = 'opacity 200ms';
-    c.style.opacity = 0;
-  });
-
-  await new Promise(r => setTimeout(r, 500));
-}
-
-async function handleGameRestart() {
-  await animateRestart();
-
-  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-  updateOnlineBoard();
-  currentPlayer = 1;
-  gameActive = true;
-  updateInfo("Player 1's turn");
-
-  boardDiv.style.opacity = 1;
-  document.querySelectorAll('.counter').forEach(c => c.style.opacity = 1);
-  setTimeout(() => boardDiv.classList.remove('shake'), 700);
-
-  isAnimating = false;
-  
-  if (gameMode === 'online') {
-      hideRestartButton(); 
-  }
-}
-
-async function handleOfflineRestart() {
-    if (isRestarting) return;
-    isRestarting = true;
-
-    await handleGameRestart();
-    
-    setTimeout(() => {
-        isRestarting = false;
-    }, 800); 
-}
-
-async function handleOnlineRestart() {
-  if (isAnimating) return;
-  if (playerNumber !== 1) {
-    updateInfo("Only Player 1 can restart the game.");
-    return;
-  }
-
-  try {
-    await updateDoc(doc(db, "games", gameId), {
-      restart: true,
-      board: Array(ROWS * COLS).fill(0),
-      currentPlayer: 1,
-      status: "playing",
-      winner: 0
-    });
-    hideRestartButton(); 
-  } catch (e) {
-    console.error("Error restarting online game:", e);
-    updateInfo("Could not restart the game. Try again.");
-  }
-}
-
-restartBtn.addEventListener('click', () => {
-  if (gameMode === 'offline') {
-    handleOfflineRestart();
-  } else if (gameMode === 'online') {
-    handleOnlineRestart();
-  }
-});
-
-boardDiv.addEventListener('click', e => {
-  if (isAnimating) return;
-  if (e.target.classList.contains('cell')) {
-    const col = Number(e.target.dataset.col);
-    handleMove(col);
-  }
-});
-
-leaveGameBtn.addEventListener('click', async () => {
-  iInitiatedLeave = true;
-  if (gameMode === 'online' && gameId) {
-    try {
-      await deleteDoc(doc(db, "games", gameId));
-    } catch (e) {
-      console.error("Error deleting game on leave:", e);
-    }
-  }
-  await handleLeaveGame();
-});
-
-async function handleLeaveGame() {
-  if (gameMode === 'online') {
-    if (unsubscribeWaitListener) { unsubscribeWaitListener(); unsubscribeWaitListener = null; }
-    if (unsubscribeGameListener) { unsubscribeGameListener(); unsubscribeGameListener = null; }
-    gameId = null;
-    playerNumber = 0;
-  }
-
-  gameMode = null; 
-  gameActive = false;
-  currentPlayer = 1;
-  boardState = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-  updateInfo('');
-  hideWinningPulse();
-  stopConfetti();
-
-  leaveGameBtn.classList.add('hidden'); 
-  hideRestartButton(); 
-
-  await window.fadeOut(gameContainer);
-  await window.fadeIn(startScreen, 'flex'); 
-
-  setTimeout(() => { iInitiatedLeave = false; }, 0);
-}
-
-function endGameOpponentLeft(previousData) {
-  if (previousData && previousData.status === "finished") {
-    return;
-  }
-  gameActive = false;
-  updateInfo(`Opponent left the game. You win! 🎉`);
-  startConfetti();
-  if (playerNumber === 1) {
-      showRestartButton();
-  } else {
-      hideRestartButton();
-  }
-  leaveGameBtn.classList.remove('hidden');
-}
-
-const unflattenBoard = (flatBoard) => {
-  const newBoard = [];
-  for (let r = 0; r < ROWS; r++) {
-    newBoard.push(flatBoard.slice(r * COLS, (r + 1) * COLS));
-  }
-  return newBoard;
-};
-
-function generateRoomCode(length = 7) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < length; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
-
-async function createGame() {
-  if (!auth.currentUser) {
-    multiplayerStatus.textContent = "Error: Please wait, establishing connection (or sign in is required).";
-    return;
-  }
-  
-  multiplayerStatus.textContent = "";
-  try {
-    const shortCode = generateRoomCode(7);
-
-    const newGameRef = await addDoc(gamesCollection, {
-      shortCode: shortCode,
-      player1: auth.currentUser.uid,
-      board: Array.from({ length: ROWS }, () => Array(COLS).fill(0)).flat(),
-      currentPlayer: 1,
-      status: "waiting",
-      winner: 0,
-      restart: false 
-    });
-    
-    gameId = newGameRef.id;
-    playerNumber = 1;
-
-    await window.fadeOut(multiplayerOptions);
-    roomCodeSpan.textContent = shortCode;
-    multiplayerStatus.textContent = "Game created! Waiting for opponent...";
-    await window.fadeIn(roomCodeDisplay, 'flex');
-
-    waitForOpponent();
-  } catch (err) {
-    console.error("Error creating game:", err);
-    multiplayerStatus.textContent = "Error creating game. Try again.";
-  }
-}
-
-async function showJoinScreen() {
-  await window.fadeOut(multiplayerOptions);
-  await window.fadeIn(joinInputSection, 'flex');
-}
-
-async function joinGame() {
-  const code = joinCodeInput.value.trim().toUpperCase();
-  if (!code) {
-    multiplayerStatus.textContent = "Please enter a game ID.";
-    return;
-  }
-  
-  if (!auth.currentUser) {
-    multiplayerStatus.textContent = "Error: Please wait, establishing connection (or sign in is required).";
-    return;
-  }
-
-  try {
-    multiplayerStatus.textContent = "Joining game...";
-    const q = query(gamesCollection, where("shortCode", "==", code));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-      multiplayerStatus.textContent = "Error: Game not found. Check the code and try again.";
-      return;
-    }
-
-    const docSnap = querySnapshot.docs[0];
-    const data = docSnap.data();
-
-    if (data.status !== "waiting" && data.player2 !== auth.currentUser.uid) {
-      multiplayerStatus.textContent = "Error: This game has already started or is finished.";
-      return;
-    }
-
-    if (data.player1 === auth.currentUser.uid) {
-      multiplayerStatus.textContent = "Error: You are already the creator of this game (Player 1).";
-      return;
-    }
-
-    if (data.player2 === auth.currentUser.uid) {
-         gameId = docSnap.id;
-         playerNumber = 2;
-         
-         await window.fadeOut(multiplayerScreen);
-         multiplayerStatus.textContent = "";
-         await window.fadeIn(gameContainer, 'block');
-         resetUIForNewOnlineGame();
-         startOnlineGame();
-         return;
-    }
-    
-    if (data.player2) {
-         multiplayerStatus.textContent = "Error: A second player has already joined this game.";
-         return;
-    }
-
-    gameId = docSnap.id;
-    playerNumber = 2;
-    await updateDoc(doc(db, "games", gameId), { 
-        player2: auth.currentUser.uid, 
-        status: "playing" 
-    });
-
-    await window.fadeOut(multiplayerScreen);
-    multiplayerStatus.textContent = "";
-    await window.fadeIn(gameContainer, 'block');
-    resetUIForNewOnlineGame();
-    startOnlineGame();
-
-  } catch (err) {
-      console.error("Error joining game:", err);
-      multiplayerStatus.textContent = "An unexpected error occurred while joining. Try again.";
-  }
-}
-
-async function backToOptions() {
-  await window.fadeOut(joinInputSection);
-  multiplayerStatus.textContent = "";
-  await window.fadeIn(multiplayerOptions, 'flex');
-}
-
-async function backToStartFromRoomCode() {
-    if (gameId && playerNumber === 1) {
-        try {
-            await deleteDoc(doc(db, "games", gameId));
-        } catch(e) { 
-            console.error("Error deleting game on back to start:", e);
-        }
-    }
-  if (unsubscribeWaitListener) { unsubscribeWaitListener(); unsubscribeWaitListener = null; }
-  gameId = null;
-  playerNumber = 0;
-
-  await window.fadeOut(roomCodeDisplay);
-  multiplayerStatus.textContent = "";
-  await window.fadeIn(multiplayerOptions, 'flex');
-}
-
-async function backToStartFromMultiplayer() {
-  await window.fadeOut(multiplayerScreen);
-  multiplayerStatus.textContent = "";
-  joinCodeInput.value = "";
-  await window.fadeIn(startScreen, 'flex');
-}
-
-function startOnlineGame() {
-  updateInfo(`You are Player ${playerNumber}. Game started.`);
-  window.fadeIn(boardDiv, 'grid');
-  subscribeToGame();
-}
-
-function subscribeToGame() {
-  if (!gameId) return;
-  hideRestartButton();
-
-  const gameRef = doc(db, "games", gameId);
-  if (unsubscribeGameListener) {
-    unsubscribeGameListener();
-  }
-
-  unsubscribeGameListener = onSnapshot(gameRef, async (snapshot) => {
-    if (!snapshot.exists()) {
-      if (!iInitiatedLeave) {
-        endGameOpponentLeft(lastGameData);
-      }
-      return;
-    }
-
-    const data = snapshot.data();
-    const oldData = lastGameData;
-    lastGameData = data;
-
-    const receivedBoard = unflattenBoard(data.board);
-    const oldFlat = oldData ? oldData.board : [];
-    const newFlat = data.board;
-
-if (data.restart === true) {
-  if (playerNumber === 2) {
-    showRestartMessage();
-  }
-
-  await handleGameRestart(); 
-
-  if (playerNumber === 1) {
-    try {
-      await updateDoc(doc(db, "games", gameId), { 
-          restart: false,
-          board: Array(ROWS * COLS).fill(0),
-          currentPlayer: 1,
-          status: "playing",
-          winner: 0
-      });
-    } catch (e) {
-      console.error("Failed to clear restart flag:", e);
-    }
-  }
-
-  return;
-}
-
-    hideWinningPulse();
-
-    if (data.status === 'finished') {
-      boardState = receivedBoard;
-      updateOnlineBoard();
-      gameActive = false;
-
-      if (data.winner) {
-        const winningCells = getWinningCells(data.winner);
-        if (winningCells) {
-          pulseWinningCells(winningCells);
-          startConfetti();
-        }
-        updateInfo(`Player ${data.winner} wins! 🎉`);
-      } else {
-        updateInfo("It's a draw!");
-        startConfetti();
-      }
-
-      if (playerNumber === 1) {
-        showRestartButton();
-      } else {
-        hideRestartButton();
-      }
-      return;
-    }
-
-    currentPlayer = data.currentPlayer;
-    gameActive = true;
-
-    let placedDiscIndex = -1;
-    for (let i = 0; i < newFlat.length; i++) {
-      if (oldFlat[i] !== newFlat[i]) {
-        placedDiscIndex = i;
-        break;
-      }
-    }
-
-    if (placedDiscIndex !== -1) {
-      const placedRow = Math.floor(placedDiscIndex / COLS);
-      const placedCol = placedDiscIndex % COLS;
-      const playerWhoMoved = newFlat[placedDiscIndex];
-
-      if (boardState[placedRow][placedCol] !== playerWhoMoved) {
-        isAnimating = true;
-        await createFallingDisc(placedCol, playerWhoMoved, placedRow);
-        isAnimating = false;
-      }
-    }
-
-    boardState = receivedBoard;
-    updateOnlineBoard();
-
-    infoDiv.textContent = (playerNumber === currentPlayer) ?
-      'Your turn!' :
-      `Player ${currentPlayer}'s turn`;
-  });
-}
-
-function waitForOpponent() {
-  if (!gameId) return;
-
-  const gameRef = doc(db, "games", gameId);
-  if (unsubscribeWaitListener) {
-    unsubscribeWaitListener();
-  }
-
-  unsubscribeWaitListener = onSnapshot(gameRef, async (snapshot) => {
-    if (!snapshot.exists()) return;
-    const data = snapshot.data();
-    if (data.status === "playing") {
-      if (unsubscribeWaitListener) {
-        unsubscribeWaitListener();
-        unsubscribeWaitListener = null;
-      }
-
-      await window.fadeOut(multiplayerScreen);
-      await window.fadeIn(gameContainer, 'block');
-      resetUIForNewOnlineGame();
-      startOnlineGame();
-    }
-  });
-}
-
-window.addEventListener('resize', () => {
-  if (confettiActive) {
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
-  }
-});
-
-window.onAuthReady = function() {
-    playOfflineBtn.addEventListener('click', async () => {
-      await window.fadeOut(startScreen);
-      await window.fadeIn(gameContainer, 'block');
-
-      initBoard();
-      initGame('offline');
-    });
-
-    playOnlineBtn.addEventListener('click', async () => {
-      await window.fadeOut(startScreen);
-      await window.fadeIn(multiplayerScreen, 'flex');
-      addOnlineEventListeners(); 
-      initGame('online');
-    });
-};
-
-window.leaveGame = async function() {
-  if (!gameId) return;
-  
-  try {
-    const gameRef = doc(db, "games", gameId);
-    const snap = await getDoc(gameRef);
-    
-    if (snap.exists()) {
-      const data = snap.data();
-      
-      if (data.player1 === auth.currentUser.uid) {
-        await deleteDoc(gameRef);
-      } else if (data.player2 === auth.currentUser.uid) {
-        await updateDoc(gameRef, {
-          player2: null,
-          status: "waiting"
-        });
-      }
-    }
-  } catch (err) {
-    console.error("Leave game error", err);
-  }
-  
-  gameId = null;
-  playerNumber = null;
-  
-  await window.fadeOut(gameContainer);
-  await window.fadeIn(multiplayerScreen, "block");
-};
+document.addEventListener('DOMContentLoaded', init);

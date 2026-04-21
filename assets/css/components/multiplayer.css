@@ -1,0 +1,93 @@
+.text-input {
+  width: 90%;
+  max-width: 320px;
+  padding: 12px 20px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  font-family: var(--font-family);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: var(--input-bg);
+  color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.text-input::placeholder {
+  color: var(--meta-text);
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: var(--text);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.07);
+}
+
+@media (prefers-color-scheme: dark) {
+  .text-input:focus {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.07);
+  }
+}
+
+.status-message {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--meta-text);
+  min-height: 1.3rem;
+  margin: 6px 0 10px;
+  width: 90%;
+  max-width: 340px;
+  text-align: center;
+}
+
+.room-code-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--shape-large);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 90%;
+  max-width: 340px;
+  margin-bottom: 10px;
+}
+
+.room-code-card p {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--meta-text);
+  margin: 0;
+}
+
+#room-code {
+  font-size: clamp(1.4rem, 6vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 5px;
+  background: var(--secondary-bg);
+  color: var(--header-color);
+  padding: 10px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  -webkit-user-select: all;
+  user-select: all;
+  border: 1px solid var(--border);
+  width: 100%;
+  text-align: center;
+}
+
+.multiplayer-options,
+.join-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.multiplayer-options.is-hidden,
+.join-section.is-hidden,
+.room-code-display-wrap.is-hidden {
+  display: none !important;
+}

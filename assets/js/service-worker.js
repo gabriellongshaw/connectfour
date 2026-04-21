@@ -1,53 +1,36 @@
-const CACHE_NAME = 'connect-four-v4'; 
+const CACHE = 'connect-four-v5';
 
-const urlsToCache = [
+const STATIC = [
   '/',
-  '../../index.html',
-  '../css/styles.css',
-  'main.js',
-  'hover-on-touch-screen.js',
-  'dialog.js',
-  '../images/favicon/manifest.json',
-  '../images/favicon/favicon-192x192.png',
-  '../images/favicon/android-icon-512x512.png'
+  '/index.html',
+  '/assets/css/variables.css',
+  '/assets/css/main.css',
+  '/assets/css/fonts.css',
+  '/assets/css/animations.css',
+  '/assets/css/responsive.css',
+  '/assets/css/components/screens.css',
+  '/assets/css/components/buttons.css',
+  '/assets/css/components/board.css',
+  '/assets/css/components/multiplayer.css',
+  '/assets/css/components/modal.css',
+  '/assets/images/favicon/manifest.json',
+  '/assets/images/favicon/favicon-192x192.png',
 ];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-    .then((cache) => {
-      console.log('Opened cache');
-      return cache.addAll(urlsToCache);
-    })
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    )
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-    .then((response) => {
-      
-      if (response) {
-        return response;
-      }
-      
-      return fetch(event.request);
-    })
-  );
-});
-
-self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request))
   );
 });

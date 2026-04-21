@@ -7,8 +7,9 @@
   <meta name="keywords" content="Connect Four, Gabriel Longshaw, play Connect Four, four in a row">
   <meta name="author" content="Gabriel Longshaw, bocajthomas">
   <title>Connect Four</title>
-  <meta name="google-site-verification" content="HihCOsgH0UVQPbqo7pMEgDNXIXR16hIm907pXZPI3w8" />
-  <meta name="theme-color" content="#000000">
+  <meta name="google-site-verification" content="HihCOsgH0UVQPbqo7pMEgDNXIXR16hIm907pXZPI3w8">
+  <meta name="theme-color" content="#f9f9f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101010" media="(prefers-color-scheme: dark)">
   <meta property="og:title" content="Connect Four">
   <meta property="og:description" content="Play Connect Four offline or online with friends!">
   <meta property="og:type" content="website">
@@ -17,129 +18,99 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Connect Four">
   <meta name="twitter:description" content="Play Connect Four offline or online with friends!">
-  <meta name="twitter:image" content="assets/images/og-image.png">
+  <meta name="twitter:image" content="assets/images/preview.png">
   <meta name="msapplication-TileColor" content="#ffffff">
   <meta name="msapplication-TileImage" content="assets/images/favicon/ms-icon-144x144.png">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicon/apple-icon-180x180.png">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon/favicon-16x16.png">
   <link rel="icon" type="image/png" sizes="96x96" href="assets/images/favicon/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon/android-icon-192x192.png">
   <link rel="shortcut icon" href="assets/images/favicon/favicon.ico">
-  <link rel="manifest" href="assets/images/favicon/manifest.json">
-  <meta name="msapplication-config" content="assets/images/favicon/browserconfig.xml">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" id="ios-status-bar-meta">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24..48,400,0,0&display=swap" rel="stylesheet"> 
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:FILL,GRAD,wght,opsz@1,0,500,24" rel="stylesheet" />
+  <link rel="manifest" href="manifest.json">
+  <meta name="msapplication-config" content="browserconfig.xml">
+  <link rel="preload" href="assets/fonts/ProductSans-Regular.ttf" as="font" type="font/truetype" crossorigin>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:FILL,GRAD,wght,opsz@1,0,500,24&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/variables.css">
-  <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="stylesheet" href="assets/css/fonts.css">
-  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/animations.css">
+  <link rel="stylesheet" href="assets/css/components/screens.css">
+  <link rel="stylesheet" href="assets/css/components/buttons.css">
+  <link rel="stylesheet" href="assets/css/components/board.css">
+  <link rel="stylesheet" href="assets/css/components/multiplayer.css">
+  <link rel="stylesheet" href="assets/css/components/modal.css">
   <link rel="stylesheet" href="assets/css/responsive.css">
 </head>
 <body>
-  <div id="start-screen" class="screen active fade">
+  <div id="start-screen" class="screen">
     <h1>Connect Four</h1>
     <button id="play-offline" class="start-screen-button"><i class="fa-solid fa-user"></i> Play Offline</button>
     <button id="play-online" class="start-screen-button"><i class="fa-solid fa-user-group"></i> Play Online</button>
     <div class="credits-container">
-      <p class="credits created-by">
-        Created by <a class="credits-link" target="_blank" href="https://www.gabriellongshaw.co.uk">Gabriel Longshaw</a>
-      </p>
-      <p class="credits created-by">
-        & <a class="credits-link" target="_blank" href="https://www.bocajsolutions.co.uk">bocajthomas</a>
-      </p>
+      <p>Created by <a class="credits-link" target="_blank" href="https://www.gabriellongshaw.co.uk">Gabriel Longshaw</a></p>
+      <p>&amp; <a class="credits-link" target="_blank" href="https://www.bocajsolutions.co.uk">bocajthomas</a></p>
     </div>
   </div>
-  <div id="multiplayer-screen" class="screen" style="display:none;">
+  <div id="multiplayer-screen" class="screen">
     <h1>Online Multiplayer</h1>
-    <div id="multiplayer-options">
-      <button id="create-game-btn" class="start-screen-button"><i class="fa-solid fa-square-plus"></i> Create New Game</button>
-      <button id="show-join-screen-btn" class="start-screen-button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Game</button>
-      <button id="back-to-start-from-multiplayer" class="back-button">Back to Start</button>
+    <div id="multiplayer-options" class="multiplayer-options">
+      <button id="create-game-btn" class="start-screen-button"><i class="fa-solid fa-square-plus"></i> Create Game</button>
+      <button id="show-join-btn" class="start-screen-button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Game</button>
+      <button id="back-from-mp" class="btn btn-ghost">Back</button>
     </div>
-
-    <div id="join-input-section" style="display:none;">
-      <input type="text" id="join-code-input" placeholder="Enter Room Code" class="text-input">
-      <button id="join-game-btn" class="start-screen-button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Game</button>
-      <button id="back-to-options-btn" class="back-button">Back to Options</button>
+    <div id="join-section" class="join-section">
+      <input type="text" id="join-code-input" class="text-input" placeholder="Enter Room Code"
+        autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button id="join-game-btn" class="start-screen-button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join</button>
+      <button id="back-to-options" class="btn btn-ghost">Back</button>
     </div>
-    <p id="multiplayer-status" class="status-message"></p>
-    <div id="room-code-display" class="room-code-section" style="display: none">
-      <p>Share this code with a friend:</p>
-      <span id="room-code"></span>
-      <button id="back-to-start-btn" class="back-button">Back</button>
+    <div id="room-code-display" class="room-code-display-wrap">
+      <div class="room-code-card">
+        <p>Share this code with a friend</p>
+        <span id="room-code"></span>
+      </div>
+      <p id="multiplayer-status" class="status-message"></p>
+      <button id="back-from-wait" class="btn btn-ghost">Cancel</button>
     </div>
   </div>
-  <div id="game-container" class="game-container" style="display: none">
+  <div id="game-container" class="game-container">
     <h1>Connect Four</h1>
-    <div id="board" class="board" aria-label="Connect Four board" role="grid"></div>
-    <div id="info" class="info">Player 1's turn (Red)</div>
-    <div class="gamebutton-container">
-      <button id="restartBtn" class="restart-btn"><i class="fa-solid fa-redo"></i> Restart</button>
-      <button id="leaveGameBtn" class="leave-game">Leave Game</button>
+    <div id="board" class="board" style="display:none;" role="grid" aria-label="Connect Four board"></div>
+    <p id="info" class="info"></p>
+    <div class="gamebutton-row">
+      <button id="restart-btn" class="btn btn-secondary" style="display:none;">
+        <i class="fa-solid fa-redo"></i> Restart
+      </button>
     </div>
   </div>
-  <dialog id="modal" class="dialog">
+  <button id="leave-btn" class="btn-leave" style="display:none;">&#8592; Leave</button>
+  <dialog id="browser-modal" class="dialog">
     <div class="modal-header">
       <span class="material-symbols-rounded modal-icon">language</span>
-      <h2>Browser</h2>
+      <h2>Open in Browser</h2>
     </div>
     <div class="modal-body">
       <p class="modal-body-text">
-        When you create an online game, you get a unique code. If you open this website within an app to share that code with a friend, your session will be reset, giving you a different code when you open the website again. To avoid this, we recommend opening the website in an external browser like Chrome or Safari.
+        For the best experience with online multiplayer, open this site in a full browser like Chrome or Safari — not inside an app's built-in webview. This prevents your session from resetting when you share a room code.
       </p>
     </div>
     <div class="modal-actions">
-      <button id="close-modal" class="button primary-button">
-        Close
-      </button>
+      <button id="close-modal" class="modal-close-btn">Got it</button>
     </div>
   </dialog>
-  <canvas id="confetti-canvas"></canvas>
   <div id="backdrop" class="backdrop"></div>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyB18M9FSegBBx8ZJnQmXVuWOE_GtAYT1D0",
-      authDomain: "connect-four-ea92e.firebaseapp.com",
-      projectId: "connect-four-ea92e",
-      storageBucket: "connect-four-ea92e.firebasestorage.app",
-      messagingSenderId: "661961025897",
-      appId: "1:661961025897:web:d983ac6833d8d6c015b5f8",
-      measurementId: "G-QPY4TNXN2Y"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    
-    window.firebaseDB = db;
-    window.firebaseAuth = auth;
-  </script>
-  <script src="assets/js/firebase-auth.js" type="module"></script>
-  <script src="assets/js/main.js" type="module"></script>
-  <script src="assets/js/hover-on-touch-screen.js" type="module"></script>
-  <script src="assets/js/dialog.js" type="module"></script>
+  <canvas id="confetti-canvas"></canvas>
+  <script type="module" src="assets/js/main.js"></script>
   <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('assets/js/service-worker.js')
-        .then(registration => {
-          console.log('Service Worker registered with scope:', registration.scope);
-        })
-        .catch(error => {
-          console.error('Service Worker registration failed:', error);
-        });
-    });
-  }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('assets/js/service-worker.js');
+      });
+    }
   </script>
 </body>
 </html>

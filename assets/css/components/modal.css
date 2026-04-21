@@ -1,0 +1,115 @@
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.94);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10000;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: 90vw;
+  max-width: 460px;
+  border-radius: 28px;
+  background: var(--modal-bg);
+  color: var(--modal-text);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border);
+}
+
+.dialog.open {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+.dialog.closing {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.94);
+  pointer-events: none;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 10px;
+}
+
+.modal-icon {
+  font-size: 26px;
+  color: var(--button-secondary-text);
+  background: var(--button-secondary-bg);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.modal-header h2 {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--modal-text);
+}
+
+.modal-body {
+  padding: 4px 24px 12px;
+}
+
+.modal-body-text {
+  font-size: 0.93rem;
+  line-height: 1.6;
+  color: var(--meta-text);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 24px 20px;
+  gap: 8px;
+}
+
+.modal-close-btn {
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  border: none;
+  border-radius: 100px;
+  padding: 10px 20px;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: var(--button-secondary-bg-hover);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  z-index: 9998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.backdrop.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+
+dialog[open]::backdrop {
+  opacity: 1;
+}
