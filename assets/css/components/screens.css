@@ -33,7 +33,6 @@
   background: var(--bg);
   z-index: 9998;
   overflow-y: auto;
-  transition: opacity 0.3s ease;
 }
 
 .credits-container {

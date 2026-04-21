@@ -47,13 +47,6 @@ function init() {
   applySystemTheme();
   initConfetti();
 
-  // Set initial visibility — start screen visible, everything else hidden
-  showInstant(startScreen);
-  hideInstant(multiplayerScreen);
-  hideInstant(gameContainer);
-  hideInstant(joinSection);
-  hideInstant(roomCodeDisplay);
-
   initOfflineRefs({ boardEl, infoEl, restartBtn });
   initOnlineRefs({ boardEl, infoEl, restartBtn, leaveBtn, statusEl });
 
@@ -182,14 +175,15 @@ async function returnToStart() {
   stopConfetti();
   restartBtn.style.display = 'none';
   leaveBtn.style.display = 'none';
-  boardEl.style.display = 'none';
   gameMode = null;
 
-  const fromGame = !gameContainer.classList.contains('is-hidden');
-  const fromMp   = !multiplayerScreen.classList.contains('is-hidden');
-
-  if (fromGame) await fadeOut(gameContainer);
-  if (fromMp)   await fadeOut(multiplayerScreen);
+  if (!gameContainer.classList.contains('is-hidden')) {
+    boardEl.style.display = 'none';
+    await fadeOut(gameContainer);
+  }
+  if (!multiplayerScreen.classList.contains('is-hidden')) {
+    await fadeOut(multiplayerScreen);
+  }
 
   resetMpUI();
   showInstant(startScreen);
