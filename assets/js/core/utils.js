@@ -5,7 +5,6 @@ export function fadeOut(element, duration = 300) {
     setTimeout(() => {
       element.classList.add('is-hidden');
       element.style.transition = '';
-      element.style.opacity = '';
       resolve();
     }, duration);
   });
@@ -13,8 +12,8 @@ export function fadeOut(element, duration = 300) {
 
 export function fadeIn(element, duration = 300) {
   return new Promise(resolve => {
-    element.classList.remove('is-hidden');
     element.style.opacity = '0';
+    element.classList.remove('is-hidden');
     element.style.transition = `opacity ${duration}ms ease`;
     void element.offsetWidth;
     element.style.opacity = '1';
