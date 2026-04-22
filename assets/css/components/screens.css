@@ -1,4 +1,4 @@
-.screen {
+.page {
   position: fixed;
   inset: 0;
   background: var(--bg);
@@ -14,15 +14,13 @@
   overflow-y: auto;
 }
 
-.screen.is-hidden {
+.page-hidden {
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
 }
 
-.game-container {
-  position: fixed;
-  inset: 0;
+.game-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -30,16 +28,6 @@
   text-align: center;
   width: 100%;
   padding: 16px 12px;
-  background: var(--bg);
-  z-index: 9998;
-  overflow-y: auto;
-  transition: opacity 0.3s ease;
-}
-
-.game-container.is-hidden {
-  opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
 }
 
 .credits-container {
@@ -82,8 +70,9 @@
   width: 100%;
 }
 
-.is-hidden {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
+.join-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }

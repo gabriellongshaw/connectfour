@@ -15,101 +15,95 @@ import { startConfetti, stopConfetti } from './confetti.js';
 
 const gamesRef = collection(db, 'games');
 
-let gameId = null;
-let playerNumber = 0;
-let boardState = createEmptyBoard();
+let gameId        = null;
+let playerNumber  = 0;
+let boardState    = createEmptyBoard();
 let currentPlayer = 1;
-let gameActive = false;
-let isAnimating = false;
-let unsubGame = null;
+let gameActive    = false;
+let isAnimating   = false;
+let unsubGame     = null;
 let isSelfLeaving = false;
-let lastSnapshotBoard = null;
 
-let boardEl, infoEl, restartBtn, leaveBtn, statusEl;
+let pendingMoveFlat = null;
+
+let boardEl, infoEl, restartBtn, statusEl;
 
 export function initOnlineRefs(els) {
-  boardEl = els.boardEl;
-  infoEl = els.infoEl;
+  boardEl    = els.boardEl;
+  infoEl     = els.infoEl;
   restartBtn = els.restartBtn;
-  leaveBtn = els.leaveBtn;
-  statusEl = els.statusEl;
+  statusEl   = els.statusEl;
 }
 
 export async function createGame(onWaiting, onGameStart) {
-  statusEl.textContent = 'Creating game…';
+  setStatus('Creating game…');
   const code = generateCode(7);
 
   try {
     const ref = await addDoc(gamesRef, {
       code,
-      player1: auth.currentUser.uid,
-      player2: null,
-      board: flattenBoard(createEmptyBoard()),
-      currentPlayer: 1,
-      status: 'waiting',
-      winner: 0,
+      player1:        auth.currentUser.uid,
+      player2:        null,
+      board:          flattenBoard(createEmptyBoard()),
+      currentPlayer:  1,
+      status:         'waiting',
+      winner:         0,
+      draw:           false,
       restartRequest: false,
     });
 
-    gameId = ref.id;
+    gameId       = ref.id;
     playerNumber = 1;
-    statusEl.textContent = '';
+    setStatus('');
     onWaiting(code);
     waitForOpponent(onGameStart);
   } catch (err) {
-    statusEl.textContent = 'Could not create game. Please try again.';
+    setStatus('Could not create game. Please try again.');
     console.error(err);
   }
 }
 
-export async function joinGame(code, onGameStart) {
+export async function joinGame(code, onGameStart, onError) {
   const trimmed = code.trim().toUpperCase();
-  if (!trimmed) { statusEl.textContent = 'Please enter a room code.'; return; }
+  if (!trimmed) { onError?.('Please enter a room code.'); return; }
 
-  statusEl.textContent = 'Joining…';
+  onError?.('Joining…');
 
   try {
-    const q = query(gamesRef, where('code', '==', trimmed));
+    const q    = query(gamesRef, where('code', '==', trimmed));
     const snap = await getDocs(q);
 
-    if (snap.empty) {
-      statusEl.textContent = 'Game not found. Check the code and try again.';
-      return;
-    }
+    if (snap.empty) { onError?.('Game not found. Check the code and try again.'); return; }
 
     const docSnap = snap.docs[0];
-    const data = docSnap.data();
+    const data    = docSnap.data();
 
     if (data.player1 === auth.currentUser.uid) {
-      statusEl.textContent = 'You created this game — share the code with a friend!';
+      onError?.('You created this game — share the code with a friend!');
       return;
     }
-
     if (data.player2 && data.player2 !== auth.currentUser.uid) {
-      statusEl.textContent = 'This game already has two players.';
+      onError?.('This game already has two players.');
       return;
     }
-
     if (data.status === 'finished') {
-      statusEl.textContent = 'This game has already ended.';
+      onError?.('This game has already ended.');
       return;
     }
 
-    gameId = docSnap.id;
+    gameId       = docSnap.id;
     playerNumber = 2;
 
-    if (data.player2 !== auth.currentUser.uid) {
-      await updateDoc(doc(db, 'games', gameId), {
-        player2: auth.currentUser.uid,
-        status: 'playing',
-      });
-    }
+    await updateDoc(doc(db, 'games', gameId), {
+      player2: auth.currentUser.uid,
+      status:  'playing',
+    });
 
-    statusEl.textContent = '';
+    onError?.('');
     onGameStart();
     startOnlineGame();
   } catch (err) {
-    statusEl.textContent = 'Error joining game. Please try again.';
+    onError?.('Error joining game. Please try again.');
     console.error(err);
   }
 }
@@ -127,12 +121,12 @@ function waitForOpponent(onGameStart) {
 }
 
 export function startOnlineGame() {
-  boardState = createEmptyBoard();
-  currentPlayer = 1;
-  gameActive = true;
-  isAnimating = false;
-  lastSnapshotBoard = flattenBoard(createEmptyBoard());
-  isSelfLeaving = false;
+  boardState      = createEmptyBoard();
+  currentPlayer   = 1;
+  gameActive      = true;
+  isAnimating     = false;
+  isSelfLeaving   = false;
+  pendingMoveFlat = null;
 
   clearWinningPulse(boardEl);
   stopConfetti();
@@ -140,7 +134,6 @@ export function startOnlineGame() {
 
   initBoardElement(boardEl, false);
   boardEl.style.opacity = '1';
-  boardEl.style.display = 'grid';
 
   setInfo(playerNumber === 1 ? 'Your turn! (Red)' : 'Waiting for opponent… (Yellow)');
 
@@ -160,60 +153,60 @@ function subscribeToGame() {
     const data = snap.data();
 
     if (data.restartRequest === true) {
-      const wasAlreadyRestart = lastSnapshotBoard === '__restart__';
-      lastSnapshotBoard = '__restart__';
-      if (!wasAlreadyRestart) {
-        await handleRemoteRestart(data);
-      }
+      await handleRemoteRestart(data);
       return;
     }
 
     const newFlat = data.board;
-    const prevFlat = lastSnapshotBoard === '__restart__'
-      ? flattenBoard(createEmptyBoard())
-      : (lastSnapshotBoard ?? flattenBoard(createEmptyBoard()));
 
+    if (pendingMoveFlat !== null) {
+      const isMine = newFlat.every((v, i) => v === pendingMoveFlat[i]);
+      if (isMine) {
+        pendingMoveFlat = null;
+        return;
+      }
+      pendingMoveFlat = null;
+    }
+
+    const oldFlat = flattenBoard(boardState);
     let changedIdx = -1;
     for (let i = 0; i < newFlat.length; i++) {
-      if (prevFlat[i] !== newFlat[i]) { changedIdx = i; break; }
+      if (oldFlat[i] !== newFlat[i]) { changedIdx = i; break; }
     }
 
-    lastSnapshotBoard = newFlat;
-
-    if (changedIdx !== -1) {
-      const placedRow = Math.floor(changedIdx / COLS);
-      const placedCol = changedIdx % COLS;
+    if (changedIdx !== -1 && !isAnimating) {
+      const placedRow   = Math.floor(changedIdx / COLS);
+      const placedCol   = changedIdx % COLS;
       const movedPlayer = newFlat[changedIdx];
 
-      if (boardState[placedRow][placedCol] !== movedPlayer && !isAnimating) {
-        isAnimating = true;
-        await animateFallingDisc(boardEl, placedCol, movedPlayer, placedRow);
-        boardState[placedRow][placedCol] = movedPlayer;
-        isAnimating = false;
-      }
+      isAnimating = true;
+      await animateFallingDisc(boardEl, placedCol, movedPlayer, placedRow);
+      boardState[placedRow][placedCol] = movedPlayer;
+      isAnimating = false;
+    } else if (changedIdx === -1) {
+      boardState = unflattenBoard(newFlat);
     }
 
-    const newBoard = unflattenBoard(newFlat);
-    boardState = newBoard;
+    boardState    = unflattenBoard(newFlat);
     currentPlayer = data.currentPlayer;
+
+    renderBoard(boardEl, boardState);
 
     if (data.status === 'finished') {
       gameActive = false;
-      renderBoard(boardEl, boardState);
-      if (data.winner) {
+      if (data.winner && data.winner !== 0) {
         const result = getWinningCells(boardState);
         if (result) pulseWinningCells(boardEl, result.cells);
         startConfetti();
         setInfo(data.winner === playerNumber ? 'You win! 🎉' : 'You lost!');
       } else {
-        setInfo("It's a draw!");
         startConfetti();
+        setInfo("It's a draw!");
       }
       if (playerNumber === 1) setRestartVisible(true);
       return;
     }
 
-    renderBoard(boardEl, boardState);
     clearWinningPulse(boardEl);
     gameActive = true;
     setInfo(currentPlayer === playerNumber ? 'Your turn!' : "Opponent's turn…");
@@ -231,22 +224,13 @@ export async function handleOnlineMove(col) {
   const newBoard = boardState.map(r => [...r]);
   newBoard[row][col] = currentPlayer;
 
-  const won = checkWin(newBoard, currentPlayer, row, col);
-  const draw = !won && isBoardFull(newBoard);
+  const won        = checkWin(newBoard, currentPlayer, row, col);
+  const draw       = !won && isBoardFull(newBoard);
   const nextPlayer = currentPlayer === 1 ? 2 : 1;
+  const newFlat    = flattenBoard(newBoard);
 
   await animateFallingDisc(boardEl, col, currentPlayer, row);
-  boardState[row][col] = currentPlayer;
-
-  const newFlat = flattenBoard(newBoard);
-  lastSnapshotBoard = newFlat;
-
-  const updatedDoc = {
-    board: newFlat,
-    currentPlayer: (won || draw) ? currentPlayer : nextPlayer,
-    status: (won || draw) ? 'finished' : 'playing',
-    winner: won ? currentPlayer : 0,
-  };
+  boardState = newBoard;
 
   renderBoard(boardEl, boardState);
 
@@ -259,16 +243,27 @@ export async function handleOnlineMove(col) {
     if (playerNumber === 1) setRestartVisible(true);
   } else if (draw) {
     gameActive = false;
-    setInfo("It's a draw!");
     startConfetti();
+    setInfo("It's a draw!");
     if (playerNumber === 1) setRestartVisible(true);
+  } else {
+    setInfo("Opponent's turn…");
   }
 
   isAnimating = false;
 
+  pendingMoveFlat = newFlat;
+
   try {
-    await updateDoc(doc(db, 'games', gameId), updatedDoc);
+    await updateDoc(doc(db, 'games', gameId), {
+      board:         newFlat,
+      currentPlayer: (won || draw) ? currentPlayer : nextPlayer,
+      status:        (won || draw) ? 'finished' : 'playing',
+      winner:        won ? currentPlayer : 0,
+      draw:          draw,
+    });
   } catch (err) {
+    pendingMoveFlat = null;
     boardState[row][col] = 0;
     renderBoard(boardEl, boardState);
     clearWinningPulse(boardEl);
@@ -290,22 +285,22 @@ export async function requestOnlineRestart() {
 
     await animateRestart(boardEl);
 
-    boardState = createEmptyBoard();
+    boardState    = createEmptyBoard();
     currentPlayer = 1;
-    gameActive = true;
-    isAnimating = false;
+    gameActive    = true;
+    isAnimating   = false;
+    pendingMoveFlat = null;
     initBoardElement(boardEl, false);
     boardEl.style.opacity = '1';
     setInfo('Your turn!');
 
-    lastSnapshotBoard = '__restart__';
-
     await updateDoc(doc(db, 'games', gameId), {
       restartRequest: true,
-      board: flattenBoard(createEmptyBoard()),
-      currentPlayer: 1,
-      status: 'playing',
-      winner: 0,
+      board:          flattenBoard(createEmptyBoard()),
+      currentPlayer:  1,
+      status:         'playing',
+      winner:         0,
+      draw:           false,
     });
   } catch (err) {
     console.error('Restart failed:', err);
@@ -320,7 +315,6 @@ async function handleRemoteRestart(data) {
     } catch (err) {
       console.error('Could not clear restartRequest:', err);
     }
-    lastSnapshotBoard = flattenBoard(createEmptyBoard());
     return;
   }
 
@@ -329,18 +323,17 @@ async function handleRemoteRestart(data) {
   setInfo('Opponent restarted the game…');
 
   await new Promise(r => setTimeout(r, 1800));
-
   await animateRestart(boardEl);
 
-  boardState = createEmptyBoard();
-  currentPlayer = 1;
-  gameActive = true;
-  isAnimating = false;
+  boardState      = createEmptyBoard();
+  currentPlayer   = 1;
+  gameActive      = true;
+  isAnimating     = false;
+  pendingMoveFlat = null;
   initBoardElement(boardEl, false);
   boardEl.style.opacity = '1';
   setRestartVisible(false);
   setInfo("Opponent's turn…");
-  lastSnapshotBoard = flattenBoard(createEmptyBoard());
 }
 
 function opponentLeft() {
@@ -363,7 +356,7 @@ export async function leaveOnlineGame() {
         if (data.player1 === auth.currentUser.uid) {
           await deleteDoc(doc(db, 'games', gameId));
         } else {
-          await updateDoc(doc(db, 'games', gameId), { status: 'finished', winner: 0 });
+          await updateDoc(doc(db, 'games', gameId), { status: 'finished', winner: 0, draw: false });
         }
       }
     } catch (err) {
@@ -371,10 +364,10 @@ export async function leaveOnlineGame() {
     }
   }
 
-  gameId = null;
+  gameId       = null;
   playerNumber = 0;
-  boardState = createEmptyBoard();
-  gameActive = false;
+  boardState   = createEmptyBoard();
+  gameActive   = false;
 }
 
 export async function cancelWaiting() {
@@ -382,7 +375,7 @@ export async function cancelWaiting() {
   if (gameId) {
     try { await deleteDoc(doc(db, 'games', gameId)); } catch (_) {}
   }
-  gameId = null;
+  gameId       = null;
   playerNumber = 0;
 }
 
@@ -396,6 +389,11 @@ function setInfo(text) {
     infoEl.style.opacity = '1';
     infoTimeout = null;
   }, 180);
+}
+
+function setStatus(text) {
+  if (!statusEl) return;
+  statusEl.textContent = text;
 }
 
 function setRestartVisible(visible) {

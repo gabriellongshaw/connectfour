@@ -3,9 +3,8 @@
     font-size: 1.3rem;
     margin-bottom: 8px;
   }
-  .screen {
+  .page {
     padding: 10px 20px;
-    justify-content: center;
   }
   .start-screen-button {
     padding: 0.55rem 1.4rem;
@@ -19,7 +18,7 @@
   .board {
     width: min(78vh, 78vw);
   }
-  .game-container {
+  .game-inner {
     padding: 6px 12px;
   }
   .info {

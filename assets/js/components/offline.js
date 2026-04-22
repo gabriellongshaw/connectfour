@@ -7,32 +7,31 @@ import { startConfetti, stopConfetti } from './confetti.js';
 
 const PLAYER_COLORS = { 1: 'Red', 2: 'Yellow' };
 
-let boardState = createEmptyBoard();
+let boardState    = createEmptyBoard();
 let currentPlayer = 1;
-let gameActive = false;
-let isAnimating = false;
-let isRestarting = false;
-let firstInit = true;
+let gameActive    = false;
+let isAnimating   = false;
+let isRestarting  = false;
+let firstInit     = true;
 
 let boardEl, infoEl, restartBtn;
 
 export function initOfflineRefs(els) {
-  boardEl = els.boardEl;
-  infoEl = els.infoEl;
+  boardEl    = els.boardEl;
+  infoEl     = els.infoEl;
   restartBtn = els.restartBtn;
 }
 
 export function startOfflineGame() {
-  boardState = createEmptyBoard();
+  boardState    = createEmptyBoard();
   currentPlayer = 1;
-  gameActive = true;
-  isAnimating = false;
+  gameActive    = true;
+  isAnimating   = false;
 
   clearWinningPulse(boardEl);
   stopConfetti();
 
   initBoardElement(boardEl, firstInit);
-  boardEl.style.display = 'grid';
   boardEl.style.opacity = '1';
   firstInit = false;
 
@@ -59,6 +58,7 @@ export async function handleOfflineMove(col) {
     gameActive = false;
   } else if (isBoardFull(boardState)) {
     setInfo("It's a draw!");
+    startConfetti();
     gameActive = false;
   } else {
     currentPlayer = currentPlayer === 1 ? 2 : 1;
@@ -74,10 +74,10 @@ export async function restartOfflineGame() {
 
   await animateRestart(boardEl);
 
-  boardState = createEmptyBoard();
+  boardState    = createEmptyBoard();
   currentPlayer = 1;
-  gameActive = true;
-  isAnimating = false;
+  gameActive    = true;
+  isAnimating   = false;
   clearWinningPulse(boardEl);
   stopConfetti();
   initBoardElement(boardEl, false);

@@ -34,11 +34,22 @@
   font-size: 0.88rem;
   font-weight: 500;
   color: var(--meta-text);
-  min-height: 1.3rem;
-  margin: 6px 0 10px;
   width: 90%;
   max-width: 340px;
   text-align: center;
+  overflow: hidden;
+  max-height: 0;
+  margin: 0;
+  transition: max-height 0.25s ease, margin 0.25s ease;
+}
+
+.status-message:not(:empty) {
+  max-height: 3rem;
+  margin: 6px 0 10px;
+}
+
+.creating-status-msg:not(:empty) {
+  margin: 6px 0 0;
 }
 
 .room-code-card {
@@ -76,18 +87,4 @@
   border: 1px solid var(--border);
   width: 100%;
   text-align: center;
-}
-
-.multiplayer-options,
-.join-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-.multiplayer-options.is-hidden,
-.join-section.is-hidden,
-.room-code-display-wrap.is-hidden {
-  display: none !important;
 }

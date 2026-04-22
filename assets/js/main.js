@@ -1,5 +1,5 @@
 import { applySystemTheme } from './core/theme.js';
-import { fadeIn, fadeOut, showInstant, hideInstant } from './core/utils.js';
+import { fadeIn, fadeOut } from './core/utils.js';
 import { waitForAuth } from './core/firebase.js';
 import { initConfetti, resizeConfetti, stopConfetti } from './components/confetti.js';
 import { initOfflineRefs, startOfflineGame, handleOfflineMove, restartOfflineGame } from './components/offline.js';
@@ -10,45 +10,53 @@ import {
 
 const $ = id => document.getElementById(id);
 
-const startScreen       = $('start-screen');
-const multiplayerScreen = $('multiplayer-screen');
-const gameContainer     = $('game-container');
+const pages = {
+  home:    $('page-home'),
+  offline: $('page-offline'),
+  online:  $('page-online'),
+  create:  $('page-create'),
+  join:    $('page-join'),
+  game:    $('page-game'),
+};
 
 const playOfflineBtn    = $('play-offline');
 const playOnlineBtn     = $('play-online');
-
-const mpOptions         = $('multiplayer-options');
-const joinSection       = $('join-section');
-const roomCodeDisplay   = $('room-code-display');
-
 const createGameBtn     = $('create-game-btn');
 const showJoinBtn       = $('show-join-btn');
+const backFromOnlineBtn = $('back-from-online');
 const joinGameBtn       = $('join-game-btn');
 const joinCodeInput     = $('join-code-input');
-
-const backFromMpBtn     = $('back-from-mp');
-const backToOptionsBtn  = $('back-to-options');
 const backFromWaitBtn   = $('back-from-wait');
-
-const boardEl           = $('board');
-const infoEl            = $('info');
-const restartBtn        = $('restart-btn');
-const leaveBtn          = $('leave-btn');
-const statusEl          = $('multiplayer-status');
+const backFromJoinBtn   = $('back-from-join');
+const leaveBtnOffline   = $('leave-btn-offline');
+const leaveBtnOnline    = $('leave-btn-online');
+const restartBtnOffline = $('restart-btn-offline');
+const restartBtnOnline  = $('restart-btn-online');
+const boardOffline      = $('board-offline');
+const infoOffline       = $('info-offline');
+const boardOnline       = $('board-online');
+const infoOnline        = $('info-online');
 const roomCodeSpan      = $('room-code');
+const creatingStatus    = $('creating-status');
+const joinStatus        = $('join-status');
 const modal             = $('browser-modal');
 const closeModalBtn     = $('close-modal');
 const backdrop          = $('backdrop');
 
-let gameMode  = null;
-let authReady = false;
+let currentPage = 'home';
+let authReady   = false;
 
 function init() {
   applySystemTheme();
   initConfetti();
 
-  initOfflineRefs({ boardEl, infoEl, restartBtn });
-  initOnlineRefs({ boardEl, infoEl, restartBtn, leaveBtn, statusEl });
+  initOfflineRefs({ boardEl: boardOffline, infoEl: infoOffline, restartBtn: restartBtnOffline });
+  initOnlineRefs({
+    boardEl:    boardOnline,
+    infoEl:     infoOnline,
+    restartBtn: restartBtnOnline,
+    statusEl:   creatingStatus,
+  });
 
   bindEvents();
   showModal();
@@ -58,105 +66,103 @@ function init() {
     .catch(err => console.error('Auth failed:', err));
 }
 
+async function goTo(name) {
+  if (name === currentPage) return;
+  const from = pages[currentPage];
+  const to   = pages[name];
+  currentPage = name;
+  await fadeOut(from, 300);
+  from.classList.add('page-hidden');
+  to.classList.remove('page-hidden');
+  await fadeIn(to, 300);
+}
+
 function bindEvents() {
   playOfflineBtn.addEventListener('click', async () => {
-    gameMode = 'offline';
-    await fadeOut(startScreen);
-    showInstant(gameContainer);
+    await goTo('offline');
+    boardOffline.style.display = 'grid';
     startOfflineGame();
-    showLeaveBtn();
-    await fadeIn(gameContainer);
   });
 
   playOnlineBtn.addEventListener('click', async () => {
-    if (!authReady) {
-      if (statusEl) statusEl.textContent = 'Connecting… please wait.';
-      return;
-    }
-    gameMode = 'online';
-    await fadeOut(startScreen);
-    showMpOptions();
-    showInstant(multiplayerScreen);
-    await fadeIn(multiplayerScreen);
+    if (!authReady) return;
+    await goTo('online');
+  });
+
+  backFromOnlineBtn.addEventListener('click', async () => {
+    await goTo('home');
   });
 
   createGameBtn.addEventListener('click', async () => {
-    if (!authReady) { if (statusEl) statusEl.textContent = 'Connecting… please wait.'; return; }
-    await fadeOut(mpOptions);
-    showInstant(roomCodeDisplay);
-    await fadeIn(roomCodeDisplay);
+    if (!authReady) return;
+    roomCodeSpan.textContent = '';
+    creatingStatus.textContent = '';
+    await goTo('create');
     createGame(
       code => { roomCodeSpan.textContent = code; },
       async () => {
-        await fadeOut(multiplayerScreen);
-        showInstant(gameContainer);
-        startOnlineGameUI();
-        await fadeIn(gameContainer);
+        boardOnline.style.display = 'grid';
+        await goTo('game');
       }
     );
   });
 
   showJoinBtn.addEventListener('click', async () => {
-    await fadeOut(mpOptions);
-    showInstant(joinSection);
-    await fadeIn(joinSection);
+    joinCodeInput.value = '';
+    joinStatus.textContent = '';
+    await goTo('join');
   });
 
   joinGameBtn.addEventListener('click', async () => {
-    if (!authReady) { if (statusEl) statusEl.textContent = 'Connecting… please wait.'; return; }
-    joinCodeInput.value = joinCodeInput.value.trim().toUpperCase();
-    await joinGame(joinCodeInput.value, async () => {
-      await fadeOut(multiplayerScreen);
-      showInstant(gameContainer);
-      startOnlineGameUI();
-      await fadeIn(gameContainer);
-    });
+    if (!authReady) { joinStatus.textContent = 'Connecting… please wait.'; return; }
+    const code = joinCodeInput.value.trim().toUpperCase();
+    joinCodeInput.value = code;
+    joinStatus.textContent = '';
+    joinGame(code, async () => {
+      boardOnline.style.display = 'grid';
+      await goTo('game');
+    }, text => { joinStatus.textContent = text; });
   });
 
   joinCodeInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') joinGameBtn.click();
   });
 
-  backFromMpBtn.addEventListener('click', async () => {
-    await fadeOut(multiplayerScreen);
-    resetMpUI();
-    showInstant(startScreen);
-    await fadeIn(startScreen);
-  });
-
-  backToOptionsBtn.addEventListener('click', async () => {
-    await fadeOut(joinSection);
-    hideInstant(joinSection);
-    showInstant(mpOptions);
-    await fadeIn(mpOptions);
-    if (statusEl) statusEl.textContent = '';
+  backFromJoinBtn.addEventListener('click', async () => {
+    joinStatus.textContent = '';
+    joinCodeInput.value = '';
+    await goTo('online');
   });
 
   backFromWaitBtn.addEventListener('click', async () => {
     await cancelWaiting();
-    await fadeOut(roomCodeDisplay);
-    hideInstant(roomCodeDisplay);
-    showInstant(mpOptions);
-    await fadeIn(mpOptions);
-    if (statusEl) statusEl.textContent = '';
+    await goTo('online');
   });
 
-  boardEl.addEventListener('click', e => {
+  leaveBtnOffline.addEventListener('click', async () => {
+    stopConfetti();
+    await goTo('home');
+  });
+
+  leaveBtnOnline.addEventListener('click', async () => {
+    await leaveOnlineGame();
+    stopConfetti();
+    await goTo('home');
+  });
+
+  restartBtnOffline.addEventListener('click', () => restartOfflineGame());
+  restartBtnOnline.addEventListener('click', () => requestOnlineRestart());
+
+  boardOffline.addEventListener('click', e => {
     const cell = e.target.closest('.cell');
     if (!cell) return;
-    const col = Number(cell.dataset.col);
-    if (gameMode === 'offline') handleOfflineMove(col);
-    else if (gameMode === 'online') handleOnlineMove(col);
+    handleOfflineMove(Number(cell.dataset.col));
   });
 
-  restartBtn.addEventListener('click', () => {
-    if (gameMode === 'offline') restartOfflineGame();
-    else if (gameMode === 'online') requestOnlineRestart();
-  });
-
-  leaveBtn.addEventListener('click', async () => {
-    if (gameMode === 'online') await leaveOnlineGame();
-    await returnToStart();
+  boardOnline.addEventListener('click', e => {
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    handleOnlineMove(Number(cell.dataset.col));
   });
 
   closeModalBtn?.addEventListener('click', closeModal);
@@ -164,51 +170,7 @@ function bindEvents() {
 
   window.addEventListener('resize', resizeConfetti);
 
-  addTouchHover('.start-screen-button, .btn-ghost, #leave-btn, #restart-btn');
-}
-
-function startOnlineGameUI() {
-  showLeaveBtn();
-}
-
-async function returnToStart() {
-  stopConfetti();
-  restartBtn.style.display = 'none';
-  leaveBtn.style.display = 'none';
-  gameMode = null;
-
-  if (!gameContainer.classList.contains('is-hidden')) {
-    boardEl.style.display = 'none';
-    await fadeOut(gameContainer);
-  }
-  if (!multiplayerScreen.classList.contains('is-hidden')) {
-    await fadeOut(multiplayerScreen);
-  }
-
-  resetMpUI();
-  showInstant(startScreen);
-  await fadeIn(startScreen);
-}
-
-function showMpOptions() {
-  showInstant(mpOptions);
-  hideInstant(joinSection);
-  hideInstant(roomCodeDisplay);
-  if (statusEl) statusEl.textContent = '';
-  joinCodeInput.value = '';
-}
-
-function resetMpUI() {
-  showInstant(mpOptions);
-  hideInstant(joinSection);
-  hideInstant(roomCodeDisplay);
-  if (statusEl) statusEl.textContent = '';
-  joinCodeInput.value = '';
-  roomCodeSpan.textContent = '';
-}
-
-function showLeaveBtn() {
-  leaveBtn.style.display = 'block';
+  addTouchHover('.start-screen-button, .btn-ghost, .btn-leave, #restart-btn-offline, #restart-btn-online');
 }
 
 function showModal() {
