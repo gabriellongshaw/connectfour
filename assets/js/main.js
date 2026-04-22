@@ -59,7 +59,7 @@ function init() {
   });
 
   bindEvents();
-  showModal();
+  if (isInAppBrowser()) showModal();
 
   waitForAuth()
     .then(() => { authReady = true; })
@@ -171,6 +171,17 @@ function bindEvents() {
   window.addEventListener('resize', resizeConfetti);
 
   addTouchHover('.start-screen-button, .btn-ghost, .btn-leave, #restart-btn-offline, #restart-btn-online');
+}
+
+function isInAppBrowser() {
+  const ua = navigator.userAgent;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (isStandalone) return false;
+  return /FB_IAB|FBAN|FBAV|Instagram|Twitter|LinkedInApp|Snapchat|TikTok|BytedanceWebview|GSA|musical_ly/.test(ua)
+    || /wv/.test(ua)
+    || (/Android/.test(ua) && !/Chrome\/[.0-9]* Mobile/.test(ua) && /Version\//.test(ua))
+    || (window.ReactNativeWebView !== undefined)
+    || (typeof Android !== 'undefined');
 }
 
 function showModal() {
