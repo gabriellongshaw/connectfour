@@ -6,7 +6,7 @@
   gap: clamp(5px, 1.8vw, 11px);
   background: var(--board-bg);
   border: 1px solid var(--border);
-  width: min(94vw, 94vmin, 520px);
+  width: min(88vw, 88vmin, 520px);
   margin: 0 auto;
   padding: clamp(7px, 2vw, 14px);
   border-radius: var(--shape-large);

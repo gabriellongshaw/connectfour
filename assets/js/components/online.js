@@ -386,11 +386,15 @@ export async function cancelWaiting() {
   playerNumber = 0;
 }
 
+let infoTimeout = null;
+
 function setInfo(text) {
+  if (infoTimeout) { clearTimeout(infoTimeout); infoTimeout = null; }
   infoEl.style.opacity = '0';
-  setTimeout(() => {
+  infoTimeout = setTimeout(() => {
     infoEl.textContent = text;
     infoEl.style.opacity = '1';
+    infoTimeout = null;
   }, 180);
 }
 

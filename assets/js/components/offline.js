@@ -47,8 +47,6 @@ export async function handleOfflineMove(col) {
   if (row === -1) return;
 
   isAnimating = true;
-
-  // animateFallingDisc now sets cell.dataset.player at the last frame before resolve
   await animateFallingDisc(boardEl, col, currentPlayer, row);
 
   boardState[row][col] = currentPlayer;
@@ -89,10 +87,14 @@ export async function restartOfflineGame() {
   setTimeout(() => { isRestarting = false; }, 200);
 }
 
+let infoTimeout = null;
+
 function setInfo(text) {
+  if (infoTimeout) { clearTimeout(infoTimeout); infoTimeout = null; }
   infoEl.style.opacity = '0';
-  setTimeout(() => {
+  infoTimeout = setTimeout(() => {
     infoEl.textContent = text;
     infoEl.style.opacity = '1';
+    infoTimeout = null;
   }, 180);
 }
