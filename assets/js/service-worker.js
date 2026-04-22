@@ -1,8 +1,10 @@
-const CACHE = 'connect-four-v5';
+const CACHE = 'connect-four-v6';
 
 const STATIC = [
   '/',
   '/index.html',
+  '/manifest.json',
+  '/assets/fonts/ProductSans-Regular.ttf',
   '/assets/css/variables.css',
   '/assets/css/main.css',
   '/assets/css/fonts.css',
@@ -13,12 +15,23 @@ const STATIC = [
   '/assets/css/components/board.css',
   '/assets/css/components/multiplayer.css',
   '/assets/css/components/modal.css',
-  '/assets/images/favicon/manifest.json',
   '/assets/images/favicon/favicon-192x192.png',
+  '/assets/js/main.js',
+  '/assets/js/core/firebase.js',
+  '/assets/js/core/theme.js',
+  '/assets/js/core/utils.js',
+  '/assets/js/components/board.js',
+  '/assets/js/components/confetti.js',
+  '/assets/js/components/offline.js',
+  '/assets/js/components/online.js',
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)));
+  e.waitUntil(
+    caches.open(CACHE).then(c =>
+      Promise.allSettled(STATIC.map(url => c.add(url)))
+    )
+  );
 });
 
 self.addEventListener('activate', e => {

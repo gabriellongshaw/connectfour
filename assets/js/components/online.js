@@ -161,11 +161,8 @@ function subscribeToGame() {
 
     if (pendingMoveFlat !== null) {
       const isMine = newFlat.every((v, i) => v === pendingMoveFlat[i]);
-      if (isMine) {
-        pendingMoveFlat = null;
-        return;
-      }
       pendingMoveFlat = null;
+      if (isMine && data.status !== 'finished') return;
     }
 
     const oldFlat = flattenBoard(boardState);
@@ -194,12 +191,19 @@ function subscribeToGame() {
 
     if (data.status === 'finished') {
       gameActive = false;
+      boardState = unflattenBoard(newFlat);
+      renderBoard(boardEl, boardState);
       if (data.winner && data.winner !== 0) {
         const result = getWinningCells(boardState);
         if (result) pulseWinningCells(boardEl, result.cells);
-        startConfetti();
-        setInfo(data.winner === playerNumber ? 'You win! 🎉' : 'You lost!');
-      } else {
+        if (data.winner !== playerNumber) {
+          startConfetti();
+          setInfo('You lost!');
+        } else if (playerNumber === 2) {
+          startConfetti();
+          setInfo('You win! 🎉');
+        }
+      } else if (data.draw) {
         startConfetti();
         setInfo("It's a draw!");
       }
@@ -252,9 +256,8 @@ export async function handleOnlineMove(col) {
 
   isAnimating = false;
 
-  pendingMoveFlat = newFlat;
-
   try {
+    pendingMoveFlat = newFlat;
     await updateDoc(doc(db, 'games', gameId), {
       board:         newFlat,
       currentPlayer: (won || draw) ? currentPlayer : nextPlayer,
@@ -264,13 +267,12 @@ export async function handleOnlineMove(col) {
     });
   } catch (err) {
     pendingMoveFlat = null;
-    boardState[row][col] = 0;
-    renderBoard(boardEl, boardState);
-    clearWinningPulse(boardEl);
-    stopConfetti();
-    gameActive = true;
-    setRestartVisible(false);
-    setInfo('Your turn!');
+    if (!won && !draw) {
+      boardState[row][col] = 0;
+      renderBoard(boardEl, boardState);
+      gameActive = true;
+      setInfo('Your turn!');
+    }
     console.error('Move update failed:', err);
   }
 }
