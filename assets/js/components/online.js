@@ -159,12 +159,16 @@ function subscribeToGame() {
 
     const newFlat = data.board;
 
+    // If this snapshot is the echo of our own move, skip it entirely.
+    // pendingMoveFlat is cleared after we confirm the write succeeded,
+    // so this guard only fires for our own echoed snapshot.
     if (pendingMoveFlat !== null) {
       const isMine = newFlat.every((v, i) => v === pendingMoveFlat[i]);
       pendingMoveFlat = null;
-      if (isMine && data.status !== 'finished') return;
+      if (isMine) return;
     }
 
+    // Opponent made a move — find the changed cell and animate it.
     const oldFlat = flattenBoard(boardState);
     let changedIdx = -1;
     for (let i = 0; i < newFlat.length; i++) {
@@ -178,31 +182,20 @@ function subscribeToGame() {
 
       isAnimating = true;
       await animateFallingDisc(boardEl, placedCol, movedPlayer, placedRow);
-      boardState[placedRow][placedCol] = movedPlayer;
       isAnimating = false;
-    } else if (changedIdx === -1) {
-      boardState = unflattenBoard(newFlat);
     }
 
     boardState    = unflattenBoard(newFlat);
     currentPlayer = data.currentPlayer;
-
     renderBoard(boardEl, boardState);
 
     if (data.status === 'finished') {
       gameActive = false;
-      boardState = unflattenBoard(newFlat);
-      renderBoard(boardEl, boardState);
       if (data.winner && data.winner !== 0) {
         const result = getWinningCells(boardState);
         if (result) pulseWinningCells(boardEl, result.cells);
-        if (data.winner !== playerNumber) {
-          startConfetti();
-          setInfo('You lost!');
-        } else if (playerNumber === 2) {
-          startConfetti();
-          setInfo('You win! 🎉');
-        }
+        startConfetti();
+        setInfo(data.winner === playerNumber ? 'You win! 🎉' : 'You lost!');
       } else if (data.draw) {
         startConfetti();
         setInfo("It's a draw!");
@@ -244,12 +237,12 @@ export async function handleOnlineMove(col) {
     if (result) pulseWinningCells(boardEl, result.cells);
     startConfetti();
     setInfo('You win! 🎉');
-    if (playerNumber === 1) setRestartVisible(true);
+    setRestartVisible(true);
   } else if (draw) {
     gameActive = false;
     startConfetti();
     setInfo("It's a draw!");
-    if (playerNumber === 1) setRestartVisible(true);
+    setRestartVisible(true);
   } else {
     setInfo("Opponent's turn…");
   }
@@ -257,7 +250,6 @@ export async function handleOnlineMove(col) {
   isAnimating = false;
 
   try {
-    pendingMoveFlat = newFlat;
     await updateDoc(doc(db, 'games', gameId), {
       board:         newFlat,
       currentPlayer: (won || draw) ? currentPlayer : nextPlayer,
@@ -265,13 +257,15 @@ export async function handleOnlineMove(col) {
       winner:        won ? currentPlayer : 0,
       draw:          draw,
     });
+    // Set pendingMoveFlat only after confirmed write so the echo snapshot is skipped.
+    pendingMoveFlat = newFlat;
   } catch (err) {
-    pendingMoveFlat = null;
     if (!won && !draw) {
       boardState[row][col] = 0;
       renderBoard(boardEl, boardState);
       gameActive = true;
       setInfo('Your turn!');
+      setRestartVisible(false);
     }
     console.error('Move update failed:', err);
   }
