@@ -2,8 +2,8 @@ import {
   ROWS, COLS, createEmptyBoard, getAvailableRow, checkWin, isBoardFull,
   getWinningCells, initBoardElement, pulseWinningCells, clearWinningPulse,
   animateFallingDisc, animateRestart
-} from './board.js';
-import { startConfetti, stopConfetti } from './confetti.js';
+} from '../components/board.js';
+import { startConfetti, stopConfetti } from '../components/confetti.js';
 
 const PLAYER_COLORS = { 1: 'Red', 2: 'Yellow' };
 

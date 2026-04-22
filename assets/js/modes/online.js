@@ -10,8 +10,8 @@ import {
   getAvailableRow, checkWin, isBoardFull, getWinningCells,
   renderBoard, initBoardElement, pulseWinningCells, clearWinningPulse,
   animateFallingDisc, animateRestart
-} from './board.js';
-import { startConfetti, stopConfetti } from './confetti.js';
+} from '../components/board.js';
+import { startConfetti, stopConfetti } from '../components/confetti.js';
 
 const gamesRef = collection(db, 'games');
 
@@ -345,6 +345,7 @@ async function handleRemoteRestart(data) {
 function opponentLeft() {
   gameActive = false;
   stopConfetti();
+  setRestartVisible(false);
   setInfo('Your opponent left the game.');
 }
 

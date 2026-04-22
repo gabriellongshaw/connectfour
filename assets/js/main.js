@@ -2,11 +2,11 @@ import { applySystemTheme } from './core/theme.js';
 import { fadeIn, fadeOut } from './core/utils.js';
 import { waitForAuth } from './core/firebase.js';
 import { initConfetti, resizeConfetti, stopConfetti } from './components/confetti.js';
-import { initOfflineRefs, startOfflineGame, handleOfflineMove, restartOfflineGame } from './components/offline.js';
+import { initOfflineRefs, startOfflineGame, handleOfflineMove, restartOfflineGame } from './modes/offline.js';
 import {
   initOnlineRefs, createGame, joinGame, handleOnlineMove,
   requestOnlineRestart, leaveOnlineGame, cancelWaiting
-} from './components/online.js';
+} from './modes/online.js';
 
 const $ = id => document.getElementById(id);
 

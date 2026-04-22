@@ -1,4 +1,4 @@
-const CACHE = 'connect-four-v6';
+const CACHE = 'connect-four-v7';
 
 const STATIC = [
   '/',
@@ -22,8 +22,8 @@ const STATIC = [
   '/assets/js/core/utils.js',
   '/assets/js/components/board.js',
   '/assets/js/components/confetti.js',
-  '/assets/js/components/offline.js',
-  '/assets/js/components/online.js',
+  '/assets/js/modes/offline.js',
+  '/assets/js/modes/online.js',
 ];
 
 self.addEventListener('install', e => {
