@@ -25,6 +25,7 @@ let unsubGame     = null;
 let isSelfLeaving = false;
 
 let pendingMoveFlat = null;
+let isRestarting    = false;
 
 let boardEl, infoEl, restartBtn, statusEl;
 
@@ -127,6 +128,7 @@ export function startOnlineGame() {
   gameActive      = true;
   isAnimating     = false;
   isSelfLeaving   = false;
+  isRestarting    = false;
   pendingMoveFlat = null;
 
   clearWinningPulse(boardEl);
@@ -177,7 +179,7 @@ function subscribeToGame() {
       if (oldFlat[i] !== newFlat[i]) { changedIdx = i; break; }
     }
 
-    if (changedIdx !== -1 && !isAnimating) {
+    if (changedIdx !== -1 && !isAnimating && !isRestarting) {
       const placedRow   = Math.floor(changedIdx / COLS);
       const placedCol   = changedIdx % COLS;
       const movedPlayer = newFlat[changedIdx];
@@ -245,12 +247,12 @@ export async function handleOnlineMove(col) {
     if (result) pulseWinningCells(boardEl, result.cells);
     startConfetti();
     setInfo('You win! 🎉');
-    setRestartVisible(true);
+    if (playerNumber === 1) setRestartVisible(true);
   } else if (draw) {
     gameActive = false;
     startConfetti();
     setInfo("It's a draw!");
-    setRestartVisible(true);
+    if (playerNumber === 1) setRestartVisible(true);
   } else {
     setInfo("Opponent's turn…");
   }
@@ -304,6 +306,7 @@ async function handleRemoteRestart(data) {
       currentPlayer   = 1;
       gameActive      = true;
       isAnimating     = false;
+      isRestarting    = false;
       pendingMoveFlat = null;
       initBoardElement(boardEl, false);
       boardEl.style.opacity = '1';
@@ -324,6 +327,7 @@ async function handleRemoteRestart(data) {
   }
 
   // P2 sees the restartRequest — animate and wait, then P1 will push the reset.
+  isRestarting = true;
   clearWinningPulse(boardEl);
   stopConfetti();
   setInfo('Opponent is restarting the game…');
@@ -340,6 +344,8 @@ async function handleRemoteRestart(data) {
   boardEl.style.opacity = '1';
   setRestartVisible(false);
   setInfo("Waiting for opponent…");
+  await new Promise(r => setTimeout(r, 200));
+  isRestarting = false;
 }
 
 function opponentLeft() {
