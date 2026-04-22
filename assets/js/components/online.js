@@ -50,6 +50,7 @@ export async function createGame(onWaiting, onGameStart) {
       winner:         0,
       draw:           false,
       restartRequest: false,
+      leftGame:       false,
     });
 
     gameId       = ref.id;
@@ -152,6 +153,11 @@ function subscribeToGame() {
 
     const data = snap.data();
 
+    if (data.leftGame === true) {
+      if (!isSelfLeaving) opponentLeft();
+      return;
+    }
+
     if (data.restartRequest === true) {
       await handleRemoteRestart(data);
       return;
@@ -159,16 +165,12 @@ function subscribeToGame() {
 
     const newFlat = data.board;
 
-    // If this snapshot is the echo of our own move, skip it entirely.
-    // pendingMoveFlat is cleared after we confirm the write succeeded,
-    // so this guard only fires for our own echoed snapshot.
     if (pendingMoveFlat !== null) {
       const isMine = newFlat.every((v, i) => v === pendingMoveFlat[i]);
       pendingMoveFlat = null;
       if (isMine) return;
     }
 
-    // Opponent made a move — find the changed cell and animate it.
     const oldFlat = flattenBoard(boardState);
     let changedIdx = -1;
     for (let i = 0; i < newFlat.length; i++) {
@@ -194,8 +196,14 @@ function subscribeToGame() {
       if (data.winner && data.winner !== 0) {
         const result = getWinningCells(boardState);
         if (result) pulseWinningCells(boardEl, result.cells);
-        startConfetti();
-        setInfo(data.winner === playerNumber ? 'You win! 🎉' : 'You lost!');
+        if (data.winner === playerNumber) {
+          startConfetti();
+          setInfo('You win! 🎉');
+        } else {
+          setInfo(playerNumber === 2
+            ? 'You lost! Player 1 can restart the game.'
+            : 'You lost!');
+        }
       } else if (data.draw) {
         startConfetti();
         setInfo("It's a draw!");
@@ -257,7 +265,6 @@ export async function handleOnlineMove(col) {
       winner:        won ? currentPlayer : 0,
       draw:          draw,
     });
-    // Set pendingMoveFlat only after confirmed write so the echo snapshot is skipped.
     pendingMoveFlat = newFlat;
   } catch (err) {
     if (!won && !draw) {
@@ -279,25 +286,8 @@ export async function requestOnlineRestart() {
     clearWinningPulse(boardEl);
     stopConfetti();
 
-    await animateRestart(boardEl);
-
-    boardState    = createEmptyBoard();
-    currentPlayer = 1;
-    gameActive    = true;
-    isAnimating   = false;
-    pendingMoveFlat = null;
-    initBoardElement(boardEl, false);
-    boardEl.style.opacity = '1';
-    setInfo('Your turn!');
-
-    await updateDoc(doc(db, 'games', gameId), {
-      restartRequest: true,
-      board:          flattenBoard(createEmptyBoard()),
-      currentPlayer:  1,
-      status:         'playing',
-      winner:         0,
-      draw:           false,
-    });
+    // Signal P2 to animate restart first; board reset happens after P2 acknowledges.
+    await updateDoc(doc(db, 'games', gameId), { restartRequest: true });
   } catch (err) {
     console.error('Restart failed:', err);
     setRestartVisible(true);
@@ -306,38 +296,56 @@ export async function requestOnlineRestart() {
 
 async function handleRemoteRestart(data) {
   if (playerNumber === 1) {
+    // P1's own write echoed back — now do the actual board reset.
     try {
-      await updateDoc(doc(db, 'games', gameId), { restartRequest: false });
+      await animateRestart(boardEl);
+
+      boardState      = createEmptyBoard();
+      currentPlayer   = 1;
+      gameActive      = true;
+      isAnimating     = false;
+      pendingMoveFlat = null;
+      initBoardElement(boardEl, false);
+      boardEl.style.opacity = '1';
+      setInfo('Your turn!');
+
+      await updateDoc(doc(db, 'games', gameId), {
+        restartRequest: false,
+        board:          flattenBoard(createEmptyBoard()),
+        currentPlayer:  1,
+        status:         'playing',
+        winner:         0,
+        draw:           false,
+      });
     } catch (err) {
-      console.error('Could not clear restartRequest:', err);
+      console.error('Restart reset failed:', err);
     }
     return;
   }
 
+  // P2 sees the restartRequest — animate and wait, then P1 will push the reset.
   clearWinningPulse(boardEl);
   stopConfetti();
-  setInfo('Opponent restarted the game…');
+  setInfo('Opponent is restarting the game…');
 
-  await new Promise(r => setTimeout(r, 1800));
+  await new Promise(r => setTimeout(r, 600));
   await animateRestart(boardEl);
 
   boardState      = createEmptyBoard();
   currentPlayer   = 1;
-  gameActive      = true;
+  gameActive      = false;
   isAnimating     = false;
   pendingMoveFlat = null;
   initBoardElement(boardEl, false);
   boardEl.style.opacity = '1';
   setRestartVisible(false);
-  setInfo("Opponent's turn…");
+  setInfo("Waiting for opponent…");
 }
 
 function opponentLeft() {
   gameActive = false;
   stopConfetti();
-  startConfetti();
-  setInfo('Opponent left. You win! 🎉');
-  if (playerNumber === 1) setRestartVisible(true);
+  setInfo('Your opponent left the game.');
 }
 
 export async function leaveOnlineGame() {
@@ -352,7 +360,7 @@ export async function leaveOnlineGame() {
         if (data.player1 === auth.currentUser.uid) {
           await deleteDoc(doc(db, 'games', gameId));
         } else {
-          await updateDoc(doc(db, 'games', gameId), { status: 'finished', winner: 0, draw: false });
+          await updateDoc(doc(db, 'games', gameId), { leftGame: true });
         }
       }
     } catch (err) {
