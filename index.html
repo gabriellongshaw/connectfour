@@ -46,8 +46,6 @@
   <link rel="stylesheet" href="assets/css/responsive.css">
 </head>
 <body>
-
-  <!-- PAGE: home -->
   <div id="page-home" class="page">
     <h1>Connect Four</h1>
     <button id="play-offline" class="start-screen-button"><i class="fa-solid fa-user"></i> Play Offline</button>
@@ -57,8 +55,6 @@
       <p>&amp; <a class="credits-link" target="_blank" href="https://www.bocajsolutions.co.uk">bocajthomas</a></p>
     </div>
   </div>
-
-  <!-- PAGE: offline game -->
   <div id="page-offline" class="page page-hidden">
     <button id="leave-btn-offline" class="btn-leave">&#8592; Leave</button>
     <div class="game-inner">
@@ -72,16 +68,12 @@
       </div>
     </div>
   </div>
-
-  <!-- PAGE: online lobby -->
   <div id="page-online" class="page page-hidden">
     <h1>Online Multiplayer</h1>
     <button id="create-game-btn" class="start-screen-button"><i class="fa-solid fa-square-plus"></i> Create Game</button>
     <button id="show-join-btn" class="start-screen-button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Game</button>
     <button id="back-from-online" class="btn btn-ghost">Back</button>
   </div>
-
-  <!-- PAGE: create game -->
   <div id="page-create" class="page page-hidden">
     <h1>Create Game</h1>
     <div class="room-code-display-wrap">
@@ -93,8 +85,6 @@
     </div>
     <button id="back-from-wait" class="btn btn-ghost">Cancel</button>
   </div>
-
-  <!-- PAGE: join game -->
   <div id="page-join" class="page page-hidden">
     <h1>Join Game</h1>
     <div class="join-section">
@@ -105,8 +95,6 @@
       <button id="back-from-join" class="btn btn-ghost">Back</button>
     </div>
   </div>
-
-  <!-- PAGE: online game -->
   <div id="page-game" class="page page-hidden">
     <button id="leave-btn-online" class="btn-leave">&#8592; Leave</button>
     <div class="game-inner">
@@ -120,7 +108,6 @@
       </div>
     </div>
   </div>
-
   <dialog id="browser-modal" class="dialog">
     <div class="modal-header">
       <span class="material-symbols-rounded modal-icon">language</span>
@@ -137,7 +124,6 @@
   </dialog>
   <div id="backdrop" class="backdrop"></div>
   <canvas id="confetti-canvas"></canvas>
-
   <script type="module" src="assets/js/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
