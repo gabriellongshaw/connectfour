@@ -97,3 +97,13 @@
   margin-top: 12px;
   flex-wrap: wrap;
 }
+
+.sub-info {
+  margin: 2px 0 4px;
+  font-weight: 500;
+  font-size: clamp(0.78rem, 3vw, 0.88rem);
+  color: var(--meta-text);
+  min-height: 1.2em;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}

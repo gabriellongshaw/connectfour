@@ -34,8 +34,10 @@ const restartBtnOffline = $('restart-btn-offline');
 const restartBtnOnline  = $('restart-btn-online');
 const boardOffline      = $('board-offline');
 const infoOffline       = $('info-offline');
+const subInfoOffline    = $('sub-info-offline');
 const boardOnline       = $('board-online');
 const infoOnline        = $('info-online');
+const subInfoOnline     = $('sub-info-online');
 const roomCodeSpan      = $('room-code');
 const creatingStatus    = $('creating-status');
 const joinStatus        = $('join-status');
@@ -50,10 +52,11 @@ function init() {
   applySystemTheme();
   initConfetti();
 
-  initOfflineRefs({ boardEl: boardOffline, infoEl: infoOffline, restartBtn: restartBtnOffline });
+  initOfflineRefs({ boardEl: boardOffline, infoEl: infoOffline, subInfoEl: subInfoOffline, restartBtn: restartBtnOffline });
   initOnlineRefs({
     boardEl:    boardOnline,
     infoEl:     infoOnline,
+    subInfoEl:  subInfoOnline,
     restartBtn: restartBtnOnline,
     statusEl:   creatingStatus,
   });
@@ -170,7 +173,7 @@ function bindEvents() {
 
   window.addEventListener('resize', resizeConfetti);
 
-  addTouchHover('.start-screen-button, .btn-ghost, .btn-leave, #restart-btn-offline, #restart-btn-online');
+  addTouchHover('.button, .secondary-button, .tertiary-button, .btn-leave');
 }
 
 function isInAppBrowser() {

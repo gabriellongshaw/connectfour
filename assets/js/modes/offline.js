@@ -14,11 +14,12 @@ let isAnimating   = false;
 let isRestarting  = false;
 let firstInit     = true;
 
-let boardEl, infoEl, restartBtn;
+let boardEl, infoEl, subInfoEl, restartBtn;
 
 export function initOfflineRefs(els) {
   boardEl    = els.boardEl;
   infoEl     = els.infoEl;
+  subInfoEl  = els.subInfoEl;
   restartBtn = els.restartBtn;
 }
 
@@ -37,6 +38,7 @@ export function startOfflineGame() {
 
   restartBtn.style.display = 'inline-flex';
   setInfo(`Player 1's turn (${PLAYER_COLORS[1]})`);
+  setSubInfo('');
 }
 
 export async function handleOfflineMove(col) {
@@ -54,15 +56,19 @@ export async function handleOfflineMove(col) {
   if (result) {
     pulseWinningCells(boardEl, result.cells);
     setInfo(`Player ${currentPlayer} wins! 🎉`);
+    const loser = currentPlayer === 1 ? 2 : 1;
+    setSubInfo(`Player ${loser} can restart the game.`);
     startConfetti();
     gameActive = false;
   } else if (isBoardFull(boardState)) {
     setInfo("It's a draw!");
+    setSubInfo('Either player can restart the game.');
     startConfetti();
     gameActive = false;
   } else {
     currentPlayer = currentPlayer === 1 ? 2 : 1;
     setInfo(`Player ${currentPlayer}'s turn (${PLAYER_COLORS[currentPlayer]})`);
+    setSubInfo('');
   }
 
   isAnimating = false;
@@ -83,6 +89,7 @@ export async function restartOfflineGame() {
   initBoardElement(boardEl, false);
   boardEl.style.opacity = '1';
   setInfo(`Player 1's turn (${PLAYER_COLORS[1]})`);
+  setSubInfo('');
 
   setTimeout(() => { isRestarting = false; }, 200);
 }
@@ -97,4 +104,8 @@ function setInfo(text) {
     infoEl.style.opacity = '1';
     infoTimeout = null;
   }, 180);
+}
+
+function setSubInfo(text) {
+  subInfoEl.textContent = text;
 }

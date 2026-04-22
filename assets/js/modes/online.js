@@ -27,11 +27,12 @@ let isSelfLeaving = false;
 let pendingMoveFlat = null;
 let isRestarting    = false;
 
-let boardEl, infoEl, restartBtn, statusEl;
+let boardEl, infoEl, subInfoEl, restartBtn, statusEl;
 
 export function initOnlineRefs(els) {
   boardEl    = els.boardEl;
   infoEl     = els.infoEl;
+  subInfoEl  = els.subInfoEl;
   restartBtn = els.restartBtn;
   statusEl   = els.statusEl;
 }
@@ -139,6 +140,7 @@ export function startOnlineGame() {
   boardEl.style.opacity = '1';
 
   setInfo(playerNumber === 1 ? 'Your turn! (Red)' : 'Waiting for opponent… (Yellow)');
+  setSubInfo('');
 
   subscribeToGame();
 }
@@ -201,14 +203,21 @@ function subscribeToGame() {
         if (data.winner === playerNumber) {
           startConfetti();
           setInfo('You win! 🎉');
+          setSubInfo(playerNumber === 1
+            ? 'You can restart the game using the button below.'
+            : 'Player 1 (host) can restart the game.');
         } else {
-          setInfo(playerNumber === 2
-            ? 'You lost! Player 1 can restart the game.'
-            : 'You lost!');
+          setInfo('You lost!');
+          setSubInfo(playerNumber === 2
+            ? 'Player 1 (host) can restart the game.'
+            : 'Your opponent can restart the game.');
         }
       } else if (data.draw) {
         startConfetti();
         setInfo("It's a draw!");
+        setSubInfo(playerNumber === 1
+          ? 'You can restart the game using the button below.'
+          : 'Player 1 (host) can restart the game.');
       }
       if (playerNumber === 1) setRestartVisible(true);
       return;
@@ -217,6 +226,7 @@ function subscribeToGame() {
     clearWinningPulse(boardEl);
     gameActive = true;
     setInfo(currentPlayer === playerNumber ? 'Your turn!' : "Opponent's turn…");
+    setSubInfo('');
   });
 }
 
@@ -247,14 +257,17 @@ export async function handleOnlineMove(col) {
     if (result) pulseWinningCells(boardEl, result.cells);
     startConfetti();
     setInfo('You win! 🎉');
+    setSubInfo('You can restart the game using the button below.');
     if (playerNumber === 1) setRestartVisible(true);
   } else if (draw) {
     gameActive = false;
     startConfetti();
     setInfo("It's a draw!");
+    setSubInfo('You can restart the game using the button below.');
     if (playerNumber === 1) setRestartVisible(true);
   } else {
     setInfo("Opponent's turn…");
+    setSubInfo('');
   }
 
   isAnimating = false;
@@ -274,6 +287,7 @@ export async function handleOnlineMove(col) {
       renderBoard(boardEl, boardState);
       gameActive = true;
       setInfo('Your turn!');
+      setSubInfo('');
       setRestartVisible(false);
     }
     console.error('Move update failed:', err);
@@ -288,7 +302,6 @@ export async function requestOnlineRestart() {
     clearWinningPulse(boardEl);
     stopConfetti();
 
-    // Signal P2 to animate restart first; board reset happens after P2 acknowledges.
     await updateDoc(doc(db, 'games', gameId), { restartRequest: true });
   } catch (err) {
     console.error('Restart failed:', err);
@@ -298,7 +311,6 @@ export async function requestOnlineRestart() {
 
 async function handleRemoteRestart(data) {
   if (playerNumber === 1) {
-    // P1's own write echoed back — now do the actual board reset.
     try {
       await animateRestart(boardEl);
 
@@ -311,6 +323,7 @@ async function handleRemoteRestart(data) {
       initBoardElement(boardEl, false);
       boardEl.style.opacity = '1';
       setInfo('Your turn!');
+      setSubInfo('');
 
       await updateDoc(doc(db, 'games', gameId), {
         restartRequest: false,
@@ -326,11 +339,11 @@ async function handleRemoteRestart(data) {
     return;
   }
 
-  // P2 sees the restartRequest — animate and wait, then P1 will push the reset.
   isRestarting = true;
   clearWinningPulse(boardEl);
   stopConfetti();
   setInfo('Opponent is restarting the game…');
+  setSubInfo('');
 
   await new Promise(r => setTimeout(r, 600));
   await animateRestart(boardEl);
@@ -344,6 +357,7 @@ async function handleRemoteRestart(data) {
   boardEl.style.opacity = '1';
   setRestartVisible(false);
   setInfo("Waiting for opponent…");
+  setSubInfo('');
   await new Promise(r => setTimeout(r, 200));
   isRestarting = false;
 }
@@ -353,6 +367,7 @@ function opponentLeft() {
   stopConfetti();
   setRestartVisible(false);
   setInfo('Your opponent left the game.');
+  setSubInfo('');
 }
 
 export async function leaveOnlineGame() {
@@ -400,6 +415,10 @@ function setInfo(text) {
     infoEl.style.opacity = '1';
     infoTimeout = null;
   }, 180);
+}
+
+function setSubInfo(text) {
+  subInfoEl.textContent = text;
 }
 
 function setStatus(text) {
