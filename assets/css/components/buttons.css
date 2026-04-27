@@ -32,10 +32,6 @@
   box-shadow: 0 0 20px rgba(0, 123, 255, 0.6), 0 0 30px rgba(0, 198, 255, 0.4);
 }
 
-.button:active {
-  transform: scale(0.97);
-}
-
 .secondary-button {
   display: inline-flex;
   align-items: center;
