@@ -57,12 +57,12 @@ export async function handleOfflineMove(col) {
     pulseWinningCells(boardEl, result.cells);
     setInfo(`Player ${currentPlayer} wins! 🎉`);
     const loser = currentPlayer === 1 ? 2 : 1;
-    setSubInfo(`Player ${loser} can restart the game.`);
+    setSubInfo(`You can restart the game using the button below.`);
     startConfetti();
     gameActive = false;
   } else if (isBoardFull(boardState)) {
     setInfo("It's a draw!");
-    setSubInfo('Either player can restart the game.');
+    setSubInfo('You can restart the game using the button below.');
     startConfetti();
     gameActive = false;
   } else {
