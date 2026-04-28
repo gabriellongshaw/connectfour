@@ -208,9 +208,9 @@ function subscribeToGame() {
             : 'Player 1 (host) can restart the game.');
         } else {
           setInfo('You lost!');
-          setSubInfo(playerNumber === 2
-            ? 'Player 1 (host) can restart the game.'
-            : 'Your opponent can restart the game.');
+          setSubInfo(playerNumber === 1
+            ? 'You can restart the game using the button below.'
+            : 'Player 1 (host) can restart the game.');
         }
       } else if (data.draw) {
         startConfetti();
