@@ -97,6 +97,14 @@
   width: 100%;
   max-width: 380px;
   box-sizing: border-box;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.leaderboard.lb-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .lb-row {

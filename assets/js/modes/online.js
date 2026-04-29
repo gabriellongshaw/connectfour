@@ -139,8 +139,16 @@ export function startOnlineGame() {
   stopConfetti();
   setRestartVisible(false);
 
+  const hadCounters = boardEl && boardEl.querySelector('.cell[data-player]');
+
   initBoardElement(boardEl, false);
-  boardEl.style.opacity = '1';
+
+  if (hadCounters) {
+    boardEl.style.opacity = '0.15';
+    setTimeout(() => { boardEl.style.opacity = '1'; }, 220);
+  } else {
+    boardEl.style.opacity = '1';
+  }
 
   setInfo(playerNumber === 1 ? 'Your turn! (Red)' : 'Waiting for opponent… (Yellow)');
   setSubInfo('');
@@ -380,6 +388,17 @@ function opponentLeft() {
   setSubInfo('');
 }
 
+export function clearOnlineBoard() {
+  gameActive = false;
+  isAnimating = false;
+  if (boardEl) {
+    boardEl.querySelectorAll('.cell').forEach(cell => {
+      delete cell.dataset.player;
+      cell.classList.remove('winning');
+    });
+  }
+}
+
 export async function leaveOnlineGame() {
   isSelfLeaving = true;
   if (unsubGame) { unsubGame(); unsubGame = null; }
@@ -420,6 +439,7 @@ export async function cancelWaiting() {
 
 function renderLeaderboard() {
   if (!leaderboardEl) return;
+  leaderboardEl.classList.remove('lb-visible');
   leaderboardEl.innerHTML = `
     <div class="lb-row">
       <span class="lb-dot lb-dot-player"></span>
@@ -438,6 +458,7 @@ function renderLeaderboard() {
       <span class="lb-score">${leaderboard.draws}</span>
     </div>
   `;
+  requestAnimationFrame(() => leaderboardEl.classList.add('lb-visible'));
 }
 
 let infoTimeout = null;
@@ -454,6 +475,11 @@ function setInfo(text) {
 
 function setSubInfo(text) {
   subInfoEl.textContent = text;
+  if (text) {
+    subInfoEl.classList.add('has-text');
+  } else {
+    subInfoEl.classList.remove('has-text');
+  }
 }
 
 function setStatus(text) {

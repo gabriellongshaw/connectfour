@@ -2,14 +2,14 @@ import { applySystemTheme } from './core/theme.js';
 import { fadeIn, fadeOut } from './core/utils.js';
 import { waitForAuth } from './core/firebase.js';
 import { initConfetti, resizeConfetti, stopConfetti } from './components/confetti.js';
-import { initOfflineRefs, startOfflineGame, handleOfflineMove, restartOfflineGame } from './modes/offline.js';
+import { initOfflineRefs, startOfflineGame, handleOfflineMove, restartOfflineGame, clearOfflineBoard } from './modes/offline.js';
 import {
   initOnlineRefs, createGame, joinGame, handleOnlineMove,
-  requestOnlineRestart, leaveOnlineGame, cancelWaiting
+  requestOnlineRestart, leaveOnlineGame, cancelWaiting, clearOnlineBoard
 } from './modes/online.js';
 import {
   initBotRefs, setBotDifficulty, startBotGame, handleBotMove,
-  restartBotGame, resetBotLeaderboard
+  restartBotGame, resetBotLeaderboard, clearBotBoard
 } from './modes/bot.js';
 
 const $ = id => document.getElementById(id);
@@ -148,6 +148,7 @@ function bindEvents() {
 
   leaveBtnBot.addEventListener('click', async () => {
     stopConfetti();
+    clearBotBoard();
     await goTo('home');
   });
 
@@ -216,12 +217,14 @@ function bindEvents() {
 
   leaveBtnOffline.addEventListener('click', async () => {
     stopConfetti();
+    clearOfflineBoard();
     await goTo('home');
   });
 
   leaveBtnOnline.addEventListener('click', async () => {
     await leaveOnlineGame();
     stopConfetti();
+    clearOnlineBoard();
     await goTo('home');
   });
 

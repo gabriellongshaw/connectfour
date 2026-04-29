@@ -26,6 +26,17 @@ export function initOfflineRefs(els) {
   leaderboardEl = els.leaderboardEl;
 }
 
+export function clearOfflineBoard() {
+  gameActive = false;
+  isAnimating = false;
+  if (boardEl) {
+    boardEl.querySelectorAll('.cell').forEach(cell => {
+      delete cell.dataset.player;
+      cell.classList.remove('winning');
+    });
+  }
+}
+
 export function startOfflineGame() {
   boardState    = createEmptyBoard();
   currentPlayer = 1;
@@ -35,9 +46,17 @@ export function startOfflineGame() {
   clearWinningPulse(boardEl);
   stopConfetti();
 
+  const hadCounters = boardEl && boardEl.querySelector('.cell[data-player]');
+
   initBoardElement(boardEl, firstInit);
-  boardEl.style.opacity = '1';
   firstInit = false;
+
+  if (hadCounters) {
+    boardEl.style.opacity = '0.15';
+    setTimeout(() => { boardEl.style.opacity = '1'; }, 220);
+  } else {
+    boardEl.style.opacity = '1';
+  }
 
   restartBtn.style.display = 'inline-flex';
   setInfo(`Player 1's turn (${PLAYER_COLORS[1]})`);
@@ -106,6 +125,7 @@ export async function restartOfflineGame() {
 
 function renderLeaderboard() {
   if (!leaderboardEl) return;
+  leaderboardEl.classList.remove('lb-visible');
   leaderboardEl.innerHTML = `
     <div class="lb-row">
       <span class="lb-dot lb-dot-player"></span>
@@ -124,6 +144,7 @@ function renderLeaderboard() {
       <span class="lb-score">${leaderboard.draws}</span>
     </div>
   `;
+  requestAnimationFrame(() => leaderboardEl.classList.add('lb-visible'));
 }
 
 let infoTimeout = null;
@@ -140,4 +161,9 @@ function setInfo(text) {
 
 function setSubInfo(text) {
   subInfoEl.textContent = text;
+  if (text) {
+    subInfoEl.classList.add('has-text');
+  } else {
+    subInfoEl.classList.remove('has-text');
+  }
 }

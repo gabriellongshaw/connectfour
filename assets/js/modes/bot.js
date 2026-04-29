@@ -25,6 +25,17 @@ export function initBotRefs(els) {
   leaderboardEl = els.leaderboardEl;
 }
 
+export function clearBotBoard() {
+  gameActive = false;
+  isAnimating = false;
+  if (boardEl) {
+    boardEl.querySelectorAll('.cell').forEach(cell => {
+      delete cell.dataset.player;
+      cell.classList.remove('winning');
+    });
+  }
+}
+
 export function setBotDifficulty(d) {
   difficulty = d;
 }
@@ -37,9 +48,18 @@ export function startBotGame() {
 
   clearWinningPulse(boardEl);
   stopConfetti();
+
+  const hadCounters = boardEl && boardEl.querySelector('.cell[data-player]');
+
   initBoardElement(boardEl, firstInit);
-  boardEl.style.opacity = '1';
   firstInit = false;
+
+  if (hadCounters) {
+    boardEl.style.opacity = '0.15';
+    setTimeout(() => { boardEl.style.opacity = '1'; }, 220);
+  } else {
+    boardEl.style.opacity = '1';
+  }
 
   restartBtn.style.display = 'inline-flex';
   setInfo("Your turn (Red)");
@@ -159,6 +179,7 @@ export function resetBotLeaderboard() {
 function renderLeaderboard() {
   if (!leaderboardEl) return;
   const diffLabel = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+  leaderboardEl.classList.remove('lb-visible');
   leaderboardEl.innerHTML = `
     <div class="lb-row">
       <span class="lb-dot lb-dot-player"></span>
@@ -177,6 +198,7 @@ function renderLeaderboard() {
       <span class="lb-score">${leaderboard.draws}</span>
     </div>
   `;
+  requestAnimationFrame(() => leaderboardEl.classList.add('lb-visible'));
 }
 
 function getValidCols(board) {
@@ -338,4 +360,9 @@ function setInfo(text) {
 
 function setSubInfo(text) {
   subInfoEl.textContent = text;
+  if (text) {
+    subInfoEl.classList.add('has-text');
+  } else {
+    subInfoEl.classList.remove('has-text');
+  }
 }
