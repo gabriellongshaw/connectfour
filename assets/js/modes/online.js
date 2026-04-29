@@ -27,14 +27,17 @@ let isSelfLeaving = false;
 let pendingMoveFlat = null;
 let isRestarting    = false;
 
-let boardEl, infoEl, subInfoEl, restartBtn, statusEl;
+let boardEl, infoEl, subInfoEl, restartBtn, statusEl, leaderboardEl;
+
+export const leaderboard = { p1: 0, p2: 0, draws: 0 };
 
 export function initOnlineRefs(els) {
-  boardEl    = els.boardEl;
-  infoEl     = els.infoEl;
-  subInfoEl  = els.subInfoEl;
-  restartBtn = els.restartBtn;
-  statusEl   = els.statusEl;
+  boardEl      = els.boardEl;
+  infoEl       = els.infoEl;
+  subInfoEl    = els.subInfoEl;
+  restartBtn   = els.restartBtn;
+  statusEl     = els.statusEl;
+  leaderboardEl = els.leaderboardEl;
 }
 
 export async function createGame(onWaiting, onGameStart) {
@@ -141,6 +144,7 @@ export function startOnlineGame() {
 
   setInfo(playerNumber === 1 ? 'Your turn! (Red)' : 'Waiting for opponent… (Yellow)');
   setSubInfo('');
+  renderLeaderboard();
 
   subscribeToGame();
 }
@@ -200,6 +204,9 @@ function subscribeToGame() {
       if (data.winner && data.winner !== 0) {
         const result = getWinningCells(boardState);
         if (result) pulseWinningCells(boardEl, result.cells);
+        if (data.winner === 1) leaderboard.p1++;
+        else leaderboard.p2++;
+        renderLeaderboard();
         if (data.winner === playerNumber) {
           startConfetti();
           setInfo('You win! 🎉');
@@ -213,6 +220,8 @@ function subscribeToGame() {
             : 'Player 1 (host) can restart the game.');
         }
       } else if (data.draw) {
+        leaderboard.draws++;
+        renderLeaderboard();
         startConfetti();
         setInfo("It's a draw!");
         setSubInfo(playerNumber === 1
@@ -324,6 +333,7 @@ async function handleRemoteRestart(data) {
       boardEl.style.opacity = '1';
       setInfo('Your turn!');
       setSubInfo('');
+      renderLeaderboard();
 
       await updateDoc(doc(db, 'games', gameId), {
         restartRequest: false,
@@ -394,6 +404,9 @@ export async function leaveOnlineGame() {
   playerNumber = 0;
   boardState   = createEmptyBoard();
   gameActive   = false;
+  leaderboard.p1 = 0;
+  leaderboard.p2 = 0;
+  leaderboard.draws = 0;
 }
 
 export async function cancelWaiting() {
@@ -403,6 +416,28 @@ export async function cancelWaiting() {
   }
   gameId       = null;
   playerNumber = 0;
+}
+
+function renderLeaderboard() {
+  if (!leaderboardEl) return;
+  leaderboardEl.innerHTML = `
+    <div class="lb-row">
+      <span class="lb-dot lb-dot-player"></span>
+      <span class="lb-name">Player 1</span>
+      <span class="lb-score">${leaderboard.p1}</span>
+    </div>
+    <div class="lb-divider"></div>
+    <div class="lb-row">
+      <span class="lb-dot lb-dot-player2"></span>
+      <span class="lb-name">Player 2</span>
+      <span class="lb-score">${leaderboard.p2}</span>
+    </div>
+    <div class="lb-divider"></div>
+    <div class="lb-row lb-row-draws">
+      <span class="lb-name">Draws</span>
+      <span class="lb-score">${leaderboard.draws}</span>
+    </div>
+  `;
 }
 
 let infoTimeout = null;

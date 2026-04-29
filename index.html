@@ -50,6 +50,7 @@
     <h1>Connect Four</h1>
     <button id="play-offline" class="button"><i class="fa-solid fa-user-friends"></i> Play Offline</button>
     <button id="play-online" class="button"><i class="fa-solid fa-wifi"></i> Play Online</button>
+    <button id="play-bot" class="button button-bot"><i class="fa-solid fa-robot"></i> Play vs Bot</button>
     <div class="credits-container">
       <p>Created by <a class="credits-link" target="_blank" href="https://www.gabriellongshaw.co.uk">Gabriel Longshaw</a></p>
       <p>&amp; <a class="credits-link" target="_blank" href="https://www.bocajsolutions.co.uk">bocajthomas</a></p>
@@ -59,11 +60,35 @@
     <button id="leave-btn-offline" class="leave-button">&#8592; Leave</button>
     <div class="game-inner">
       <h1>Connect Four</h1>
+      <div id="leaderboard-offline" class="leaderboard"></div>
       <div id="board-offline" class="board" role="grid" aria-label="Connect Four board"></div>
       <p id="info-offline" class="info"></p>
       <p id="sub-info-offline" class="sub-info"></p>
       <div class="gamebutton-row">
         <button id="restart-btn-offline" class="secondary-button">
+          <i class="fa-solid fa-redo"></i> Restart
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="page-bot-difficulty" class="page page-hidden">
+    <h1>Play vs Bot</h1>
+    <p class="difficulty-label">Choose difficulty</p>
+    <button id="bot-easy" class="button button-diff button-easy"><i class="fa-solid fa-seedling"></i> Easy</button>
+    <button id="bot-medium" class="button button-diff button-medium"><i class="fa-solid fa-robot"></i> Medium</button>
+    <button id="bot-hard" class="button button-diff button-hard"><i class="fa-solid fa-skull"></i> Hard</button>
+    <button id="back-from-bot-difficulty" class="tertiary-button">Back</button>
+  </div>
+  <div id="page-bot" class="page page-hidden">
+    <button id="leave-btn-bot" class="leave-button">&#8592; Leave</button>
+    <div class="game-inner">
+      <h1>Connect Four</h1>
+      <div id="leaderboard-bot" class="leaderboard"></div>
+      <div id="board-bot" class="board" role="grid" aria-label="Connect Four board"></div>
+      <p id="info-bot" class="info"></p>
+      <p id="sub-info-bot" class="sub-info"></p>
+      <div class="gamebutton-row">
+        <button id="restart-btn-bot" class="secondary-button">
           <i class="fa-solid fa-redo"></i> Restart
         </button>
       </div>
@@ -100,6 +125,7 @@
     <button id="leave-btn-online" class="leave-button">&#8592; Leave</button>
     <div class="game-inner">
       <h1>Connect Four</h1>
+      <div id="leaderboard-online" class="leaderboard"></div>
       <div id="board-online" class="board" role="grid" aria-label="Connect Four board"></div>
       <p id="info-online" class="info"></p>
       <p id="sub-info-online" class="sub-info"></p>

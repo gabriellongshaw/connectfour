@@ -14,13 +14,16 @@ let isAnimating   = false;
 let isRestarting  = false;
 let firstInit     = true;
 
-let boardEl, infoEl, subInfoEl, restartBtn;
+let boardEl, infoEl, subInfoEl, restartBtn, leaderboardEl;
+
+export const leaderboard = { p1: 0, p2: 0, draws: 0 };
 
 export function initOfflineRefs(els) {
-  boardEl    = els.boardEl;
-  infoEl     = els.infoEl;
-  subInfoEl  = els.subInfoEl;
-  restartBtn = els.restartBtn;
+  boardEl      = els.boardEl;
+  infoEl       = els.infoEl;
+  subInfoEl    = els.subInfoEl;
+  restartBtn   = els.restartBtn;
+  leaderboardEl = els.leaderboardEl;
 }
 
 export function startOfflineGame() {
@@ -39,6 +42,7 @@ export function startOfflineGame() {
   restartBtn.style.display = 'inline-flex';
   setInfo(`Player 1's turn (${PLAYER_COLORS[1]})`);
   setSubInfo('');
+  renderLeaderboard();
 }
 
 export async function handleOfflineMove(col) {
@@ -57,12 +61,17 @@ export async function handleOfflineMove(col) {
     pulseWinningCells(boardEl, result.cells);
     setInfo(`Player ${currentPlayer} wins! 🎉`);
     const loser = currentPlayer === 1 ? 2 : 1;
-    setSubInfo(`You can restart the game using the button below.`);
+    setSubInfo(`Player ${loser} can restart the game.`);
+    if (currentPlayer === 1) leaderboard.p1++;
+    else leaderboard.p2++;
+    renderLeaderboard();
     startConfetti();
     gameActive = false;
   } else if (isBoardFull(boardState)) {
     setInfo("It's a draw!");
-    setSubInfo('You can restart the game using the button below.');
+    setSubInfo('Either player can restart the game.');
+    leaderboard.draws++;
+    renderLeaderboard();
     startConfetti();
     gameActive = false;
   } else {
@@ -90,8 +99,31 @@ export async function restartOfflineGame() {
   boardEl.style.opacity = '1';
   setInfo(`Player 1's turn (${PLAYER_COLORS[1]})`);
   setSubInfo('');
+  renderLeaderboard();
 
   setTimeout(() => { isRestarting = false; }, 200);
+}
+
+function renderLeaderboard() {
+  if (!leaderboardEl) return;
+  leaderboardEl.innerHTML = `
+    <div class="lb-row">
+      <span class="lb-dot lb-dot-player"></span>
+      <span class="lb-name">Player 1</span>
+      <span class="lb-score">${leaderboard.p1}</span>
+    </div>
+    <div class="lb-divider"></div>
+    <div class="lb-row">
+      <span class="lb-dot lb-dot-player2"></span>
+      <span class="lb-name">Player 2</span>
+      <span class="lb-score">${leaderboard.p2}</span>
+    </div>
+    <div class="lb-divider"></div>
+    <div class="lb-row lb-row-draws">
+      <span class="lb-name">Draws</span>
+      <span class="lb-score">${leaderboard.draws}</span>
+    </div>
+  `;
 }
 
 let infoTimeout = null;

@@ -22,6 +22,7 @@ const STATIC = [
   '/assets/js/core/utils.js',
   '/assets/js/components/board.js',
   '/assets/js/components/confetti.js',
+  '/assets/js/modes/bot.js',
   '/assets/js/modes/offline.js',
   '/assets/js/modes/online.js',
 ];

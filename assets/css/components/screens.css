@@ -76,3 +76,86 @@
   align-items: center;
   width: 100%;
 }
+
+.difficulty-label {
+  color: var(--meta-text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0 0 4px;
+}
+
+.leaderboard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 20px;
+  margin-bottom: 14px;
+  width: 100%;
+  max-width: 380px;
+  box-sizing: border-box;
+}
+
+.lb-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  padding: 2px 0;
+}
+
+.lb-row-draws {
+  opacity: 0.7;
+}
+
+.lb-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border);
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.lb-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.lb-dot-player {
+  background: var(--player1-color);
+}
+
+.lb-dot-player2 {
+  background: var(--player2-color);
+}
+
+.lb-dot-bot {
+  background: var(--player2-color);
+}
+
+.lb-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--meta-text);
+  white-space: nowrap;
+}
+
+.lb-diff {
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.lb-score {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
