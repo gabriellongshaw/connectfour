@@ -61,7 +61,7 @@ export async function handleOfflineMove(col) {
     pulseWinningCells(boardEl, result.cells);
     setInfo(`Player ${currentPlayer} wins! 🎉`);
     const loser = currentPlayer === 1 ? 2 : 1;
-    setSubInfo(`Player ${loser} can restart the game.`);
+    setSubInfo(`Press Restart to play again.`);
     if (currentPlayer === 1) leaderboard.p1++;
     else leaderboard.p2++;
     renderLeaderboard();
@@ -69,7 +69,7 @@ export async function handleOfflineMove(col) {
     gameActive = false;
   } else if (isBoardFull(boardState)) {
     setInfo("It's a draw!");
-    setSubInfo('Either player can restart the game.');
+    setSubInfo('Press Restart to play again.');
     leaderboard.draws++;
     renderLeaderboard();
     startConfetti();
