@@ -178,7 +178,7 @@ export function resetBotLeaderboard() {
 
 function renderLeaderboard() {
   if (!leaderboardEl) return;
-  const diffLabel = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+  const diffLabel = difficulty === 'impossible' ? 'Impossible' : difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
   leaderboardEl.classList.remove('lb-visible');
   leaderboardEl.innerHTML = `
     <div class="lb-row">
@@ -222,9 +222,10 @@ function boardHasWinner(board) {
 }
 
 function chooseBotCol(board, diff) {
-  if (diff === 'easy')   return easyMove(board);
-  if (diff === 'medium') return mediumMove(board);
-  return hardMove(board);
+  if (diff === 'easy')       return easyMove(board);
+  if (diff === 'medium')     return mediumMove(board);
+  if (diff === 'hard')       return hardMove(board);
+  return impossibleMove(board);
 }
 
 function easyMove(board) {
@@ -237,17 +238,32 @@ function easyMove(board) {
 }
 
 function mediumMove(board) {
+  if (Math.random() < 0.35) {
+    const cols = getValidCols(board);
+    return cols[Math.floor(Math.random() * cols.length)];
+  }
   const win = findImmediateWin(board, 2);
   if (win !== -1) return win;
-  const block = findImmediateWin(board, 1);
-  if (block !== -1) return block;
+  if (Math.random() < 0.5) {
+    const block = findImmediateWin(board, 1);
+    if (block !== -1) return block;
+  }
   const cols = getValidCols(board);
   const center = Math.floor(COLS / 2);
-  if (cols.includes(center)) return center;
+  if (cols.includes(center) && Math.random() < 0.5) return center;
   return cols[Math.floor(Math.random() * cols.length)];
 }
 
 function hardMove(board) {
+  if (Math.random() < 0.08) {
+    const cols = getValidCols(board);
+    return cols[Math.floor(Math.random() * cols.length)];
+  }
+  const result = minimax(board, 5, -Infinity, Infinity, true);
+  return result.col;
+}
+
+function impossibleMove(board) {
   const result = minimax(board, 7, -Infinity, Infinity, true);
   return result.col;
 }

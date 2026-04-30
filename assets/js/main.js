@@ -31,6 +31,7 @@ const playOnlineBtn          = $('play-online');
 const botEasyBtn             = $('bot-easy');
 const botMediumBtn           = $('bot-medium');
 const botHardBtn             = $('bot-hard');
+const botImpossibleBtn       = $('bot-impossible');
 const backFromBotDifficultyBtn = $('back-from-bot-difficulty');
 const leaveBtnBot            = $('leave-btn-bot');
 const restartBtnBot          = $('restart-btn-bot');
@@ -136,6 +137,14 @@ function bindEvents() {
 
   botHardBtn.addEventListener('click', async () => {
     setBotDifficulty('hard');
+    resetBotLeaderboard();
+    await goTo('bot');
+    boardBot.style.display = 'grid';
+    startBotGame();
+  });
+
+  botImpossibleBtn.addEventListener('click', async () => {
+    setBotDifficulty('impossible');
     resetBotLeaderboard();
     await goTo('bot');
     boardBot.style.display = 'grid';
