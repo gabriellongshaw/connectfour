@@ -228,30 +228,59 @@ function chooseBotCol(board, diff) {
   return impossibleMove(board);
 }
 
+function givesOpponentWin(board, col, botPlayer) {
+  const opp = botPlayer === 2 ? 1 : 2;
+  const next = dropPiece(board, col, botPlayer);
+  if (!next) return false;
+  return findImmediateWin(next, opp) !== -1;
+}
+
+function safeCols(board, cols, botPlayer) {
+  const safe = cols.filter(c => !givesOpponentWin(board, c, botPlayer));
+  return safe.length > 0 ? safe : cols;
+}
+
 function easyMove(board) {
   const cols = getValidCols(board);
-  if (Math.random() < 0.25) {
-    const block = findImmediateWin(board, 1);
-    if (block !== -1) return block;
+
+  const win = findImmediateWin(board, 2);
+  if (win !== -1 && Math.random() < 0.6) return win;
+
+  const block = findImmediateWin(board, 1);
+  if (block !== -1 && Math.random() < 0.55) return block;
+
+  if (Math.random() < 0.15) {
+    return cols[Math.floor(Math.random() * cols.length)];
   }
-  return cols[Math.floor(Math.random() * cols.length)];
+
+  const candidates = safeCols(board, cols, 2);
+  return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
 function mediumMove(board) {
-  if (Math.random() < 0.35) {
-    const cols = getValidCols(board);
-    return cols[Math.floor(Math.random() * cols.length)];
-  }
+  const cols = getValidCols(board);
+
   const win = findImmediateWin(board, 2);
   if (win !== -1) return win;
-  if (Math.random() < 0.5) {
-    const block = findImmediateWin(board, 1);
-    if (block !== -1) return block;
+
+  const block = findImmediateWin(board, 1);
+  if (block !== -1 && Math.random() < 0.85) return block;
+
+  if (Math.random() < 0.18) {
+    const candidates = safeCols(board, cols, 2);
+    return candidates[Math.floor(Math.random() * candidates.length)];
   }
-  const cols = getValidCols(board);
-  const center = Math.floor(COLS / 2);
-  if (cols.includes(center) && Math.random() < 0.5) return center;
-  return cols[Math.floor(Math.random() * cols.length)];
+
+  const candidates = safeCols(board, cols, 2);
+  const scored = candidates.map(c => {
+    const next = dropPiece(board, c, 2);
+    return { col: c, score: next ? scoreBoard(next, 2) : -Infinity };
+  });
+  scored.sort((a, b) => b.score - a.score);
+
+  const topScore = scored[0].score;
+  const topTier = scored.filter(s => s.score >= topScore - 1);
+  return topTier[Math.floor(Math.random() * topTier.length)].col;
 }
 
 function hardMove(board) {
@@ -292,7 +321,13 @@ function scoreBoard(board, player) {
   let score = 0;
   const center = Math.floor(COLS / 2);
   const centerCol = board.map(r => r[center]);
-  score += centerCol.filter(v => v === player).length * 3;
+  score += centerCol.filter(v => v === player).length * 2;
+  const nearCenter = [center - 1, center + 1];
+  for (const nc of nearCenter) {
+    if (nc >= 0 && nc < COLS) {
+      score += board.map(r => r[nc]).filter(v => v === player).length * 1;
+    }
+  }
 
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c <= COLS - 4; c++) {
