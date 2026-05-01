@@ -40,7 +40,7 @@ h1 {
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--header-color);
-  font-size: clamp(1.7rem, 7vw, 3rem);
+  font-size: 1.7rem;
   margin-bottom: 20px;
 }
 

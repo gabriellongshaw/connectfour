@@ -12,8 +12,7 @@
   cursor: pointer;
   color: #ffffff;
   margin: 8px 0;
-  width: 80%;
-  max-width: 300px;
+  min-width: 260px;
   background: linear-gradient(45deg, #007bff, #00c6ff, #007bff, #00c6ff);
   background-size: 300% 300%;
   background-position: 50% 0;
@@ -32,6 +31,11 @@
   box-shadow: 0 0 20px rgba(0, 123, 255, 0.6), 0 0 30px rgba(0, 198, 255, 0.4);
 }
 
+.button-container {
+  display: flex;
+  flex-direction: column;
+}
+
 .secondary-button {
   display: inline-flex;
   align-items: center;
@@ -42,7 +46,7 @@
   cursor: pointer;
   font-family: var(--font-family);
   font-weight: 600;
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  font-size: 1rem;
   transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   text-decoration: none;
   -webkit-user-select: none;

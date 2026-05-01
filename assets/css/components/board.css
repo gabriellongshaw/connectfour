@@ -3,12 +3,12 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   grid-template-rows: repeat(6, 1fr);
-  gap: clamp(5px, 1.8vw, 11px);
+  gap: 5px;
   background: var(--board-bg);
   border: 1px solid var(--border);
   width: min(85vw, 85vh, 520px);
   margin: 0 auto;
-  padding: clamp(7px, 2vw, 14px);
+  padding: 7px;
   border-radius: var(--shape-large);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   cursor: pointer;
@@ -82,7 +82,7 @@
 .info {
   margin: 14px 0 4px;
   font-weight: 600;
-  font-size: clamp(0.9rem, 4vw, 1.1rem);
+  font-size: 0.9rem;
   min-height: 1.6em;
   color: var(--text);
   opacity: 1;
@@ -100,7 +100,7 @@
 
 .sub-info {
   font-weight: 500;
-  font-size: clamp(0.78rem, 3vw, 0.88rem);
+  font-size: 0.78rem;
   color: var(--meta-text);
   overflow: hidden;
   max-height: 0;
