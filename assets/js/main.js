@@ -15,58 +15,58 @@ import {
 const $ = id => document.getElementById(id);
 
 const pages = {
-  home:          $('page-home'),
-  offline:       $('page-offline'),
+  home: $('page-home'),
+  offline: $('page-offline'),
   botDifficulty: $('page-bot-difficulty'),
-  bot:           $('page-bot'),
-  online:        $('page-online'),
-  create:        $('page-create'),
-  join:          $('page-join'),
-  game:          $('page-game'),
+  bot: $('page-bot'),
+  online: $('page-online'),
+  create: $('page-create'),
+  join: $('page-join'),
+  game: $('page-game'),
 };
 
-const playOfflineBtn         = $('play-offline');
-const playBotBtn             = $('play-bot');
-const playOnlineBtn          = $('play-online');
-const botEasyBtn             = $('bot-easy');
-const botMediumBtn           = $('bot-medium');
-const botHardBtn             = $('bot-hard');
-const botImpossibleBtn       = $('bot-impossible');
+const playOfflineBtn = $('play-offline');
+const playBotBtn = $('play-bot');
+const playOnlineBtn = $('play-online');
+const botEasyBtn = $('bot-easy');
+const botMediumBtn = $('bot-medium');
+const botHardBtn = $('bot-hard');
+const botImpossibleBtn = $('bot-impossible');
 const backFromBotDifficultyBtn = $('back-from-bot-difficulty');
-const leaveBtnBot            = $('leave-btn-bot');
-const restartBtnBot          = $('restart-btn-bot');
-const boardBot               = $('board-bot');
-const infoBot                = $('info-bot');
-const subInfoBot             = $('sub-info-bot');
-const leaderboardBot         = $('leaderboard-bot');
-const createGameBtn          = $('create-game-btn');
-const showJoinBtn            = $('show-join-btn');
-const backFromOnlineBtn      = $('back-from-online');
-const joinGameBtn            = $('join-game-btn');
-const joinCodeInput          = $('join-code-input');
-const backFromWaitBtn        = $('back-from-wait');
-const backFromJoinBtn        = $('back-from-join');
-const leaveBtnOffline        = $('leave-btn-offline');
-const leaveBtnOnline         = $('leave-btn-online');
-const restartBtnOffline      = $('restart-btn-offline');
-const restartBtnOnline       = $('restart-btn-online');
-const boardOffline           = $('board-offline');
-const infoOffline            = $('info-offline');
-const subInfoOffline         = $('sub-info-offline');
-const leaderboardOffline     = $('leaderboard-offline');
-const boardOnline            = $('board-online');
-const infoOnline             = $('info-online');
-const subInfoOnline          = $('sub-info-online');
-const leaderboardOnline      = $('leaderboard-online');
-const roomCodeSpan           = $('room-code');
-const creatingStatus         = $('creating-status');
-const joinStatus             = $('join-status');
-const modal                  = $('browser-modal');
-const closeModalBtn          = $('close-modal');
-const backdrop               = $('backdrop');
+const leaveBtnBot = $('leave-btn-bot');
+const restartBtnBot = $('restart-btn-bot');
+const boardBot = $('board-bot');
+const infoBot = $('info-bot');
+const subInfoBot = $('sub-info-bot');
+const leaderboardBot = $('leaderboard-bot');
+const createGameBtn = $('create-game-btn');
+const showJoinBtn = $('show-join-btn');
+const backFromOnlineBtn = $('back-from-online');
+const joinGameBtn = $('join-game-btn');
+const joinCodeInput = $('join-code-input');
+const backFromWaitBtn = $('back-from-wait');
+const backFromJoinBtn = $('back-from-join');
+const leaveBtnOffline = $('leave-btn-offline');
+const leaveBtnOnline = $('leave-btn-online');
+const restartBtnOffline = $('restart-btn-offline');
+const restartBtnOnline = $('restart-btn-online');
+const boardOffline = $('board-offline');
+const infoOffline = $('info-offline');
+const subInfoOffline = $('sub-info-offline');
+const leaderboardOffline = $('leaderboard-offline');
+const boardOnline = $('board-online');
+const infoOnline = $('info-online');
+const subInfoOnline = $('sub-info-online');
+const leaderboardOnline = $('leaderboard-online');
+const roomCodeSpan = $('room-code');
+const creatingStatus = $('creating-status');
+const joinStatus = $('join-status');
+const modal = $('browser-modal');
+const closeModalBtn = $('close-modal');
+const backdrop = $('backdrop');
 
 let currentPage = 'home';
-let authReady   = false;
+let authReady = false;
 
 function init() {
   applySystemTheme();
@@ -74,18 +74,18 @@ function init() {
 
   initOfflineRefs({ boardEl: boardOffline, infoEl: infoOffline, subInfoEl: subInfoOffline, restartBtn: restartBtnOffline, leaderboardEl: leaderboardOffline });
   initOnlineRefs({
-    boardEl:      boardOnline,
-    infoEl:       infoOnline,
-    subInfoEl:    subInfoOnline,
-    restartBtn:   restartBtnOnline,
-    statusEl:     creatingStatus,
+    boardEl: boardOnline,
+    infoEl: infoOnline,
+    subInfoEl: subInfoOnline,
+    restartBtn: restartBtnOnline,
+    statusEl: creatingStatus,
     leaderboardEl: leaderboardOnline,
   });
   initBotRefs({
-    boardEl:      boardBot,
-    infoEl:       infoBot,
-    subInfoEl:    subInfoBot,
-    restartBtn:   restartBtnBot,
+    boardEl: boardBot,
+    infoEl: infoBot,
+    subInfoEl: subInfoBot,
+    restartBtn: restartBtnBot,
     leaderboardEl: leaderboardBot,
   });
 
@@ -100,7 +100,7 @@ function init() {
 async function goTo(name) {
   if (name === currentPage) return;
   const from = pages[currentPage];
-  const to   = pages[name];
+  const to = pages[name];
   currentPage = name;
   await fadeOut(from, 300);
   from.classList.add('page-hidden');

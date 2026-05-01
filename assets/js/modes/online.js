@@ -15,28 +15,28 @@ import { startConfetti, stopConfetti } from '../components/confetti.js';
 
 const gamesRef = collection(db, 'games');
 
-let gameId        = null;
-let playerNumber  = 0;
-let boardState    = createEmptyBoard();
+let gameId = null;
+let playerNumber = 0;
+let boardState = createEmptyBoard();
 let currentPlayer = 1;
-let gameActive    = false;
-let isAnimating   = false;
-let unsubGame     = null;
+let gameActive = false;
+let isAnimating = false;
+let unsubGame = null;
 let isSelfLeaving = false;
 
 let pendingMoveFlat = null;
-let isRestarting    = false;
+let isRestarting = false;
 
 let boardEl, infoEl, subInfoEl, restartBtn, statusEl, leaderboardEl;
 
 export const leaderboard = { p1: 0, p2: 0, draws: 0 };
 
 export function initOnlineRefs(els) {
-  boardEl      = els.boardEl;
-  infoEl       = els.infoEl;
-  subInfoEl    = els.subInfoEl;
-  restartBtn   = els.restartBtn;
-  statusEl     = els.statusEl;
+  boardEl = els.boardEl;
+  infoEl = els.infoEl;
+  subInfoEl = els.subInfoEl;
+  restartBtn = els.restartBtn;
+  statusEl = els.statusEl;
   leaderboardEl = els.leaderboardEl;
 }
 
@@ -47,18 +47,18 @@ export async function createGame(onWaiting, onGameStart) {
   try {
     const ref = await addDoc(gamesRef, {
       code,
-      player1:        auth.currentUser.uid,
-      player2:        null,
-      board:          flattenBoard(createEmptyBoard()),
-      currentPlayer:  1,
-      status:         'waiting',
-      winner:         0,
-      draw:           false,
+      player1: auth.currentUser.uid,
+      player2: null,
+      board: flattenBoard(createEmptyBoard()),
+      currentPlayer: 1,
+      status: 'waiting',
+      winner: 0,
+      draw: false,
       restartRequest: false,
-      leftGame:       false,
+      leftGame: false,
     });
 
-    gameId       = ref.id;
+    gameId = ref.id;
     playerNumber = 1;
     setStatus('');
     onWaiting(code);
@@ -76,13 +76,13 @@ export async function joinGame(code, onGameStart, onError) {
   onError?.('Joining…');
 
   try {
-    const q    = query(gamesRef, where('code', '==', trimmed));
+    const q = query(gamesRef, where('code', '==', trimmed));
     const snap = await getDocs(q);
 
     if (snap.empty) { onError?.('Game not found. Check the code and try again.'); return; }
 
     const docSnap = snap.docs[0];
-    const data    = docSnap.data();
+    const data = docSnap.data();
 
     if (data.player1 === auth.currentUser.uid) {
       onError?.('You created this game — share the code with a friend!');
@@ -97,12 +97,12 @@ export async function joinGame(code, onGameStart, onError) {
       return;
     }
 
-    gameId       = docSnap.id;
+    gameId = docSnap.id;
     playerNumber = 2;
 
     await updateDoc(doc(db, 'games', gameId), {
       player2: auth.currentUser.uid,
-      status:  'playing',
+      status: 'playing',
     });
 
     onError?.('');
@@ -127,12 +127,12 @@ function waitForOpponent(onGameStart) {
 }
 
 export function startOnlineGame() {
-  boardState      = createEmptyBoard();
-  currentPlayer   = 1;
-  gameActive      = true;
-  isAnimating     = false;
-  isSelfLeaving   = false;
-  isRestarting    = false;
+  boardState = createEmptyBoard();
+  currentPlayer = 1;
+  gameActive = true;
+  isAnimating = false;
+  isSelfLeaving = false;
+  isRestarting = false;
   pendingMoveFlat = null;
 
   clearWinningPulse(boardEl);
@@ -194,8 +194,8 @@ function subscribeToGame() {
     }
 
     if (changedIdx !== -1 && !isAnimating && !isRestarting) {
-      const placedRow   = Math.floor(changedIdx / COLS);
-      const placedCol   = changedIdx % COLS;
+      const placedRow = Math.floor(changedIdx / COLS);
+      const placedCol = changedIdx % COLS;
       const movedPlayer = newFlat[changedIdx];
 
       isAnimating = true;
@@ -203,7 +203,7 @@ function subscribeToGame() {
       isAnimating = false;
     }
 
-    boardState    = unflattenBoard(newFlat);
+    boardState = unflattenBoard(newFlat);
     currentPlayer = data.currentPlayer;
     renderBoard(boardEl, boardState);
 
@@ -258,10 +258,10 @@ export async function handleOnlineMove(col) {
   const newBoard = boardState.map(r => [...r]);
   newBoard[row][col] = currentPlayer;
 
-  const won        = checkWin(newBoard, currentPlayer, row, col);
-  const draw       = !won && isBoardFull(newBoard);
+  const won = checkWin(newBoard, currentPlayer, row, col);
+  const draw = !won && isBoardFull(newBoard);
   const nextPlayer = currentPlayer === 1 ? 2 : 1;
-  const newFlat    = flattenBoard(newBoard);
+  const newFlat = flattenBoard(newBoard);
 
   await animateFallingDisc(boardEl, col, currentPlayer, row);
   boardState = newBoard;
@@ -291,11 +291,11 @@ export async function handleOnlineMove(col) {
 
   try {
     await updateDoc(doc(db, 'games', gameId), {
-      board:         newFlat,
+      board: newFlat,
       currentPlayer: (won || draw) ? currentPlayer : nextPlayer,
-      status:        (won || draw) ? 'finished' : 'playing',
-      winner:        won ? currentPlayer : 0,
-      draw:          draw,
+      status: (won || draw) ? 'finished' : 'playing',
+      winner: won ? currentPlayer : 0,
+      draw: draw,
     });
     pendingMoveFlat = newFlat;
   } catch (err) {
@@ -331,11 +331,11 @@ async function handleRemoteRestart(data) {
     try {
       await animateRestart(boardEl);
 
-      boardState      = createEmptyBoard();
-      currentPlayer   = 1;
-      gameActive      = true;
-      isAnimating     = false;
-      isRestarting    = false;
+      boardState = createEmptyBoard();
+      currentPlayer = 1;
+      gameActive = true;
+      isAnimating = false;
+      isRestarting = false;
       pendingMoveFlat = null;
       initBoardElement(boardEl, false);
       boardEl.style.opacity = '1';
@@ -345,11 +345,11 @@ async function handleRemoteRestart(data) {
 
       await updateDoc(doc(db, 'games', gameId), {
         restartRequest: false,
-        board:          flattenBoard(createEmptyBoard()),
-        currentPlayer:  1,
-        status:         'playing',
-        winner:         0,
-        draw:           false,
+        board: flattenBoard(createEmptyBoard()),
+        currentPlayer: 1,
+        status: 'playing',
+        winner: 0,
+        draw: false,
       });
     } catch (err) {
       console.error('Restart reset failed:', err);
@@ -366,10 +366,10 @@ async function handleRemoteRestart(data) {
   await new Promise(r => setTimeout(r, 600));
   await animateRestart(boardEl);
 
-  boardState      = createEmptyBoard();
-  currentPlayer   = 1;
-  gameActive      = false;
-  isAnimating     = false;
+  boardState = createEmptyBoard();
+  currentPlayer = 1;
+  gameActive = false;
+  isAnimating = false;
   pendingMoveFlat = null;
   initBoardElement(boardEl, false);
   boardEl.style.opacity = '1';
@@ -419,10 +419,10 @@ export async function leaveOnlineGame() {
     }
   }
 
-  gameId       = null;
+  gameId = null;
   playerNumber = 0;
-  boardState   = createEmptyBoard();
-  gameActive   = false;
+  boardState = createEmptyBoard();
+  gameActive = false;
   leaderboard.p1 = 0;
   leaderboard.p2 = 0;
   leaderboard.draws = 0;
@@ -433,7 +433,7 @@ export async function cancelWaiting() {
   if (gameId) {
     try { await deleteDoc(doc(db, 'games', gameId)); } catch (_) {}
   }
-  gameId       = null;
+  gameId = null;
   playerNumber = 0;
 }
 

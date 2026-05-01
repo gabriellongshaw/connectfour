@@ -7,22 +7,22 @@ import { startConfetti, stopConfetti } from '../components/confetti.js';
 
 const PLAYER_COLORS = { 1: 'Red', 2: 'Yellow' };
 
-let boardState    = createEmptyBoard();
+let boardState = createEmptyBoard();
 let currentPlayer = 1;
-let gameActive    = false;
-let isAnimating   = false;
-let isRestarting  = false;
-let firstInit     = true;
+let gameActive = false;
+let isAnimating = false;
+let isRestarting = false;
+let firstInit = true;
 
 let boardEl, infoEl, subInfoEl, restartBtn, leaderboardEl;
 
 export const leaderboard = { p1: 0, p2: 0, draws: 0 };
 
 export function initOfflineRefs(els) {
-  boardEl      = els.boardEl;
-  infoEl       = els.infoEl;
-  subInfoEl    = els.subInfoEl;
-  restartBtn   = els.restartBtn;
+  boardEl = els.boardEl;
+  infoEl = els.infoEl;
+  subInfoEl = els.subInfoEl;
+  restartBtn = els.restartBtn;
   leaderboardEl = els.leaderboardEl;
 }
 
@@ -38,10 +38,10 @@ export function clearOfflineBoard() {
 }
 
 export function startOfflineGame() {
-  boardState    = createEmptyBoard();
+  boardState = createEmptyBoard();
   currentPlayer = 1;
-  gameActive    = true;
-  isAnimating   = false;
+  gameActive = true;
+  isAnimating = false;
 
   clearWinningPulse(boardEl);
   stopConfetti();
@@ -108,10 +108,10 @@ export async function restartOfflineGame() {
 
   await animateRestart(boardEl);
 
-  boardState    = createEmptyBoard();
+  boardState = createEmptyBoard();
   currentPlayer = 1;
-  gameActive    = true;
-  isAnimating   = false;
+  gameActive = true;
+  isAnimating = false;
   clearWinningPulse(boardEl);
   stopConfetti();
   initBoardElement(boardEl, false);

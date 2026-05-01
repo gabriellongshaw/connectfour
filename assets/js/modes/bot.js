@@ -7,21 +7,21 @@ import { startConfetti, stopConfetti } from '../components/confetti.js';
 
 let boardEl, infoEl, subInfoEl, restartBtn, leaderboardEl;
 
-let boardState    = createEmptyBoard();
+let boardState = createEmptyBoard();
 let currentPlayer = 1;
-let gameActive    = false;
-let isAnimating   = false;
-let isRestarting  = false;
-let firstInit     = true;
-let difficulty    = 'medium';
+let gameActive = false;
+let isAnimating = false;
+let isRestarting = false;
+let firstInit = true;
+let difficulty = 'medium';
 
 export const leaderboard = { player: 0, bot: 0, draws: 0 };
 
 export function initBotRefs(els) {
-  boardEl      = els.boardEl;
-  infoEl       = els.infoEl;
-  subInfoEl    = els.subInfoEl;
-  restartBtn   = els.restartBtn;
+  boardEl = els.boardEl;
+  infoEl = els.infoEl;
+  subInfoEl = els.subInfoEl;
+  restartBtn = els.restartBtn;
   leaderboardEl = els.leaderboardEl;
 }
 
@@ -41,10 +41,10 @@ export function setBotDifficulty(d) {
 }
 
 export function startBotGame() {
-  boardState    = createEmptyBoard();
+  boardState = createEmptyBoard();
   currentPlayer = 1;
-  gameActive    = true;
-  isAnimating   = false;
+  gameActive = true;
+  isAnimating = false;
 
   clearWinningPulse(boardEl);
   stopConfetti();
@@ -153,10 +153,10 @@ export async function restartBotGame() {
 
   await animateRestart(boardEl);
 
-  boardState    = createEmptyBoard();
+  boardState = createEmptyBoard();
   currentPlayer = 1;
-  gameActive    = true;
-  isAnimating   = false;
+  gameActive = true;
+  isAnimating = false;
 
   clearWinningPulse(boardEl);
   stopConfetti();
@@ -171,8 +171,8 @@ export async function restartBotGame() {
 
 export function resetBotLeaderboard() {
   leaderboard.player = 0;
-  leaderboard.bot    = 0;
-  leaderboard.draws  = 0;
+  leaderboard.bot = 0;
+  leaderboard.draws = 0;
   renderLeaderboard();
 }
 
@@ -222,9 +222,9 @@ function boardHasWinner(board) {
 }
 
 function chooseBotCol(board, diff) {
-  if (diff === 'easy')       return easyMove(board);
-  if (diff === 'medium')     return mediumMove(board);
-  if (diff === 'hard')       return hardMove(board);
+  if (diff === 'easy') return easyMove(board);
+  if (diff === 'medium') return mediumMove(board);
+  if (diff === 'hard') return hardMove(board);
   return impossibleMove(board);
 }
 
@@ -331,25 +331,25 @@ function scoreBoard(board, player) {
 
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c <= COLS - 4; c++) {
-      const window = [board[r][c], board[r][c+1], board[r][c+2], board[r][c+3]];
+      const window = [board[r][c], board[r][c + 1], board[r][c + 2], board[r][c + 3]];
       score += scoreWindow(window, player);
     }
   }
   for (let c = 0; c < COLS; c++) {
     for (let r = 0; r <= ROWS - 4; r++) {
-      const window = [board[r][c], board[r+1][c], board[r+2][c], board[r+3][c]];
+      const window = [board[r][c], board[r + 1][c], board[r + 2][c], board[r + 3][c]];
       score += scoreWindow(window, player);
     }
   }
   for (let r = 0; r <= ROWS - 4; r++) {
     for (let c = 0; c <= COLS - 4; c++) {
-      const window = [board[r][c], board[r+1][c+1], board[r+2][c+2], board[r+3][c+3]];
+      const window = [board[r][c], board[r + 1][c + 1], board[r + 2][c + 2], board[r + 3][c + 3]];
       score += scoreWindow(window, player);
     }
   }
   for (let r = 3; r < ROWS; r++) {
     for (let c = 0; c <= COLS - 4; c++) {
-      const window = [board[r][c], board[r-1][c+1], board[r-2][c+2], board[r-3][c+3]];
+      const window = [board[r][c], board[r - 1][c + 1], board[r - 2][c + 2], board[r - 3][c + 3]];
       score += scoreWindow(window, player);
     }
   }

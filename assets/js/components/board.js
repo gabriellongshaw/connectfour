@@ -144,7 +144,6 @@ export function animateFallingDisc(boardEl, col, player, targetRow) {
       if (elapsed < duration) {
         requestAnimationFrame(tick);
       } else {
-        // Set the cell's data-player BEFORE removing disc so there's no empty frame
         cell.dataset.player = player;
         disc.remove();
         resolve();
