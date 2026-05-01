@@ -1,8 +1,9 @@
 {
   "name": "Connect Four",
   "short_name": "Connect Four",
-  "description": "Online/Offline Connect Four game",
-  "start_url": "/index.html",
+  "description": "A web-based Connect Four game with three ways to play: local two-player, online multiplayer, and solo against a bot.",
+  "start_url": "/projects/connectfour/",
+  "scope": "/projects/connectfour/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
