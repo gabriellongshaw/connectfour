@@ -1,20 +1,17 @@
-import { auth, db, signInWithGoogle, checkModAccess } from '../core/firebase.js';
+import { auth, checkModAccess } from '../core/firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js';
 
 let modEnabled = false;
 let modMenuEl = null;
 let modBtnEl = null;
 let currentMode = null;
-
-let _botHandlersRef = null;
-let _onlineHandlersRef = null;
+let eventsBound = false;
 
 const state = {
   autoWin: false,
   skipBotTurn: false,
   multiPlace: false,
   multiPlaceCount: 3,
-  revealBotNext: false,
   freezeBot: false,
   autoWinOnline: false,
   skipOpponentTurn: false,
@@ -22,13 +19,12 @@ const state = {
   multiPlaceOnlineCount: 3,
 };
 
-export function initMod({ modBtn, modMenu, botHandlers, onlineHandlers }) {
+export function initMod({ modBtn, modMenu }) {
   modBtnEl = modBtn;
   modMenuEl = modMenu;
-  _botHandlersRef = botHandlers;
-  _onlineHandlersRef = onlineHandlers;
 
   onAuthStateChanged(auth, async (user) => {
+    console.log('[mod] auth state changed, user=', user?.uid, 'isAnonymous=', user?.isAnonymous);
     if (!user || user.isAnonymous) {
       hideMod();
       return;
@@ -37,7 +33,10 @@ export function initMod({ modBtn, modMenu, botHandlers, onlineHandlers }) {
     if (allowed) {
       modEnabled = true;
       modBtnEl.style.display = 'flex';
-      bindModEvents();
+      if (!eventsBound) {
+        bindModEvents();
+        eventsBound = true;
+      }
     } else {
       hideMod();
     }
@@ -98,14 +97,12 @@ function bindModEvents() {
     }
   });
 
-  const tabs = modMenuEl.querySelectorAll('.mod-tab');
-  tabs.forEach(tab => {
+  modMenuEl.querySelectorAll('.mod-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
+      modMenuEl.querySelectorAll('.mod-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      const panel = tab.dataset.tab;
       modMenuEl.querySelectorAll('.mod-panel').forEach(p => {
-        p.classList.toggle('active', p.dataset.panel === panel);
+        p.classList.toggle('active', p.dataset.panel === tab.dataset.tab);
       });
     });
   });
@@ -116,13 +113,11 @@ function bindModEvents() {
     state.multiPlace = v;
     modMenuEl.querySelector('.mod-multi-count-wrap').style.display = v ? 'flex' : 'none';
   });
-  bindToggle('mod-reveal-bot', (v) => { state.revealBotNext = v; });
   bindToggle('mod-freeze-bot', (v) => { state.freezeBot = v; });
 
-  const multiCount = modMenuEl.querySelector('#mod-multi-count');
-  multiCount.addEventListener('input', () => {
-    const v = Math.min(7, Math.max(2, parseInt(multiCount.value) || 2));
-    multiCount.value = v;
+  modMenuEl.querySelector('#mod-multi-count').addEventListener('input', function() {
+    const v = Math.min(7, Math.max(2, parseInt(this.value) || 2));
+    this.value = v;
     state.multiPlaceCount = v;
   });
 
@@ -133,10 +128,9 @@ function bindModEvents() {
     modMenuEl.querySelector('.mod-multi-count-online-wrap').style.display = v ? 'flex' : 'none';
   });
 
-  const multiCountOnline = modMenuEl.querySelector('#mod-multi-count-online');
-  multiCountOnline.addEventListener('input', () => {
-    const v = Math.min(7, Math.max(2, parseInt(multiCountOnline.value) || 2));
-    multiCountOnline.value = v;
+  modMenuEl.querySelector('#mod-multi-count-online').addEventListener('input', function() {
+    const v = Math.min(7, Math.max(2, parseInt(this.value) || 2));
+    this.value = v;
     state.multiPlaceOnlineCount = v;
   });
 
@@ -151,12 +145,4 @@ function bindToggle(id, cb) {
 
 export function getModState() {
   return state;
-}
-
-export async function signInForMod() {
-  try {
-    await signInWithGoogle();
-  } catch (e) {
-    console.error('Google sign-in failed', e);
-  }
 }

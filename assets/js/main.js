@@ -1,6 +1,6 @@
 import { applySystemTheme } from './core/theme.js';
 import { fadeIn, fadeOut } from './core/utils.js';
-import { waitForAuth, signInWithGoogle, handleRedirectResult } from './core/firebase.js';
+import { waitForAuth, signInWithGoogle, checkRedirectResult } from './core/firebase.js';
 import { initConfetti, resizeConfetti, stopConfetti } from './components/confetti.js';
 import { initOfflineRefs, startOfflineGame, handleOfflineMove, restartOfflineGame, clearOfflineBoard } from './modes/offline.js';
 import {
@@ -102,7 +102,7 @@ function init() {
   bindEvents();
   if (isInAppBrowser()) showModal();
 
-  handleRedirectResult().catch(() => {});
+  await checkRedirectResult();
 
   waitForAuth()
     .then(() => { authReady = true; })

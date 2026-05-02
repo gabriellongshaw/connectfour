@@ -50,15 +50,11 @@ export function waitForAuth() {
 }
 
 export async function signInWithGoogle() {
-  if (isInAppBrowser()) {
-    await signInWithRedirect(auth, googleProvider);
-    return;
-  }
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (e) {
-    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
       await signInWithRedirect(auth, googleProvider);
     } else {
       throw e;
@@ -66,7 +62,7 @@ export async function signInWithGoogle() {
   }
 }
 
-export async function handleRedirectResult() {
+export async function checkRedirectResult() {
   try {
     const result = await getRedirectResult(auth);
     return result?.user ?? null;
@@ -75,23 +71,15 @@ export async function handleRedirectResult() {
   }
 }
 
-function isInAppBrowser() {
-  const ua = navigator.userAgent;
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  if (isStandalone) return false;
-  return /FB_IAB|FBAN|FBAV|Instagram|Twitter|LinkedInApp|Snapchat|TikTok|BytedanceWebview|GSA|musical_ly/.test(ua)
-    || /wv/.test(ua)
-    || (/Android/.test(ua) && !/Chrome\/[.0-9]* Mobile/.test(ua) && /Version\//.test(ua))
-    || (window.ReactNativeWebView !== undefined)
-    || (typeof Android !== 'undefined');
-}
-
 export async function checkModAccess(uid) {
   try {
     const ref = doc(db, 'admins', uid);
     const snap = await getDoc(ref);
-    return snap.exists() && snap.data().mod === true;
-  } catch {
+    const allowed = snap.exists() && snap.data().mod === true;
+    console.log('[mod] checkModAccess uid=' + uid + ' allowed=' + allowed);
+    return allowed;
+  } catch (e) {
+    console.error('[mod] checkModAccess error', e);
     return false;
   }
 }
