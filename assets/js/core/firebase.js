@@ -15,6 +15,11 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
+window.addEventListener('beforeunload', () => {
+  const user = auth.currentUser;
+  if (user && user.isAnonymous) user.delete();
+});
+
 export function waitForAuth() {
   return new Promise((resolve, reject) => {
     const unsub = onAuthStateChanged(auth, user => {
