@@ -157,6 +157,40 @@ export function startOnlineGame() {
   subscribeToGame();
 }
 
+function validateIncomingBoard(oldFlat, newFlat, expectedCurrentPlayer) {
+  if (!Array.isArray(newFlat) || newFlat.length !== ROWS * COLS) return { valid: false };
+
+  for (const v of newFlat) {
+    if (v !== 0 && v !== 1 && v !== 2) return { valid: false };
+  }
+
+  let changedIdx = -1;
+  let changeCount = 0;
+  for (let i = 0; i < newFlat.length; i++) {
+    if (oldFlat[i] !== newFlat[i]) {
+      changeCount++;
+      changedIdx = i;
+    }
+  }
+
+  if (changeCount === 0) return { valid: true, changedIdx: -1 };
+  if (changeCount !== 1) return { valid: false };
+
+  if (oldFlat[changedIdx] !== 0) return { valid: false };
+
+  const placedPlayer = newFlat[changedIdx];
+  if (placedPlayer !== 1 && placedPlayer !== 2) return { valid: false };
+  if (placedPlayer !== expectedCurrentPlayer) return { valid: false };
+
+  const placedRow = Math.floor(changedIdx / COLS);
+  const placedCol = changedIdx % COLS;
+  for (let r = placedRow + 1; r < ROWS; r++) {
+    if (newFlat[r * COLS + placedCol] === 0) return { valid: false };
+  }
+
+  return { valid: true, changedIdx, placedRow, placedCol, placedPlayer };
+}
+
 function subscribeToGame() {
   if (unsubGame) { unsubGame(); unsubGame = null; }
   if (!gameId) return;
@@ -180,6 +214,7 @@ function subscribeToGame() {
     }
 
     const newFlat = data.board;
+    const oldFlat = flattenBoard(boardState);
 
     if (pendingMoveFlat !== null) {
       const isMine = newFlat.every((v, i) => v === pendingMoveFlat[i]);
@@ -187,35 +222,46 @@ function subscribeToGame() {
       if (isMine) return;
     }
 
-    const oldFlat = flattenBoard(boardState);
-    let changedIdx = -1;
-    for (let i = 0; i < newFlat.length; i++) {
-      if (oldFlat[i] !== newFlat[i]) { changedIdx = i; break; }
+    const validation = validateIncomingBoard(oldFlat, newFlat, currentPlayer);
+
+    if (!validation.valid) {
+      console.warn('Rejected invalid board update from Firestore');
+      return;
     }
 
-    if (changedIdx !== -1 && !isAnimating && !isRestarting) {
-      const placedRow = Math.floor(changedIdx / COLS);
-      const placedCol = changedIdx % COLS;
-      const movedPlayer = newFlat[changedIdx];
-
+    if (validation.changedIdx !== -1 && !isAnimating && !isRestarting) {
+      const { placedRow, placedCol, placedPlayer } = validation;
       isAnimating = true;
-      await animateFallingDisc(boardEl, placedCol, movedPlayer, placedRow);
+      await animateFallingDisc(boardEl, placedCol, placedPlayer, placedRow);
       isAnimating = false;
     }
 
     boardState = unflattenBoard(newFlat);
-    currentPlayer = data.currentPlayer;
+
+    const incomingCurrentPlayer = data.currentPlayer;
+    if (incomingCurrentPlayer !== 1 && incomingCurrentPlayer !== 2) {
+      console.warn('Rejected invalid currentPlayer from Firestore');
+      return;
+    }
+    currentPlayer = incomingCurrentPlayer;
+
     renderBoard(boardEl, boardState);
 
     if (data.status === 'finished') {
+      const winner = data.winner;
+      if (winner !== 0 && winner !== 1 && winner !== 2) {
+        console.warn('Rejected invalid winner value from Firestore');
+        return;
+      }
+
       gameActive = false;
-      if (data.winner && data.winner !== 0) {
+      if (winner && winner !== 0) {
         const result = getWinningCells(boardState);
         if (result) pulseWinningCells(boardEl, result.cells);
-        if (data.winner === 1) leaderboard.p1++;
+        if (winner === 1) leaderboard.p1++;
         else leaderboard.p2++;
         renderLeaderboard();
-        if (data.winner === playerNumber) {
+        if (winner === playerNumber) {
           startConfetti();
           setInfo('You win! 🎉');
           setSubInfo(playerNumber === 1
