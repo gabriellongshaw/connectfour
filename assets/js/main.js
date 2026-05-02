@@ -1,17 +1,16 @@
 import { applySystemTheme } from './core/theme.js';
 import { fadeIn, fadeOut } from './core/utils.js';
-import { waitForAuth, signInWithGoogle, checkRedirectResult } from './core/firebase.js';
+import { waitForAuth } from './core/firebase.js';
 import { initConfetti, resizeConfetti, stopConfetti } from './components/confetti.js';
 import { initOfflineRefs, startOfflineGame, handleOfflineMove, restartOfflineGame, clearOfflineBoard } from './modes/offline.js';
 import {
   initOnlineRefs, createGame, joinGame, handleOnlineMove,
-  requestOnlineRestart, leaveOnlineGame, cancelWaiting, clearOnlineBoard, setOnlineModHook
+  requestOnlineRestart, leaveOnlineGame, cancelWaiting, clearOnlineBoard
 } from './modes/online.js';
 import {
   initBotRefs, setBotDifficulty, startBotGame, handleBotMove,
-  restartBotGame, resetBotLeaderboard, clearBotBoard, setBotModHook
+  restartBotGame, resetBotLeaderboard, clearBotBoard
 } from './modes/bot.js';
-import { initMod, setModMode, getModState } from './components/mod.js';
 
 const $ = id => document.getElementById(id);
 
@@ -69,7 +68,7 @@ const backdrop = $('backdrop');
 let currentPage = 'home';
 let authReady = false;
 
-async function init() {
+function init() {
   applySystemTheme();
   initConfetti();
 
@@ -90,18 +89,8 @@ async function init() {
     leaderboardEl: leaderboardBot,
   });
 
-  setBotModHook(getModState);
-  setOnlineModHook(getModState);
-
-  initMod({
-    modBtn: $('mod-btn'),
-    modMenu: $('mod-menu'),
-  });
-
   bindEvents();
   if (isInAppBrowser()) showModal();
-
-  await checkRedirectResult();
 
   waitForAuth()
     .then(() => { authReady = true; })
@@ -135,7 +124,6 @@ function bindEvents() {
     resetBotLeaderboard();
     await goTo('bot');
     boardBot.style.display = 'grid';
-    setModMode('bot');
     startBotGame();
   });
 
@@ -144,7 +132,6 @@ function bindEvents() {
     resetBotLeaderboard();
     await goTo('bot');
     boardBot.style.display = 'grid';
-    setModMode('bot');
     startBotGame();
   });
 
@@ -153,7 +140,6 @@ function bindEvents() {
     resetBotLeaderboard();
     await goTo('bot');
     boardBot.style.display = 'grid';
-    setModMode('bot');
     startBotGame();
   });
 
@@ -162,7 +148,6 @@ function bindEvents() {
     resetBotLeaderboard();
     await goTo('bot');
     boardBot.style.display = 'grid';
-    setModMode('bot');
     startBotGame();
   });
 
@@ -202,7 +187,6 @@ function bindEvents() {
       code => { roomCodeSpan.textContent = code; },
       async () => {
         boardOnline.style.display = 'grid';
-        setModMode('online');
         await goTo('game');
       }
     );
@@ -221,7 +205,6 @@ function bindEvents() {
     joinStatus.textContent = '';
     joinGame(code, async () => {
       boardOnline.style.display = 'grid';
-      setModMode('online');
       await goTo('game');
     }, text => { joinStatus.textContent = text; });
   });
@@ -275,20 +258,6 @@ function bindEvents() {
   window.addEventListener('resize', resizeConfetti);
 
   addTouchHover('.button, .secondary-button, .tertiary-button, .btn-leave');
-
-  $('mod-signin-btn')?.addEventListener('click', async () => {
-    try {
-      await signInWithGoogle();
-    } catch (e) {
-      console.error('Sign-in failed', e);
-    }
-  });
-
-  $('mod-signout-btn')?.addEventListener('click', async () => {
-    const { signOut } = await import('https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js');
-    const { auth } = await import('./core/firebase.js');
-    await signOut(auth);
-  });
 }
 
 function isInAppBrowser() {
