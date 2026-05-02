@@ -9,8 +9,10 @@ import {
 } from './modes/online.js';
 import {
   initBotRefs, setBotDifficulty, startBotGame, handleBotMove,
-  restartBotGame, resetBotLeaderboard, clearBotBoard
+  restartBotGame, resetBotLeaderboard, clearBotBoard, setBotModHook
 } from './modes/bot.js';
+import { setOnlineModHook } from './modes/online.js';
+import { initMod, setModMode, getModState } from './components/mod.js';
 
 const $ = id => document.getElementById(id);
 
@@ -89,6 +91,14 @@ function init() {
     leaderboardEl: leaderboardBot,
   });
 
+  setBotModHook(getModState);
+  setOnlineModHook(getModState);
+
+  initMod({
+    modBtn: $('mod-btn'),
+    modMenu: $('mod-menu'),
+  });
+
   bindEvents();
   if (isInAppBrowser()) showModal();
 
@@ -124,6 +134,7 @@ function bindEvents() {
     resetBotLeaderboard();
     await goTo('bot');
     boardBot.style.display = 'grid';
+    setModMode('bot');
     startBotGame();
   });
 
@@ -132,6 +143,7 @@ function bindEvents() {
     resetBotLeaderboard();
     await goTo('bot');
     boardBot.style.display = 'grid';
+    setModMode('bot');
     startBotGame();
   });
 
@@ -140,6 +152,7 @@ function bindEvents() {
     resetBotLeaderboard();
     await goTo('bot');
     boardBot.style.display = 'grid';
+    setModMode('bot');
     startBotGame();
   });
 
@@ -148,6 +161,7 @@ function bindEvents() {
     resetBotLeaderboard();
     await goTo('bot');
     boardBot.style.display = 'grid';
+    setModMode('bot');
     startBotGame();
   });
 
@@ -187,6 +201,7 @@ function bindEvents() {
       code => { roomCodeSpan.textContent = code; },
       async () => {
         boardOnline.style.display = 'grid';
+        setModMode('online');
         await goTo('game');
       }
     );
@@ -205,6 +220,7 @@ function bindEvents() {
     joinStatus.textContent = '';
     joinGame(code, async () => {
       boardOnline.style.display = 'grid';
+      setModMode('online');
       await goTo('game');
     }, text => { joinStatus.textContent = text; });
   });

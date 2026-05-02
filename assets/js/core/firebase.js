@@ -1,6 +1,12 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js';
+import {
+  getAuth,
+  signInAnonymously,
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyB18M9FSegBBx8ZJnQmXVuWOE_GtAYT1D0",
@@ -14,6 +20,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+const googleProvider = new GoogleAuthProvider();
 
 window.addEventListener('beforeunload', () => {
   const user = auth.currentUser;
@@ -37,4 +45,19 @@ export function waitForAuth() {
       }
     });
   });
+}
+
+export async function signInWithGoogle() {
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user;
+}
+
+export async function checkModAccess(uid) {
+  try {
+    const ref = doc(db, 'admins', uid);
+    const snap = await getDoc(ref);
+    return snap.exists() && snap.data().mod === true;
+  } catch {
+    return false;
+  }
 }

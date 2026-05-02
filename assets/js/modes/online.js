@@ -29,6 +29,10 @@ let isRestarting = false;
 
 let boardEl, infoEl, subInfoEl, restartBtn, statusEl, leaderboardEl;
 
+let _getModState = null;
+export function setOnlineModHook(fn) { _getModState = fn; }
+function mod() { return _getModState ? _getModState() : {}; }
+
 export const leaderboard = { p1: 0, p2: 0, draws: 0 };
 
 export function initOnlineRefs(els) {
@@ -299,22 +303,42 @@ export async function handleOnlineMove(col) {
   const row = getAvailableRow(boardState, col);
   if (row === -1) return;
 
+  const m = mod();
+
+  if (m.autoWinOnline) {
+    await doOnlineAutoWin();
+    return;
+  }
+
+  const placeTimes = m.multiPlaceOnline ? Math.min(m.multiPlaceOnlineCount || 2, 7) : 1;
+
   isAnimating = true;
 
-  const newBoard = boardState.map(r => [...r]);
-  newBoard[row][col] = currentPlayer;
+  let finalWon = false;
+  let finalDraw = false;
 
-  const won = checkWin(newBoard, currentPlayer, row, col);
-  const draw = !won && isBoardFull(newBoard);
+  for (let i = 0; i < placeTimes; i++) {
+    const r = getAvailableRow(boardState, col);
+    if (r === -1) break;
+
+    const newBoard = boardState.map(row => [...row]);
+    newBoard[r][col] = currentPlayer;
+    const won = checkWin(newBoard, currentPlayer, r, col);
+    const draw = !won && isBoardFull(newBoard);
+
+    await animateFallingDisc(boardEl, col, currentPlayer, r);
+    boardState = newBoard;
+    renderBoard(boardEl, boardState);
+
+    if (won || draw) { finalWon = won; finalDraw = draw; break; }
+  }
+
   const nextPlayer = currentPlayer === 1 ? 2 : 1;
-  const newFlat = flattenBoard(newBoard);
+  const skipOpponent = m.skipOpponentTurn && !finalWon && !finalDraw;
+  const effectiveNext = skipOpponent ? currentPlayer : nextPlayer;
+  const newFlat = flattenBoard(boardState);
 
-  await animateFallingDisc(boardEl, col, currentPlayer, row);
-  boardState = newBoard;
-
-  renderBoard(boardEl, boardState);
-
-  if (won) {
+  if (finalWon) {
     gameActive = false;
     const result = getWinningCells(boardState);
     if (result) pulseWinningCells(boardEl, result.cells);
@@ -322,12 +346,15 @@ export async function handleOnlineMove(col) {
     setInfo('You win! 🎉');
     setSubInfo('You can restart the game using the button below.');
     if (playerNumber === 1) setRestartVisible(true);
-  } else if (draw) {
+  } else if (finalDraw) {
     gameActive = false;
     startConfetti();
     setInfo("It's a draw!");
     setSubInfo('You can restart the game using the button below.');
     if (playerNumber === 1) setRestartVisible(true);
+  } else if (skipOpponent) {
+    setInfo('Your turn!');
+    setSubInfo('');
   } else {
     setInfo("Opponent's turn…");
     setSubInfo('');
@@ -338,15 +365,15 @@ export async function handleOnlineMove(col) {
   try {
     await updateDoc(doc(db, 'games', gameId), {
       board: newFlat,
-      currentPlayer: (won || draw) ? currentPlayer : nextPlayer,
-      status: (won || draw) ? 'finished' : 'playing',
-      winner: won ? currentPlayer : 0,
-      draw: draw,
+      currentPlayer: (finalWon || finalDraw) ? currentPlayer : effectiveNext,
+      status: (finalWon || finalDraw) ? 'finished' : 'playing',
+      winner: finalWon ? currentPlayer : 0,
+      draw: finalDraw,
     });
     pendingMoveFlat = newFlat;
   } catch (err) {
-    if (!won && !draw) {
-      boardState[row][col] = 0;
+    if (!finalWon && !finalDraw) {
+      boardState = unflattenBoard(pendingMoveFlat || flattenBoard(boardState));
       renderBoard(boardEl, boardState);
       gameActive = true;
       setInfo('Your turn!');
@@ -355,6 +382,63 @@ export async function handleOnlineMove(col) {
     }
     console.error('Move update failed:', err);
   }
+}
+
+async function doOnlineAutoWin() {
+  isAnimating = true;
+  const { getWinningCells: gwc, getAvailableRow: gar, checkWin: cw, isBoardFull: ibf } = await import('../components/board.js');
+  for (let attempt = 0; attempt < 42; attempt++) {
+    const cols = Array.from({ length: 7 }, (_, i) => i).filter(c => getAvailableRow(boardState, c) !== -1);
+    if (!cols.length) break;
+    let best = cols[0];
+    for (const c of cols) {
+      const r = getAvailableRow(boardState, c);
+      if (r === -1) continue;
+      const nb = boardState.map(row => [...row]);
+      nb[r][c] = currentPlayer;
+      if (checkWin(nb, currentPlayer, r, c)) { best = c; break; }
+    }
+    const r = getAvailableRow(boardState, best);
+    if (r === -1) break;
+    const newBoard = boardState.map(row => [...row]);
+    newBoard[r][best] = currentPlayer;
+    const won = checkWin(newBoard, currentPlayer, r, best);
+    const draw = !won && isBoardFull(newBoard);
+    await animateFallingDisc(boardEl, best, currentPlayer, r);
+    boardState = newBoard;
+    renderBoard(boardEl, boardState);
+    if (won || draw) {
+      const newFlat = flattenBoard(boardState);
+      if (won) {
+        gameActive = false;
+        const result = getWinningCells(boardState);
+        if (result) pulseWinningCells(boardEl, result.cells);
+        startConfetti();
+        setInfo('You win! 🎉');
+        setSubInfo('You can restart the game using the button below.');
+        if (playerNumber === 1) setRestartVisible(true);
+      } else {
+        gameActive = false;
+        startConfetti();
+        setInfo("It's a draw!");
+        setSubInfo('You can restart the game using the button below.');
+        if (playerNumber === 1) setRestartVisible(true);
+      }
+      isAnimating = false;
+      try {
+        await updateDoc(doc(db, 'games', gameId), {
+          board: newFlat,
+          currentPlayer: currentPlayer,
+          status: 'finished',
+          winner: won ? currentPlayer : 0,
+          draw: draw,
+        });
+        pendingMoveFlat = newFlat;
+      } catch(err) { console.error(err); }
+      return;
+    }
+  }
+  isAnimating = false;
 }
 
 export async function requestOnlineRestart() {

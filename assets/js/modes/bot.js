@@ -15,6 +15,10 @@ let isRestarting = false;
 let firstInit = true;
 let difficulty = 'medium';
 
+let _getModState = null;
+export function setBotModHook(fn) { _getModState = fn; }
+function mod() { return _getModState ? _getModState() : {}; }
+
 export const leaderboard = { player: 0, bot: 0, draws: 0 };
 
 export function initBotRefs(els) {
@@ -73,29 +77,50 @@ export async function handleBotMove(col) {
   const row = getAvailableRow(boardState, col);
   if (row === -1) return;
 
-  isAnimating = true;
-  await animateFallingDisc(boardEl, col, 1, row);
-  boardState[row][col] = 1;
+  const m = mod();
 
-  const result = getWinningCells(boardState);
-  if (result) {
-    pulseWinningCells(boardEl, result.cells);
-    leaderboard.player++;
-    renderLeaderboard();
-    setInfo("You win! 🎉");
-    setSubInfo('Press Restart to play again.');
-    startConfetti();
-    gameActive = false;
-    isAnimating = false;
+  if (m.autoWin) {
+    await doAutoWin();
     return;
   }
-  if (isBoardFull(boardState)) {
-    leaderboard.draws++;
-    renderLeaderboard();
-    setInfo("It's a draw!");
-    setSubInfo('Press Restart to play again.');
-    startConfetti();
-    gameActive = false;
+
+  const placeTimes = m.multiPlace ? Math.min(m.multiPlaceCount || 2, 7) : 1;
+
+  isAnimating = true;
+
+  for (let i = 0; i < placeTimes; i++) {
+    const r = getAvailableRow(boardState, col);
+    if (r === -1) break;
+    await animateFallingDisc(boardEl, col, 1, r);
+    boardState[r][col] = 1;
+    const result = getWinningCells(boardState);
+    if (result) {
+      pulseWinningCells(boardEl, result.cells);
+      leaderboard.player++;
+      renderLeaderboard();
+      setInfo("You win! 🎉");
+      setSubInfo('Press Restart to play again.');
+      startConfetti();
+      gameActive = false;
+      isAnimating = false;
+      return;
+    }
+    if (isBoardFull(boardState)) {
+      leaderboard.draws++;
+      renderLeaderboard();
+      setInfo("It's a draw!");
+      setSubInfo('Press Restart to play again.');
+      startConfetti();
+      gameActive = false;
+      isAnimating = false;
+      return;
+    }
+  }
+
+  if (m.skipBotTurn || m.freezeBot) {
+    currentPlayer = 1;
+    setInfo("Your turn (Red)");
+    setSubInfo('');
     isAnimating = false;
     return;
   }
@@ -106,6 +131,34 @@ export async function handleBotMove(col) {
   isAnimating = false;
 
   setTimeout(() => doBotMove(), difficulty === 'easy' ? 300 : 500);
+}
+
+async function doAutoWin() {
+  isAnimating = true;
+  const allCols = getValidCols(boardState);
+  for (let attempt = 0; attempt < COLS * ROWS; attempt++) {
+    const winCol = findImmediateWin(boardState, 1);
+    const pickCol = winCol !== -1 ? winCol : allCols.find(c => getAvailableRow(boardState, c) !== -1);
+    if (pickCol === undefined) break;
+    const r = getAvailableRow(boardState, pickCol);
+    if (r === -1) break;
+    await animateFallingDisc(boardEl, pickCol, 1, r);
+    boardState[r][pickCol] = 1;
+    const result = getWinningCells(boardState);
+    if (result) {
+      pulseWinningCells(boardEl, result.cells);
+      leaderboard.player++;
+      renderLeaderboard();
+      setInfo("You win! 🎉");
+      setSubInfo('Press Restart to play again.');
+      startConfetti();
+      gameActive = false;
+      isAnimating = false;
+      return;
+    }
+    if (isBoardFull(boardState)) break;
+  }
+  isAnimating = false;
 }
 
 async function doBotMove() {

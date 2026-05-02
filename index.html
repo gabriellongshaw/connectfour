@@ -43,6 +43,7 @@
   <link rel="stylesheet" href="assets/css/components/board.css">
   <link rel="stylesheet" href="assets/css/components/multiplayer.css">
   <link rel="stylesheet" href="assets/css/components/modal.css">
+  <link rel="stylesheet" href="assets/css/components/mod.css">
   <link rel="stylesheet" href="assets/css/responsive.css">
 </head>
 <body>
@@ -159,6 +160,126 @@
   </dialog>
   <div id="backdrop" class="backdrop"></div>
   <canvas id="confetti-canvas"></canvas>
+
+  <button id="mod-btn" class="mod-btn" style="display:none;" aria-label="Mod Menu">
+    <span class="mod-btn-icon">🛠️</span> Mods
+  </button>
+
+  <div id="mod-menu" class="mod-menu" role="dialog" aria-label="Mod Menu">
+    <div class="mod-menu-header">
+      <span class="mod-menu-title">
+        <span class="mod-menu-title-icon">🛠️</span> Mod Menu
+      </span>
+      <button class="mod-close-btn" id="mod-close" aria-label="Close">✕</button>
+    </div>
+    <div class="mod-tabs">
+      <button class="mod-tab active" data-tab="bot">vs Bot</button>
+      <button class="mod-tab" data-tab="online">Online</button>
+    </div>
+    <div class="mod-body">
+
+      <div class="mod-panel active" data-panel="bot">
+        <span class="mod-section-label">Gameplay</span>
+
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-label">Auto Win</span>
+            <span class="mod-item-desc">Instantly fill a winning line for you</span>
+          </div>
+          <label class="mod-toggle">
+            <input type="checkbox" id="mod-auto-win">
+            <span class="mod-toggle-track"></span>
+          </label>
+        </div>
+
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-label">Multi-Place</span>
+            <span class="mod-item-desc">Drop multiple pieces per turn</span>
+          </div>
+          <label class="mod-toggle">
+            <input type="checkbox" id="mod-multi-place">
+            <span class="mod-toggle-track"></span>
+          </label>
+        </div>
+        <div class="mod-count-row mod-multi-count-wrap" style="display:none;">
+          <span class="mod-count-label">Pieces per turn</span>
+          <input type="number" id="mod-multi-count" class="mod-count-input" value="3" min="2" max="7">
+        </div>
+
+        <div class="mod-divider"></div>
+        <span class="mod-section-label">Bot Control</span>
+
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-label">Skip Bot Turn</span>
+            <span class="mod-item-desc">Bot passes after your move</span>
+          </div>
+          <label class="mod-toggle">
+            <input type="checkbox" id="mod-skip-bot-turn">
+            <span class="mod-toggle-track"></span>
+          </label>
+        </div>
+
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-label">Freeze Bot</span>
+            <span class="mod-item-desc">Bot never plays — place freely</span>
+          </div>
+          <label class="mod-toggle">
+            <input type="checkbox" id="mod-freeze-bot">
+            <span class="mod-toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="mod-panel" data-panel="online">
+        <span class="mod-section-label">Gameplay</span>
+
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-label">Auto Win</span>
+            <span class="mod-item-desc">Instantly fill a winning line for you</span>
+          </div>
+          <label class="mod-toggle">
+            <input type="checkbox" id="mod-auto-win-online">
+            <span class="mod-toggle-track"></span>
+          </label>
+        </div>
+
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-label">Multi-Place</span>
+            <span class="mod-item-desc">Drop multiple pieces per turn</span>
+          </div>
+          <label class="mod-toggle">
+            <input type="checkbox" id="mod-multi-place-online">
+            <span class="mod-toggle-track"></span>
+          </label>
+        </div>
+        <div class="mod-count-row mod-multi-count-online-wrap" style="display:none;">
+          <span class="mod-count-label">Pieces per turn</span>
+          <input type="number" id="mod-multi-count-online" class="mod-count-input" value="3" min="2" max="7">
+        </div>
+
+        <div class="mod-divider"></div>
+        <span class="mod-section-label">Opponent Control</span>
+
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-label">Skip Opponent Turn</span>
+            <span class="mod-item-desc">Opponent's turn is skipped</span>
+          </div>
+          <label class="mod-toggle">
+            <input type="checkbox" id="mod-skip-opponent">
+            <span class="mod-toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <script type="module" src="assets/js/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
