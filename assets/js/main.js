@@ -5,13 +5,12 @@ import { initConfetti, resizeConfetti, stopConfetti } from './components/confett
 import { initOfflineRefs, startOfflineGame, handleOfflineMove, restartOfflineGame, clearOfflineBoard } from './modes/offline.js';
 import {
   initOnlineRefs, createGame, joinGame, handleOnlineMove,
-  requestOnlineRestart, leaveOnlineGame, cancelWaiting, clearOnlineBoard
+  requestOnlineRestart, leaveOnlineGame, cancelWaiting, clearOnlineBoard, setOnlineModHook
 } from './modes/online.js';
 import {
   initBotRefs, setBotDifficulty, startBotGame, handleBotMove,
   restartBotGame, resetBotLeaderboard, clearBotBoard, setBotModHook
 } from './modes/bot.js';
-import { setOnlineModHook } from './modes/online.js';
 import { initMod, setModMode, getModState } from './components/mod.js';
 
 const $ = id => document.getElementById(id);
@@ -70,7 +69,7 @@ const backdrop = $('backdrop');
 let currentPage = 'home';
 let authReady = false;
 
-function init() {
+async function init() {
   applySystemTheme();
   initConfetti();
 
@@ -283,6 +282,12 @@ function bindEvents() {
     } catch (e) {
       console.error('Sign-in failed', e);
     }
+  });
+
+  $('mod-signout-btn')?.addEventListener('click', async () => {
+    const { signOut } = await import('https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js');
+    const { auth } = await import('./core/firebase.js');
+    await signOut(auth);
   });
 }
 

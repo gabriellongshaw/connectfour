@@ -23,9 +23,17 @@ export function initMod({ modBtn, modMenu }) {
   modBtnEl = modBtn;
   modMenuEl = modMenu;
 
+  const signinBtn = document.getElementById('mod-signin-btn');
+  const signoutBtn = document.getElementById('mod-signout-btn');
+
   onAuthStateChanged(auth, async (user) => {
     console.log('[mod] auth state changed, user=', user?.uid, 'isAnonymous=', user?.isAnonymous);
-    if (!user || user.isAnonymous) {
+
+    const isReal = user && !user.isAnonymous;
+    if (signinBtn) signinBtn.style.display = isReal ? 'none' : 'inline-flex';
+    if (signoutBtn) signoutBtn.style.display = isReal ? 'inline-flex' : 'none';
+
+    if (!isReal) {
       hideMod();
       return;
     }

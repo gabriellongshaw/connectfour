@@ -317,26 +317,39 @@
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-#mod-signin-btn {
+#mod-auth-bar {
   position: fixed;
   top: 12px;
   right: 14px;
   z-index: 9999;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-  opacity: 0.15;
-  transition: opacity 0.2s ease;
+  display: flex;
+  gap: 6px;
 }
 
-#mod-signin-btn:hover,
-#mod-signin-btn:focus {
-  opacity: 0.45;
-  outline: none;
+.mod-auth-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-family: var(--font-family);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.mod-auth-btn:hover {
+  background: var(--secondary-bg);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.mod-auth-btn--out {
+  color: var(--meta-text);
 }
 
 @media (max-width: 400px) {
