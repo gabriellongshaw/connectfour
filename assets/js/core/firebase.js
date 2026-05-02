@@ -4,6 +4,8 @@ import {
   getAuth,
   signInAnonymously,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js';
@@ -48,8 +50,40 @@ export function waitForAuth() {
 }
 
 export async function signInWithGoogle() {
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user;
+  if (isInAppBrowser()) {
+    await signInWithRedirect(auth, googleProvider);
+    return;
+  }
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (e) {
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+      await signInWithRedirect(auth, googleProvider);
+    } else {
+      throw e;
+    }
+  }
+}
+
+export async function handleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    return result?.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function isInAppBrowser() {
+  const ua = navigator.userAgent;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (isStandalone) return false;
+  return /FB_IAB|FBAN|FBAV|Instagram|Twitter|LinkedInApp|Snapchat|TikTok|BytedanceWebview|GSA|musical_ly/.test(ua)
+    || /wv/.test(ua)
+    || (/Android/.test(ua) && !/Chrome\/[.0-9]* Mobile/.test(ua) && /Version\//.test(ua))
+    || (window.ReactNativeWebView !== undefined)
+    || (typeof Android !== 'undefined');
 }
 
 export async function checkModAccess(uid) {
