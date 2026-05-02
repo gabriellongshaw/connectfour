@@ -275,29 +275,13 @@ function bindEvents() {
 
   addTouchHover('.button, .secondary-button, .tertiary-button, .btn-leave');
 
-  const homeTitle = pages.home.querySelector('h1');
-  if (homeTitle) {
-    let longPressTimer = null;
-    const startLongPress = () => {
-      longPressTimer = setTimeout(async () => {
-        longPressTimer = null;
-        try {
-          await signInWithGoogle();
-        } catch (e) {
-          console.error('Sign-in failed', e);
-        }
-      }, 500);
-    };
-    const cancelLongPress = () => {
-      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-    };
-    homeTitle.addEventListener('mousedown', startLongPress);
-    homeTitle.addEventListener('touchstart', startLongPress, { passive: true });
-    homeTitle.addEventListener('mouseup', cancelLongPress);
-    homeTitle.addEventListener('mouseleave', cancelLongPress);
-    homeTitle.addEventListener('touchend', cancelLongPress, { passive: true });
-    homeTitle.addEventListener('touchcancel', cancelLongPress, { passive: true });
-  }
+  $('mod-signin-btn')?.addEventListener('click', async () => {
+    try {
+      await signInWithGoogle();
+    } catch (e) {
+      console.error('Sign-in failed', e);
+    }
+  });
 }
 
 function isInAppBrowser() {
