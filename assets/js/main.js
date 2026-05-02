@@ -1,6 +1,6 @@
 import { applySystemTheme } from './core/theme.js';
 import { fadeIn, fadeOut } from './core/utils.js';
-import { waitForAuth } from './core/firebase.js';
+import { waitForAuth, signInWithGoogle } from './core/firebase.js';
 import { initConfetti, resizeConfetti, stopConfetti } from './components/confetti.js';
 import { initOfflineRefs, startOfflineGame, handleOfflineMove, restartOfflineGame, clearOfflineBoard } from './modes/offline.js';
 import {
@@ -274,6 +274,30 @@ function bindEvents() {
   window.addEventListener('resize', resizeConfetti);
 
   addTouchHover('.button, .secondary-button, .tertiary-button, .btn-leave');
+
+  const homeTitle = pages.home.querySelector('h1');
+  if (homeTitle) {
+    let longPressTimer = null;
+    const startLongPress = () => {
+      longPressTimer = setTimeout(async () => {
+        longPressTimer = null;
+        try {
+          await signInWithGoogle();
+        } catch (e) {
+          console.error('Sign-in failed', e);
+        }
+      }, 500);
+    };
+    const cancelLongPress = () => {
+      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    };
+    homeTitle.addEventListener('mousedown', startLongPress);
+    homeTitle.addEventListener('touchstart', startLongPress, { passive: true });
+    homeTitle.addEventListener('mouseup', cancelLongPress);
+    homeTitle.addEventListener('mouseleave', cancelLongPress);
+    homeTitle.addEventListener('touchend', cancelLongPress, { passive: true });
+    homeTitle.addEventListener('touchcancel', cancelLongPress, { passive: true });
+  }
 }
 
 function isInAppBrowser() {
