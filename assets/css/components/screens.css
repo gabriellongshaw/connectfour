@@ -52,15 +52,14 @@
 }
 
 .credits-link {
-  font-weight: 700;
-  color: var(--text);
+  color: var(--meta-text);
   text-decoration: underline;
   text-underline-offset: 2px;
-  transition: opacity 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .credits-link:hover {
-  opacity: 0.7;
+  color: var(--text);
 }
 
 .room-code-display-wrap {
