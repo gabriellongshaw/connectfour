@@ -36,6 +36,11 @@
   flex-direction: column;
 }
 
+.button svg {
+  flex-shrink: 0;
+  display: block;
+}
+
 .secondary-button {
   display: inline-flex;
   align-items: center;

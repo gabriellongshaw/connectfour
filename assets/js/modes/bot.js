@@ -178,7 +178,8 @@ export function resetBotLeaderboard() {
 
 function renderLeaderboard() {
   if (!leaderboardEl) return;
-  const diffLabel = difficulty === 'impossible' ? 'Impossible' : difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+  const diffLabels = { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert', impossible: 'Impossible' };
+  const diffLabel = diffLabels[difficulty] || difficulty;
   leaderboardEl.classList.remove('lb-visible');
   leaderboardEl.innerHTML = `
     <div class="lb-row">
@@ -225,6 +226,7 @@ function chooseBotCol(board, diff) {
   if (diff === 'easy') return easyMove(board);
   if (diff === 'medium') return mediumMove(board);
   if (diff === 'hard') return hardMove(board);
+  if (diff === 'expert') return expertMove(board);
   return impossibleMove(board);
 }
 
@@ -288,12 +290,17 @@ function hardMove(board) {
     const cols = getValidCols(board);
     return cols[Math.floor(Math.random() * cols.length)];
   }
-  const result = minimax(board, 5, -Infinity, Infinity, true);
+  const result = minimaxIterativeDeepening(board, 5);
+  return result.col;
+}
+
+function expertMove(board) {
+  const result = minimaxIterativeDeepening(board, 7);
   return result.col;
 }
 
 function impossibleMove(board) {
-  const result = minimax(board, 7, -Infinity, Infinity, true);
+  const result = minimaxIterativeDeepeningTimed(board, 10);
   return result.col;
 }
 
@@ -328,7 +335,6 @@ function scoreBoard(board, player) {
       score += board.map(r => r[nc]).filter(v => v === player).length * 1;
     }
   }
-
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c <= COLS - 4; c++) {
       const window = [board[r][c], board[r][c + 1], board[r][c + 2], board[r][c + 3]];
@@ -356,7 +362,47 @@ function scoreBoard(board, player) {
   return score;
 }
 
+const ZOBRIST_TABLE = (() => {
+  const t = [];
+  for (let r = 0; r < ROWS; r++) {
+    t[r] = [];
+    for (let c = 0; c < COLS; c++) {
+      t[r][c] = [0, 0, 0];
+      for (let p = 1; p <= 2; p++) {
+        t[r][c][p] = (Math.random() * 0xFFFFFFFF) >>> 0;
+      }
+    }
+  }
+  return t;
+})();
+
+function zobristHash(board) {
+  let h = 0;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (board[r][c]) h ^= ZOBRIST_TABLE[r][c][board[r][c]];
+    }
+  }
+  return h;
+}
+
+const TT_SIZE = 1 << 20;
+const transpositionTable = new Map();
+
+const EXACT = 0, LOWER = 1, UPPER = 2;
+
+let killerMoves = [];
+
 function minimax(board, depth, alpha, beta, maximizing) {
+  const hash = zobristHash(board);
+  const ttEntry = transpositionTable.get(hash);
+  if (ttEntry && ttEntry.depth >= depth) {
+    if (ttEntry.flag === EXACT) return { col: ttEntry.col, score: ttEntry.score };
+    if (ttEntry.flag === LOWER && ttEntry.score > alpha) alpha = ttEntry.score;
+    if (ttEntry.flag === UPPER && ttEntry.score < beta) beta = ttEntry.score;
+    if (alpha >= beta) return { col: ttEntry.col, score: ttEntry.score };
+  }
+
   const isTerminal = boardHasWinner(board) || isBoardFull(board) || depth === 0;
   if (isTerminal) {
     if (boardHasWinner(board)) {
@@ -370,31 +416,66 @@ function minimax(board, depth, alpha, beta, maximizing) {
 
   const validCols = getValidCols(board);
   const center = Math.floor(COLS / 2);
-  validCols.sort((a, b) => Math.abs(a - center) - Math.abs(b - center));
+  const killer = killerMoves[depth];
 
-  if (maximizing) {
-    let best = { col: validCols[0], score: -Infinity };
-    for (const col of validCols) {
-      const next = dropPiece(board, col, 2);
-      if (!next) continue;
-      const result = minimax(next, depth - 1, alpha, beta, false);
+  validCols.sort((a, b) => {
+    const aIsKiller = a === killer ? -1 : 0;
+    const bIsKiller = b === killer ? -1 : 0;
+    if (aIsKiller !== bIsKiller) return aIsKiller - bIsKiller;
+    return Math.abs(a - center) - Math.abs(b - center);
+  });
+
+  let best = { col: validCols[0], score: maximizing ? -Infinity : Infinity };
+  const origAlpha = alpha;
+
+  for (const col of validCols) {
+    const next = dropPiece(board, col, maximizing ? 2 : 1);
+    if (!next) continue;
+    const result = minimax(next, depth - 1, alpha, beta, !maximizing);
+    if (maximizing) {
       if (result.score > best.score) best = { col, score: result.score };
       alpha = Math.max(alpha, best.score);
-      if (alpha >= beta) break;
-    }
-    return best;
-  } else {
-    let best = { col: validCols[0], score: Infinity };
-    for (const col of validCols) {
-      const next = dropPiece(board, col, 1);
-      if (!next) continue;
-      const result = minimax(next, depth - 1, alpha, beta, true);
+    } else {
       if (result.score < best.score) best = { col, score: result.score };
       beta = Math.min(beta, best.score);
-      if (alpha >= beta) break;
     }
-    return best;
+    if (alpha >= beta) {
+      killerMoves[depth] = col;
+      break;
+    }
   }
+
+  const flag = best.score <= origAlpha ? UPPER : best.score >= beta ? LOWER : EXACT;
+  if (transpositionTable.size >= TT_SIZE) transpositionTable.clear();
+  transpositionTable.set(hash, { depth, score: best.score, col: best.col, flag });
+
+  return best;
+}
+
+function minimaxIterativeDeepening(board, maxDepth) {
+  transpositionTable.clear();
+  killerMoves = [];
+  let best = { col: Math.floor(COLS / 2), score: 0 };
+  for (let d = 1; d <= maxDepth; d++) {
+    const result = minimax(board, d, -Infinity, Infinity, true);
+    if (result.col !== -1) best = result;
+    if (Math.abs(best.score) >= 100000) break;
+  }
+  return best;
+}
+
+function minimaxIterativeDeepeningTimed(board, maxDepth, timeLimitMs) {
+  transpositionTable.clear();
+  killerMoves = [];
+  const deadline = Date.now() + timeLimitMs;
+  let best = { col: Math.floor(COLS / 2), score: 0 };
+  for (let d = 1; d <= maxDepth; d++) {
+    if (Date.now() >= deadline) break;
+    const result = minimax(board, d, -Infinity, Infinity, true);
+    if (result.col !== -1) best = result;
+    if (Math.abs(best.score) >= 100000) break;
+  }
+  return best;
 }
 
 let infoTimeout = null;

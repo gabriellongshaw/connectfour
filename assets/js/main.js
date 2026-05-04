@@ -1,4 +1,5 @@
 import { applySystemTheme } from './core/theme.js';
+import { difficultyIcons } from './core/icons.js';
 import { fadeIn, fadeOut } from './core/utils.js';
 import { waitForAuth } from './core/firebase.js';
 import { initConfetti, resizeConfetti, stopConfetti } from './components/confetti.js';
@@ -31,7 +32,14 @@ const playOnlineBtn = $('play-online');
 const botEasyBtn = $('bot-easy');
 const botMediumBtn = $('bot-medium');
 const botHardBtn = $('bot-hard');
+const botExpertBtn = $('bot-expert');
 const botImpossibleBtn = $('bot-impossible');
+
+botEasyBtn.innerHTML = difficultyIcons.easy + ' Easy';
+botMediumBtn.innerHTML = difficultyIcons.medium + ' Medium';
+botHardBtn.innerHTML = difficultyIcons.hard + ' Hard';
+botExpertBtn.innerHTML = difficultyIcons.expert + ' Expert';
+botImpossibleBtn.innerHTML = difficultyIcons.impossible + ' Impossible';
 const backFromBotDifficultyBtn = $('back-from-bot-difficulty');
 const leaveBtnBot = $('leave-btn-bot');
 const restartBtnBot = $('restart-btn-bot');
@@ -137,6 +145,14 @@ function bindEvents() {
 
   botHardBtn.addEventListener('click', async () => {
     setBotDifficulty('hard');
+    resetBotLeaderboard();
+    await goTo('bot');
+    boardBot.style.display = 'grid';
+    startBotGame();
+  });
+
+  botExpertBtn.addEventListener('click', async () => {
+    setBotDifficulty('expert');
     resetBotLeaderboard();
     await goTo('bot');
     boardBot.style.display = 'grid';
