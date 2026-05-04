@@ -38,8 +38,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  font-size: 0.82rem;
+  gap: 4px;
+  font-size: 0.85rem;
   font-weight: 500;
   color: var(--meta-text);
   text-align: center;
@@ -60,6 +60,10 @@
 
 .credits-link:hover {
   color: var(--text);
+}
+
+.credits-copyright {
+  font-family: sans-serif;
 }
 
 .room-code-display-wrap {
