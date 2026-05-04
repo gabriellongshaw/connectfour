@@ -246,10 +246,10 @@ function easyMove(board) {
   const cols = getValidCols(board);
 
   const win = findImmediateWin(board, 2);
-  if (win !== -1 && Math.random() < 0.6) return win;
+  if (win !== -1 && Math.random() < 0.4) return win;
 
   const block = findImmediateWin(board, 1);
-  if (block !== -1 && Math.random() < 0.55) return block;
+  if (block !== -1 && Math.random() < 0.3) return block;
 
   if (Math.random() < 0.15) {
     return cols[Math.floor(Math.random() * cols.length)];
@@ -288,7 +288,8 @@ function mediumMove(board) {
 function hardMove(board) {
   if (Math.random() < 0.08) {
     const cols = getValidCols(board);
-    return cols[Math.floor(Math.random() * cols.length)];
+    const candidates = safeCols(board, cols, 2);
+    return candidates[Math.floor(Math.random() * candidates.length)];
   }
   const result = minimaxIterativeDeepening(board, 5);
   return result.col;
@@ -300,7 +301,7 @@ function expertMove(board) {
 }
 
 function impossibleMove(board) {
-  const result = minimaxIterativeDeepeningTimed(board, 10);
+  const result = minimaxIterativeDeepeningTimed(board, 10, 2000);
   return result.col;
 }
 
