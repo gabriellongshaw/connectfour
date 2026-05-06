@@ -98,23 +98,17 @@
   position: fixed;
   inset: 0;
   background: var(--overlay-bg);
-  z-index: 9998;
+  z-index: 9999;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
 }
 
+dialog::backdrop {
+  background: transparent;
+}
+
 .backdrop.visible {
   opacity: 1;
   pointer-events: auto;
-}
-
-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  transition: opacity 250ms ease;
-}
-
-dialog[open]::backdrop {
-  opacity: 1;
 }

@@ -67,14 +67,18 @@ const infoOnline = $('info-online');
 const subInfoOnline = $('sub-info-online');
 const leaderboardOnline = $('leaderboard-online');
 const roomCodeSpan = $('room-code');
+const roomCodeQr = $('room-code-qr');
+const roomCodeQrWrap = $('room-code-qr-wrap');
 const creatingStatus = $('creating-status');
 const joinStatus = $('join-status');
+const scanQrBtn = $('scan-qr-btn');
 const modal = $('browser-modal');
 const closeModalBtn = $('close-modal');
 const backdrop = $('backdrop');
 
 let currentPage = 'home';
 let authReady = false;
+let modalShown = false;
 
 function init() {
   applySystemTheme();
@@ -98,11 +102,21 @@ function init() {
   });
 
   bindEvents();
-  if (isInAppBrowser()) showModal();
 
-  waitForAuth()
-    .then(() => { authReady = true; })
-    .catch(err => console.error('Auth failed:', err));
+  const urlParams = new URLSearchParams(location.search);
+  const joinParam = urlParams.get('join');
+  if (joinParam) {
+    history.replaceState({}, document.title, location.pathname);
+    waitForAuth().then(() => {
+      authReady = true;
+      joinCodeInput.value = joinParam.trim().toUpperCase();
+      goTo('join');
+    }).catch(err => console.error('Auth failed:', err));
+  } else {
+    waitForAuth()
+      .then(() => { authReady = true; })
+      .catch(err => console.error('Auth failed:', err));
+  }
 }
 
 async function goTo(name) {
@@ -188,6 +202,10 @@ function bindEvents() {
   playOnlineBtn.addEventListener('click', async () => {
     if (!authReady) return;
     await goTo('online');
+    if (!modalShown && isInAppBrowser()) {
+      modalShown = true;
+      showModal();
+    }
   });
 
   backFromOnlineBtn.addEventListener('click', async () => {
@@ -197,15 +215,70 @@ function bindEvents() {
   createGameBtn.addEventListener('click', async () => {
     if (!authReady) return;
     roomCodeSpan.textContent = '';
+    roomCodeQr.innerHTML = '';
+    roomCodeQrWrap.classList.remove('qr-visible');
     creatingStatus.textContent = '';
     await goTo('create');
     createGame(
-      code => { roomCodeSpan.textContent = code; },
+      code => {
+        roomCodeSpan.textContent = code;
+        roomCodeQr.innerHTML = '';
+        roomCodeQrWrap.classList.remove('qr-visible');
+        const joinUrl = location.origin + location.pathname + '?join=' + encodeURIComponent(code);
+        new QRCode(roomCodeQr, {
+          text: joinUrl,
+          width: 148,
+          height: 148,
+          colorDark: '#111111',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => roomCodeQrWrap.classList.add('qr-visible'));
+        });
+      },
       async () => {
         boardOnline.style.display = 'grid';
         await goTo('game');
       }
     );
+  });
+
+  scanQrBtn?.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', async () => {
+      const file = input.files?.[0];
+      document.body.removeChild(input);
+      if (!file) return;
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const jsQR = (await import('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js')).default;
+      const result = jsQR(imageData.data, imageData.width, imageData.height);
+      if (result?.data) {
+        try {
+          const url = new URL(result.data);
+          const code = url.searchParams.get('join') || result.data;
+          joinCodeInput.value = code.trim().toUpperCase();
+        } catch {
+          joinCodeInput.value = result.data.trim().toUpperCase();
+        }
+        joinGameBtn.click();
+      } else {
+        joinStatus.textContent = 'Could not read QR code — enter the code above.';
+      }
+    });
+    input.addEventListener('cancel', () => document.body.removeChild(input));
+    input.click();
   });
 
   showJoinBtn.addEventListener('click', async () => {
@@ -236,6 +309,7 @@ function bindEvents() {
   });
 
   backFromWaitBtn.addEventListener('click', async () => {
+    roomCodeQrWrap.classList.remove('qr-visible');
     await cancelWaiting();
     await goTo('online');
   });
@@ -290,8 +364,12 @@ function isInAppBrowser() {
 function showModal() {
   if (!modal) return;
   modal.showModal();
-  setTimeout(() => modal.classList.add('open'), 10);
-  backdrop.classList.add('visible');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      modal.classList.add('open');
+      backdrop.classList.add('visible');
+    });
+  });
 }
 
 function closeModal() {

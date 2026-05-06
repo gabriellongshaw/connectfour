@@ -117,6 +117,10 @@
         <p>Share this code with a friend</p>
         <span id="room-code"></span>
       </div>
+      <div id="room-code-qr-wrap" class="room-code-qr-wrap">
+        <div class="create-qr-divider"><span>or use QR code</span></div>
+        <div id="room-code-qr" class="room-code-qr"></div>
+      </div>
       <p id="creating-status" class="status-message creating-status-msg"></p>
     </div>
     <button id="back-from-wait" class="tertiary-button">Cancel</button>
@@ -128,6 +132,8 @@
         autocomplete="off" autocapitalize="characters" spellcheck="false">
       <button id="join-game-btn" class="button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join</button>
       <p id="join-status" class="status-message"></p>
+      <div class="join-qr-divider"><span>or scan QR code</span></div>
+      <button id="scan-qr-btn" class="secondary-button"><i class="fa-solid fa-qrcode"></i> Scan QR Code</button>
       <button id="back-from-join" class="tertiary-button">Back</button>
     </div>
   </div>
@@ -162,6 +168,7 @@
   </dialog>
   <div id="backdrop" class="backdrop"></div>
   <canvas id="confetti-canvas"></canvas>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script type="module" src="assets/js/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
