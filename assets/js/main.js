@@ -233,9 +233,14 @@ function bindEvents() {
           colorLight: '#ffffff',
           correctLevel: QRCode.CorrectLevel.M,
         });
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => roomCodeQrWrap.classList.add('qr-visible'));
-        });
+        const qrImg = roomCodeQr.querySelector('img');
+        const showQr = () => roomCodeQrWrap.classList.add('qr-visible');
+        if (qrImg) {
+          if (qrImg.complete) showQr();
+          else qrImg.addEventListener('load', showQr, { once: true });
+        } else {
+          setTimeout(showQr, 80);
+        }
       },
       async () => {
         boardOnline.style.display = 'grid';
@@ -248,36 +253,42 @@ function bindEvents() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.capture = 'environment';
-    input.style.display = 'none';
+    input.setAttribute('capture', 'environment');
+    input.style.position = 'fixed';
+    input.style.top = '-9999px';
+    input.style.opacity = '0';
     document.body.appendChild(input);
+    const cleanup = () => { if (input.parentNode) document.body.removeChild(input); };
     input.addEventListener('change', async () => {
       const file = input.files?.[0];
-      document.body.removeChild(input);
+      cleanup();
       if (!file) return;
-      const bitmap = await createImageBitmap(file);
-      const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(bitmap, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const jsQR = (await import('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js')).default;
-      const result = jsQR(imageData.data, imageData.width, imageData.height);
-      if (result?.data) {
-        try {
-          const url = new URL(result.data);
-          const code = url.searchParams.get('join') || result.data;
-          joinCodeInput.value = code.trim().toUpperCase();
-        } catch {
-          joinCodeInput.value = result.data.trim().toUpperCase();
+      try {
+        const bitmap = await createImageBitmap(file);
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const result = jsQR(imageData.data, imageData.width, imageData.height);
+        if (result?.data) {
+          try {
+            const url = new URL(result.data);
+            const code = url.searchParams.get('join') || result.data;
+            joinCodeInput.value = code.trim().toUpperCase();
+          } catch {
+            joinCodeInput.value = result.data.trim().toUpperCase();
+          }
+          joinGameBtn.click();
+        } else {
+          joinStatus.textContent = 'Could not read QR code — enter the code above.';
         }
-        joinGameBtn.click();
-      } else {
-        joinStatus.textContent = 'Could not read QR code — enter the code above.';
+      } catch {
+        joinStatus.textContent = 'Could not process image — enter the code above.';
       }
     });
-    input.addEventListener('cancel', () => document.body.removeChild(input));
+    input.addEventListener('cancel', cleanup);
     input.click();
   });
 
