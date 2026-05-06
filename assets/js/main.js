@@ -250,121 +250,146 @@ function bindEvents() {
   });
 
   scanQrBtn?.addEventListener('click', () => {
-    if (typeof BarcodeDetector !== 'undefined') {
-      BarcodeDetector.getSupportedFormats().then(formats => {
-        if (!formats.includes('qr_code')) throw new Error('qr_code not supported');
-        return startBarcodeDetectorScan();
-      }).catch(() => {
-        openQrFilePicker();
-      });
-    } else {
-      openQrFilePicker();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        joinStatus.textContent = 'Camera scanning requires HTTPS. Enter the code above instead.';
+      } else {
+        joinStatus.textContent = "Your browser doesn't support camera access. Try Safari or Chrome, or enter the code above.";
+      }
+      return;
     }
-  });
 
-  function startBarcodeDetectorScan() {
-    const detector = new BarcodeDetector({ formats: ['qr_code'] });
+    const cameraPromise = navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 1280 } },
+    });
+
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+    overlay.style.cssText = [
+      'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;',
+      'display:flex;flex-direction:column;align-items:center;justify-content:center;',
+      'padding:24px;box-sizing:border-box;',
+    ].join('');
+
+    const title = document.createElement('p');
+    title.textContent = 'Scan QR Code';
+    title.style.cssText = 'color:#fff;font-size:1.1rem;font-weight:600;margin:0 0 16px;';
+
+    const videoWrap = document.createElement('div');
+    videoWrap.style.cssText = [
+      'position:relative;width:100%;max-width:320px;aspect-ratio:1;',
+      'border-radius:16px;overflow:hidden;background:#111;',
+    ].join('');
+
     const video = document.createElement('video');
-    video.style.cssText = 'width:100%;max-width:480px;border-radius:12px;';
+    video.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
     video.autoplay = true;
     video.playsInline = true;
+    video.muted = true;
+
+    const finder = document.createElement('div');
+    finder.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
+    const bracketStyle = 'position:absolute;width:36px;height:36px;border-color:#fff;border-style:solid;border-width:0;';
+    [
+      'top:12px;left:12px;border-top-width:3px;border-left-width:3px;border-radius:4px 0 0 0;',
+      'top:12px;right:12px;border-top-width:3px;border-right-width:3px;border-radius:0 4px 0 0;',
+      'bottom:12px;left:12px;border-bottom-width:3px;border-left-width:3px;border-radius:0 0 0 4px;',
+      'bottom:12px;right:12px;border-bottom-width:3px;border-right-width:3px;border-radius:0 0 4px 0;',
+    ].forEach(s => {
+      const b = document.createElement('div');
+      b.style.cssText = bracketStyle + s;
+      finder.appendChild(b);
+    });
+
+    videoWrap.appendChild(video);
+    videoWrap.appendChild(finder);
+
     const hint = document.createElement('p');
-    hint.textContent = 'Point camera at the QR code…';
-    hint.style.cssText = 'color:#fff;margin-top:16px;font-size:1rem;';
+    hint.textContent = 'Starting camera\u2026';
+    hint.style.cssText = 'color:rgba(255,255,255,0.7);font-size:0.9rem;margin:14px 0 0;text-align:center;';
+
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'Cancel';
-    cancelBtn.style.cssText = 'margin-top:20px;padding:10px 28px;border:none;border-radius:8px;background:#fff;cursor:pointer;font-size:1rem;';
-    overlay.appendChild(video);
+    cancelBtn.style.cssText = [
+      'margin-top:24px;padding:11px 36px;border:2px solid rgba(255,255,255,0.4);',
+      'border-radius:10px;background:transparent;color:#fff;cursor:pointer;font-size:1rem;',
+    ].join('');
+
+    overlay.appendChild(title);
+    overlay.appendChild(videoWrap);
     overlay.appendChild(hint);
     overlay.appendChild(cancelBtn);
     document.body.appendChild(overlay);
 
     let stream = null;
     let rafId = null;
+    let stopped = false;
+
     const stop = () => {
+      if (stopped) return;
+      stopped = true;
       if (rafId) cancelAnimationFrame(rafId);
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (overlay.parentNode) document.body.removeChild(overlay);
     };
+
     cancelBtn.addEventListener('click', stop);
 
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-      .then(s => {
-        stream = s;
-        video.srcObject = s;
-        const scan = async () => {
-          if (!document.body.contains(overlay)) return;
-          try {
-            const barcodes = await detector.detect(video);
-            if (barcodes.length > 0) {
-              stop();
-              const raw = barcodes[0].rawValue;
-              try {
-                const url = new URL(raw);
-                const code = url.searchParams.get('join') || raw;
-                joinCodeInput.value = code.trim().toUpperCase();
-              } catch {
-                joinCodeInput.value = raw.trim().toUpperCase();
-              }
-              joinGameBtn.click();
-              return;
-            }
-          } catch (_) {}
-          rafId = requestAnimationFrame(scan);
-        };
-        video.addEventListener('loadedmetadata', () => { rafId = requestAnimationFrame(scan); }, { once: true });
-      })
-      .catch(() => {
-        stop();
-        openQrFilePicker();
-      });
-  }
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
 
-  function openQrFilePicker() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.style.position = 'fixed';
-    input.style.top = '-9999px';
-    input.style.opacity = '0';
-    document.body.appendChild(input);
-    const cleanup = () => { if (input.parentNode) document.body.removeChild(input); };
-    input.addEventListener('change', async () => {
-      const file = input.files?.[0];
-      cleanup();
-      if (!file) return;
-      joinStatus.textContent = 'Reading QR code…';
-      try {
-        const bitmap = await createImageBitmap(file);
-        const canvas = document.createElement('canvas');
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(bitmap, 0, 0);
+    const scanFrame = () => {
+      if (stopped) return;
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const result = jsQR(imageData.data, imageData.width, imageData.height);
+        const result = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: 'dontInvert',
+        });
         if (result?.data) {
+          stop();
           try {
             const url = new URL(result.data);
             const code = url.searchParams.get('join') || result.data;
             joinCodeInput.value = code.trim().toUpperCase();
-          } catch {
+          } catch (_) {
             joinCodeInput.value = result.data.trim().toUpperCase();
           }
           joinStatus.textContent = '';
           joinGameBtn.click();
-        } else {
-          joinStatus.textContent = 'Could not read QR code — try a clearer photo, or type the code above.';
+          return;
         }
-      } catch {
-        joinStatus.textContent = 'Could not process image — enter the code above.';
       }
-    });
-    input.addEventListener('cancel', cleanup);
-    input.click();
-  }
+      rafId = requestAnimationFrame(scanFrame);
+    };
+
+    cameraPromise
+      .then(s => {
+        if (stopped) { s.getTracks().forEach(t => t.stop()); return; }
+        stream = s;
+        video.srcObject = s;
+        hint.textContent = 'Point the QR code at the camera';
+        video.addEventListener('loadedmetadata', () => { rafId = requestAnimationFrame(scanFrame); }, { once: true });
+      })
+      .catch(err => {
+        stop();
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          joinStatus.textContent = 'Camera permission denied \u2014 allow camera access in your browser settings, or enter the code above.';
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          joinStatus.textContent = 'No camera found on this device. Enter the code above.';
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          joinStatus.textContent = 'Camera is in use by another app. Close it and try again, or enter the code above.';
+        } else if (err.name === 'OverconstrainedError') {
+          joinStatus.textContent = "Camera doesn't meet requirements. Enter the code above.";
+        } else if (err.name === 'SecurityError') {
+          joinStatus.textContent = 'Camera blocked \u2014 this page must be served over HTTPS. Enter the code above.';
+        } else {
+          joinStatus.textContent = 'Camera error: ' + (err.message || err.name) + '. Enter the code above.';
+        }
+      });
+  });
+
 
   showJoinBtn.addEventListener('click', async () => {
     joinCodeInput.value = '';
