@@ -117,9 +117,18 @@
         <p>Share this code with a friend</p>
         <span id="room-code"></span>
       </div>
-      <div id="room-code-qr-wrap" class="room-code-qr-wrap">
-        <div class="create-qr-divider"><span>or use QR code</span></div>
-        <div id="room-code-qr" class="room-code-qr"></div>
+      <div class="create-share-row">
+        <button id="show-qr-toggle" class="secondary-button" aria-expanded="false">
+          <i class="fa-solid fa-qrcode"></i> Show QR Code
+        </button>
+        <button id="send-link-btn" class="secondary-button">
+          <i class="fa-solid fa-share-nodes"></i> Send Link
+        </button>
+      </div>
+      <div id="room-code-qr-wrap" class="qr-panel">
+        <div class="qr-panel-inner">
+          <div id="room-code-qr" class="room-code-qr"></div>
+        </div>
       </div>
       <p id="creating-status" class="status-message creating-status-msg"></p>
     </div>
@@ -132,8 +141,9 @@
         autocomplete="off" autocapitalize="characters" spellcheck="false">
       <button id="join-game-btn" class="button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join</button>
       <p id="join-status" class="status-message"></p>
-      <div class="join-qr-divider"><span>or scan QR code</span></div>
-      <button id="scan-qr-btn" class="secondary-button"><i class="fa-solid fa-qrcode"></i> Scan QR Code</button>
+      <button id="scan-qr-btn" class="secondary-button">
+        <i class="fa-solid fa-qrcode"></i> Scan QR Code
+      </button>
       <button id="back-from-join" class="tertiary-button">Back</button>
     </div>
   </div>

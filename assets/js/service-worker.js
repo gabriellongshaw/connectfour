@@ -1,4 +1,4 @@
-const CACHE = 'connect-four-v7';
+const CACHE = 'connect-four-v8';
 
 const STATIC = [
   '/',
@@ -6,8 +6,8 @@ const STATIC = [
   '/manifest.json',
   '/assets/fonts/ProductSans-Regular.ttf',
   '/assets/css/variables.css',
-  '/assets/css/main.css',
   '/assets/css/fonts.css',
+  '/assets/css/main.css',
   '/assets/css/animations.css',
   '/assets/css/responsive.css',
   '/assets/css/components/screens.css',
@@ -17,14 +17,22 @@ const STATIC = [
   '/assets/css/components/modal.css',
   '/assets/images/favicon/favicon-192x192.png',
   '/assets/js/main.js',
+  '/assets/js/navigation.js',
   '/assets/js/core/firebase.js',
+  '/assets/js/core/icons.js',
   '/assets/js/core/theme.js',
   '/assets/js/core/utils.js',
   '/assets/js/components/board.js',
   '/assets/js/components/confetti.js',
+  '/assets/js/components/modal.js',
+  '/assets/js/components/qrScanner.js',
   '/assets/js/modes/bot.js',
   '/assets/js/modes/offline.js',
   '/assets/js/modes/online.js',
+  '/assets/js/pages/botGame.js',
+  '/assets/js/pages/createGame.js',
+  '/assets/js/pages/gameEvents.js',
+  '/assets/js/pages/joinGame.js',
 ];
 
 self.addEventListener('install', e => {
