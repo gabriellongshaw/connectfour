@@ -250,10 +250,82 @@ function bindEvents() {
   });
 
   scanQrBtn?.addEventListener('click', () => {
+    if (typeof BarcodeDetector !== 'undefined') {
+      BarcodeDetector.getSupportedFormats().then(formats => {
+        if (!formats.includes('qr_code')) throw new Error('qr_code not supported');
+        return startBarcodeDetectorScan();
+      }).catch(() => {
+        openQrFilePicker();
+      });
+    } else {
+      openQrFilePicker();
+    }
+  });
+
+  function startBarcodeDetectorScan() {
+    const detector = new BarcodeDetector({ formats: ['qr_code'] });
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+    const video = document.createElement('video');
+    video.style.cssText = 'width:100%;max-width:480px;border-radius:12px;';
+    video.autoplay = true;
+    video.playsInline = true;
+    const hint = document.createElement('p');
+    hint.textContent = 'Point camera at the QR code…';
+    hint.style.cssText = 'color:#fff;margin-top:16px;font-size:1rem;';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.cssText = 'margin-top:20px;padding:10px 28px;border:none;border-radius:8px;background:#fff;cursor:pointer;font-size:1rem;';
+    overlay.appendChild(video);
+    overlay.appendChild(hint);
+    overlay.appendChild(cancelBtn);
+    document.body.appendChild(overlay);
+
+    let stream = null;
+    let rafId = null;
+    const stop = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (overlay.parentNode) document.body.removeChild(overlay);
+    };
+    cancelBtn.addEventListener('click', stop);
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(s => {
+        stream = s;
+        video.srcObject = s;
+        const scan = async () => {
+          if (!document.body.contains(overlay)) return;
+          try {
+            const barcodes = await detector.detect(video);
+            if (barcodes.length > 0) {
+              stop();
+              const raw = barcodes[0].rawValue;
+              try {
+                const url = new URL(raw);
+                const code = url.searchParams.get('join') || raw;
+                joinCodeInput.value = code.trim().toUpperCase();
+              } catch {
+                joinCodeInput.value = raw.trim().toUpperCase();
+              }
+              joinGameBtn.click();
+              return;
+            }
+          } catch (_) {}
+          rafId = requestAnimationFrame(scan);
+        };
+        video.addEventListener('loadedmetadata', () => { rafId = requestAnimationFrame(scan); }, { once: true });
+      })
+      .catch(() => {
+        stop();
+        openQrFilePicker();
+      });
+  }
+
+  function openQrFilePicker() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.setAttribute('capture', 'environment');
     input.style.position = 'fixed';
     input.style.top = '-9999px';
     input.style.opacity = '0';
@@ -263,6 +335,7 @@ function bindEvents() {
       const file = input.files?.[0];
       cleanup();
       if (!file) return;
+      joinStatus.textContent = 'Reading QR code…';
       try {
         const bitmap = await createImageBitmap(file);
         const canvas = document.createElement('canvas');
@@ -280,9 +353,10 @@ function bindEvents() {
           } catch {
             joinCodeInput.value = result.data.trim().toUpperCase();
           }
+          joinStatus.textContent = '';
           joinGameBtn.click();
         } else {
-          joinStatus.textContent = 'Could not read QR code — enter the code above.';
+          joinStatus.textContent = 'Could not read QR code — try a clearer photo, or type the code above.';
         }
       } catch {
         joinStatus.textContent = 'Could not process image — enter the code above.';
@@ -290,7 +364,7 @@ function bindEvents() {
     });
     input.addEventListener('cancel', cleanup);
     input.click();
-  });
+  }
 
   showJoinBtn.addEventListener('click', async () => {
     joinCodeInput.value = '';
