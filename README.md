@@ -18,12 +18,13 @@ Real-time multiplayer over the internet powered by Firebase. One player hosts a 
 
 ### vs Bot
 
-Solo play against an AI. Choose a difficulty before the game starts — the bot always plays as Yellow and moves automatically after your turn. Four difficulty levels are available:
+Solo play against an AI. Choose a difficulty before the game starts — the bot always plays as Yellow and moves automatically after your turn. Five difficulty levels are available:
 
 - **Easy** — plays mostly random moves, rarely blocks you
 - **Medium** — knows the basics but makes mistakes, good for learning
 - **Hard** — strong minimax AI with occasional slip-ups, a real challenge
-- **Impossible** — full-depth minimax, plays perfectly and is very hard to beat
+- **Expert** — deep minimax search that plays very strong, consistent moves with no slip-ups
+- **Impossible** — full-depth minimax with extended time to search, plays as close to perfect as possible and is extremely hard to beat
 
 ## Leaderboard
 
