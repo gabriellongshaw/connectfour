@@ -10,48 +10,52 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
   const joinCodeInput = $('join-code-input');
   const backFromJoinBtn = $('back-from-join');
   const joinStatus = $('join-status');
+  const qrStatus = $('qr-status');
   const scanQrBtn = $('scan-qr-btn');
 
-  // Info messages: neutral styling. Error messages: red styling.
-  const ERROR_MESSAGES = new Set([
+  const JOIN_ERRORS = new Set([
     'Game not found. Check the code and try again.',
     'You created this game — share the code with a friend!',
     'This game already has two players.',
     'This game has already ended.',
     'Error joining game. Please try again.',
     'Please enter a room code.',
+  ]);
+
+  const QR_ERRORS = new Set([
     'Camera scanning is not available. Please enter the code manually.',
     'Camera access was denied. Please allow camera access in your browser settings.',
     'No camera found on this device.',
     'Could not start camera. Please enter the code manually.',
   ]);
 
-  let statusTimeout = null;
+  const timeouts = { join: null, qr: null };
 
-  function setJoinStatus(text, isError) {
-    // Determine error state from the known error set if not explicitly passed
-    const shouldError = isError !== undefined ? isError : (text ? ERROR_MESSAGES.has(text) : false);
+  function applyStatus(el, key, text, isError) {
+    if (timeouts[key]) { clearTimeout(timeouts[key]); timeouts[key] = null; }
+    el.style.opacity = '0';
+    timeouts[key] = setTimeout(() => {
+      el.textContent = text;
+      el.classList.toggle('status-error', isError);
+      el.style.opacity = '';
+      timeouts[key] = null;
+    }, 180);
+  }
 
-    if (statusTimeout) { clearTimeout(statusTimeout); statusTimeout = null; }
+  function setJoinStatus(text) {
+    applyStatus(qrStatus, 'qr', '', false);
+    applyStatus(joinStatus, 'join', text, JOIN_ERRORS.has(text));
+  }
 
-    // If there's already visible text, fade out first then swap
-    if (joinStatus.textContent && text !== joinStatus.textContent) {
-      joinStatus.style.opacity = '0';
-      statusTimeout = setTimeout(() => {
-        joinStatus.textContent = text;
-        joinStatus.classList.toggle('status-error', shouldError);
-        joinStatus.style.opacity = '';
-        statusTimeout = null;
-      }, 150);
-    } else {
-      joinStatus.textContent = text;
-      joinStatus.classList.toggle('status-error', shouldError);
-    }
+  function setQrStatus(text) {
+    applyStatus(joinStatus, 'join', '', false);
+    applyStatus(qrStatus, 'qr', text, QR_ERRORS.has(text));
   }
 
   function resetJoin() {
     joinCodeInput.value = '';
-    setJoinStatus('');
+    applyStatus(joinStatus, 'join', '', false);
+    applyStatus(qrStatus, 'qr', '', false);
   }
 
   showJoinBtn.addEventListener('click', async () => {
@@ -63,7 +67,6 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
     if (!getAuthReady()) { setJoinStatus('Connecting\u2026 please wait.'); return; }
     const code = joinCodeInput.value.trim().toUpperCase();
     joinCodeInput.value = code;
-    setJoinStatus('');
     joinGame(code, async () => {
       boardOnline.style.display = 'grid';
       await goTo('game');
@@ -91,10 +94,10 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
         }
         joinCodeInput.value = code.trim().toUpperCase();
         joinCodeInput.focus();
-        setJoinStatus('');
+        setQrStatus('');
       },
       onError: msg => {
-        setJoinStatus(msg);
+        setQrStatus(msg);
       },
     });
   });

@@ -24,7 +24,7 @@ export function initCreateGame({ boardOnline, addTouchHover }) {
       creatingStatus.classList.toggle('status-error', isError);
       creatingStatus.style.opacity = '';
       statusTimeout = null;
-    }, creatingStatus.textContent ? 150 : 0);
+    }, 180);
   }
 
   function resetQr() {
