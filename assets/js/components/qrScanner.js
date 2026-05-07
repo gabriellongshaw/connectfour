@@ -9,25 +9,23 @@ export function openQrScanner({ onResult, onError }) {
 
   const overlay = document.createElement('div');
   overlay.className = 'qr-scanner-overlay';
-
   const inner = document.createElement('div');
   inner.className = 'qr-scanner-inner';
-
+  const handle = document.createElement('div');
+  handle.className = 'qr-scanner-handle';
+  handle.setAttribute('aria-label', 'Drag to close');
   const title = document.createElement('p');
   title.className = 'qr-scanner-title';
   title.textContent = 'Scan QR Code';
-
   const canvasWrap = document.createElement('div');
   canvasWrap.className = 'qr-scanner-video-wrap';
-
   const displayCanvas = document.createElement('canvas');
   displayCanvas.className = 'qr-scanner-video';
-
   const finder = document.createElement('div');
   finder.className = 'qr-scanner-finder';
   ['tl', 'tr', 'bl', 'br'].forEach(pos => {
     const b = document.createElement('div');
-    b.className = `qr-scanner-bracket qr-scanner-bracket--${pos}`;
+    b.className = `qr-scanner-bracket qr-scanner-bracket-${pos}`;
     finder.appendChild(b);
   });
 
@@ -42,6 +40,7 @@ export function openQrScanner({ onResult, onError }) {
   cancelBtn.className = 'secondary-button';
   cancelBtn.textContent = 'Cancel';
 
+  inner.appendChild(handle);
   inner.appendChild(title);
   inner.appendChild(canvasWrap);
   inner.appendChild(hint);
@@ -50,7 +49,7 @@ export function openQrScanner({ onResult, onError }) {
   document.body.appendChild(overlay);
 
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => overlay.classList.add('qr-scanner-overlay--visible'));
+    requestAnimationFrame(() => overlay.classList.add('qr-scanner-overlay-visible'));
   });
 
   const video = document.createElement('video');
@@ -65,20 +64,73 @@ export function openQrScanner({ onResult, onError }) {
   let stream = null;
   let rafId = null;
   let stopped = false;
+  const removeOverlay = () => {
+    if (overlay.parentNode) document.body.removeChild(overlay);
+  };
 
   const stop = () => {
     if (stopped) return;
     stopped = true;
-    overlay.classList.remove('qr-scanner-overlay--visible');
     if (rafId) cancelAnimationFrame(rafId);
     if (stream) stream.getTracks().forEach(t => t.stop());
     video.srcObject = null;
-    overlay.addEventListener('transitionend', () => {
-      if (overlay.parentNode) document.body.removeChild(overlay);
+
+    overlay.classList.remove('qr-scanner-overlay-visible');
+    inner.style.transform = 'translateY(100%)';
+    const fallback = setTimeout(removeOverlay, 500);
+    inner.addEventListener('transitionend', () => {
+      clearTimeout(fallback);
+      removeOverlay();
     }, { once: true });
   };
 
   cancelBtn.addEventListener('click', stop);
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) stop();
+  });
+
+  let dragStartY = 0;
+  let dragCurrentY = 0;
+  let isDragging = false;
+
+  const onDragStart = e => {
+    if (stopped) return;
+    isDragging = true;
+    dragStartY = e.touches ? e.touches[0].clientY : e.clientY;
+    dragCurrentY = dragStartY;
+    inner.style.transition = 'none';
+  };
+
+  const onDragMove = e => {
+    if (!isDragging || stopped) return;
+    dragCurrentY = e.touches ? e.touches[0].clientY : e.clientY;
+    const delta = Math.max(0, dragCurrentY - dragStartY);
+    inner.style.transform = `translateY(${delta}px)`;
+    const progress = Math.min(delta / 300, 1);
+    overlay.style.background = `rgba(0,0,0,${0.88 * (1 - progress)})`;
+  };
+
+  const onDragEnd = () => {
+    if (!isDragging || stopped) return;
+    isDragging = false;
+    const delta = Math.max(0, dragCurrentY - dragStartY);
+    inner.style.transition = '';
+    if (delta > 120) {
+      stop();
+    } else {
+      inner.style.transform = 'translateY(0)';
+      overlay.style.background = '';
+    }
+  };
+  
+  [handle, title].forEach(el => {
+    el.addEventListener('touchstart', onDragStart, { passive: true });
+    el.addEventListener('mousedown', onDragStart);
+  });
+  window.addEventListener('touchmove', onDragMove, { passive: true });
+  window.addEventListener('mousemove', onDragMove);
+  window.addEventListener('touchend', onDragEnd);
+  window.addEventListener('mouseup', onDragEnd);
 
   const scanFrame = () => {
     if (stopped) return;
