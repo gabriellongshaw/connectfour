@@ -64,7 +64,7 @@ export async function createGame(onWaiting, onGameStart) {
     onWaiting(code);
     waitForOpponent(onGameStart);
   } catch (err) {
-    setStatus('Could not create game. Please try again.');
+    setStatus('Could not create game. Please try again.', true);
     console.error(err);
   }
 }
@@ -528,9 +528,14 @@ function setSubInfo(text) {
   }
 }
 
-function setStatus(text) {
+function setStatus(text, isError = false) {
   if (!statusEl) return;
   statusEl.textContent = text;
+  if (isError) {
+    statusEl.classList.add('status-error');
+  } else {
+    statusEl.classList.remove('status-error');
+  }
 }
 
 function setRestartVisible(visible) {

@@ -75,7 +75,8 @@ export function initCreateGame({ boardOnline, addTouchHover }) {
         sendLinkBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
         setTimeout(() => { sendLinkBtn.innerHTML = orig; }, 1800);
       } catch (_) {
-        creatingStatus.textContent = 'Copy this link: ' + url;
+        creatingStatus.textContent = 'Could not copy automatically — link: ' + url;
+        creatingStatus.classList.remove('status-error');
       }
     }
   });

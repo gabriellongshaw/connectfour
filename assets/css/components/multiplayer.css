@@ -41,7 +41,7 @@
   max-height: 0;
   opacity: 0;
   margin: 0;
-  transition: max-height 0.3s ease, margin 0.3s ease, opacity 0.3s ease;
+  transition: max-height 0.3s ease, margin 0.3s ease, opacity 0.3s ease, color 0.2s ease;
 }
 
 .status-message:not(:empty) {
@@ -52,6 +52,16 @@
 
 .creating-status-msg:not(:empty) {
   margin: 6px 0 0;
+}
+
+.status-message.status-error {
+  color: #d93025;
+}
+
+@media (prefers-color-scheme: dark) {
+  .status-message.status-error {
+    color: #ff6b6b;
+  }
 }
 
 .room-code-card {
@@ -136,8 +146,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 168px;
-  height: 168px;
+  width: clamp(140px, 40vw, 200px);
+  height: clamp(140px, 40vw, 200px);
   border-radius: 16px;
   overflow: hidden;
   background: #ffffff;
@@ -160,8 +170,8 @@
 .room-code-qr img,
 .room-code-qr canvas {
   display: block;
-  width: 148px !important;
-  height: 148px !important;
+  width: clamp(120px, calc(40vw - 20px), 180px) !important;
+  height: clamp(120px, calc(40vw - 20px), 180px) !important;
   border-radius: 4px;
 }
 
@@ -210,8 +220,8 @@
 
 .qr-scanner-video-wrap {
   position: relative;
-  width: 280px;
-  height: 280px;
+  width: clamp(200px, 70vw, 280px);
+  height: clamp(200px, 70vw, 280px);
   border-radius: 20px;
   overflow: hidden;
   background: #000;

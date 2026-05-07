@@ -12,9 +12,34 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
   const joinStatus = $('join-status');
   const scanQrBtn = $('scan-qr-btn');
 
+  // Info messages: neutral styling. Error messages: red styling.
+  const ERROR_MESSAGES = new Set([
+    'Game not found. Check the code and try again.',
+    'You created this game — share the code with a friend!',
+    'This game already has two players.',
+    'This game has already ended.',
+    'Error joining game. Please try again.',
+    'Please enter a room code.',
+    'Camera scanning is not available. Please enter the code manually.',
+    'Camera access was denied. Please allow camera access in your browser settings.',
+    'No camera found on this device.',
+    'Could not start camera. Please enter the code manually.',
+  ]);
+
+  function setJoinStatus(text) {
+    joinStatus.textContent = text;
+    if (!text) {
+      joinStatus.classList.remove('status-error');
+    } else if (ERROR_MESSAGES.has(text)) {
+      joinStatus.classList.add('status-error');
+    } else {
+      joinStatus.classList.remove('status-error');
+    }
+  }
+
   function resetJoin() {
     joinCodeInput.value = '';
-    joinStatus.textContent = '';
+    setJoinStatus('');
   }
 
   showJoinBtn.addEventListener('click', async () => {
@@ -23,14 +48,14 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
   });
 
   joinGameBtn.addEventListener('click', async () => {
-    if (!getAuthReady()) { joinStatus.textContent = 'Connecting\u2026 please wait.'; return; }
+    if (!getAuthReady()) { setJoinStatus('Connecting\u2026 please wait.'); return; }
     const code = joinCodeInput.value.trim().toUpperCase();
     joinCodeInput.value = code;
-    joinStatus.textContent = '';
+    setJoinStatus('');
     joinGame(code, async () => {
       boardOnline.style.display = 'grid';
       await goTo('game');
-    }, text => { joinStatus.textContent = text; });
+    }, text => { setJoinStatus(text); });
   });
 
   joinCodeInput.addEventListener('keydown', e => {
@@ -54,10 +79,10 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
         }
         joinCodeInput.value = code.trim().toUpperCase();
         joinCodeInput.focus();
-        joinStatus.textContent = '';
+        setJoinStatus('');
       },
       onError: msg => {
-        joinStatus.textContent = msg;
+        setJoinStatus(msg);
       },
     });
   });
