@@ -14,6 +14,18 @@ export function initCreateGame({ boardOnline, addTouchHover }) {
   const sendLinkBtn = $('send-link-btn');
 
   let currentJoinUrl = '';
+  let statusTimeout = null;
+
+  function setCreatingStatus(text, isError = false) {
+    if (statusTimeout) { clearTimeout(statusTimeout); statusTimeout = null; }
+    creatingStatus.style.opacity = '0';
+    statusTimeout = setTimeout(() => {
+      creatingStatus.textContent = text;
+      creatingStatus.classList.toggle('status-error', isError);
+      creatingStatus.style.opacity = '';
+      statusTimeout = null;
+    }, creatingStatus.textContent ? 150 : 0);
+  }
 
   function resetQr() {
     roomCodeQr.innerHTML = '';
@@ -27,7 +39,7 @@ export function initCreateGame({ boardOnline, addTouchHover }) {
   createGameBtn.addEventListener('click', async () => {
     roomCodeSpan.textContent = '';
     resetQr();
-    creatingStatus.textContent = '';
+    setCreatingStatus('');
     currentJoinUrl = '';
     await goTo('create');
     createGame(
@@ -67,7 +79,11 @@ export function initCreateGame({ boardOnline, addTouchHover }) {
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Connect Four', text: 'Join my Connect Four game!', url });
-      } catch (_) {}
+      } catch (err) {
+        if (err?.name !== 'AbortError') {
+          setCreatingStatus('Could not share. Try copying the link manually.', true);
+        }
+      }
     } else {
       try {
         await navigator.clipboard.writeText(url);
@@ -75,8 +91,7 @@ export function initCreateGame({ boardOnline, addTouchHover }) {
         sendLinkBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
         setTimeout(() => { sendLinkBtn.innerHTML = orig; }, 1800);
       } catch (_) {
-        creatingStatus.textContent = 'Could not copy automatically — link: ' + url;
-        creatingStatus.classList.remove('status-error');
+        setCreatingStatus('Could not copy to clipboard. Link: ' + url, true);
       }
     }
   });

@@ -26,14 +26,26 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
     'Could not start camera. Please enter the code manually.',
   ]);
 
-  function setJoinStatus(text) {
-    joinStatus.textContent = text;
-    if (!text) {
-      joinStatus.classList.remove('status-error');
-    } else if (ERROR_MESSAGES.has(text)) {
-      joinStatus.classList.add('status-error');
+  let statusTimeout = null;
+
+  function setJoinStatus(text, isError) {
+    // Determine error state from the known error set if not explicitly passed
+    const shouldError = isError !== undefined ? isError : (text ? ERROR_MESSAGES.has(text) : false);
+
+    if (statusTimeout) { clearTimeout(statusTimeout); statusTimeout = null; }
+
+    // If there's already visible text, fade out first then swap
+    if (joinStatus.textContent && text !== joinStatus.textContent) {
+      joinStatus.style.opacity = '0';
+      statusTimeout = setTimeout(() => {
+        joinStatus.textContent = text;
+        joinStatus.classList.toggle('status-error', shouldError);
+        joinStatus.style.opacity = '';
+        statusTimeout = null;
+      }, 150);
     } else {
-      joinStatus.classList.remove('status-error');
+      joinStatus.textContent = text;
+      joinStatus.classList.toggle('status-error', shouldError);
     }
   }
 

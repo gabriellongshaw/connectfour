@@ -1,6 +1,6 @@
 export function openQrScanner({ onResult, onError }) {
   if (!navigator.mediaDevices?.getUserMedia) {
-    if (onError) onError('Camera scanning requires HTTPS.');
+    if (onError) onError('Camera scanning is not available. Please enter the code manually.');
     return;
   }
 
@@ -38,6 +38,13 @@ export function openQrScanner({ onResult, onError }) {
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'secondary-button';
   cancelBtn.textContent = 'Cancel';
+
+  // Wire up touch hover to match the rest of the app's button behaviour
+  cancelBtn.addEventListener('touchstart', () => cancelBtn.classList.add('hover'), { passive: true });
+  const removeCancelHover = () => cancelBtn.classList.remove('hover');
+  cancelBtn.addEventListener('touchend', removeCancelHover, { passive: true });
+  cancelBtn.addEventListener('touchcancel', removeCancelHover, { passive: true });
+  cancelBtn.addEventListener('touchmove', removeCancelHover, { passive: true });
 
   inner.appendChild(title);
   inner.appendChild(canvasWrap);
@@ -115,7 +122,14 @@ export function openQrScanner({ onResult, onError }) {
       rafId = requestAnimationFrame(renderFrame);
     });
   }).catch(err => {
+    const msg = err?.name === 'NotAllowedError'
+      ? 'Camera access was denied. Please allow camera access in your browser settings.'
+      : err?.name === 'NotFoundError'
+      ? 'No camera found on this device.'
+      : 'Could not start camera. Please enter the code manually.';
     stop();
-    if (onError) onError('Camera blocked.');
+    // Delay until after the overlay close animation (350ms) so the status
+    // message fade-in doesn't race with the scanner sheet animating out
+    setTimeout(() => { if (onError) onError(msg); }, 360);
   });
 }
