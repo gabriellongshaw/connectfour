@@ -17,7 +17,7 @@ export function initCreateGame({ boardOnline, addTouchHover }) {
 
   function resetQr() {
     roomCodeQr.innerHTML = '';
-    roomCodeQrWrap.classList.remove('qr-panel--open');
+    roomCodeQrWrap.classList.remove('qr-panel-open');
     if (showQrToggle) {
       showQrToggle.setAttribute('aria-expanded', 'false');
       showQrToggle.innerHTML = '<i class="fa-solid fa-qrcode"></i> Show QR Code';
@@ -54,7 +54,7 @@ export function initCreateGame({ boardOnline, addTouchHover }) {
   });
 
   showQrToggle?.addEventListener('click', () => {
-    const open = roomCodeQrWrap.classList.toggle('qr-panel--open');
+    const open = roomCodeQrWrap.classList.toggle('qr-panel-open');
     showQrToggle.setAttribute('aria-expanded', String(open));
     showQrToggle.innerHTML = open
       ? '<i class="fa-solid fa-qrcode"></i> Hide QR Code'
