@@ -15,4 +15,12 @@ export function initPageFadeIn() {
     document.body.style.transition = TRANSITION;
     document.body.style.opacity = '1';
   });
+
+  window.addEventListener('pageshow', e => {
+    if (e.persisted) {
+      navigating = false;
+      document.body.style.transition = TRANSITION;
+      document.body.style.opacity = '1';
+    }
+  });
 }
