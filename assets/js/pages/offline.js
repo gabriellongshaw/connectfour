@@ -1,11 +1,10 @@
 import { applySystemTheme } from '../core/theme.js';
 import { initPageFadeIn, navigateTo } from '../core/transition.js';
 import { initConfetti, resizeConfetti } from '../components/confetti.js';
-import { stopConfetti } from '../components/confetti.js';
 import {
-  initBotRefs, setBotDifficulty, startBotGame, handleBotMove,
-  restartBotGame, resetBotLeaderboard, clearBotBoard
-} from '../modes/bot.js';
+  initOfflineRefs, startOfflineGame, handleOfflineMove,
+  restartOfflineGame, clearOfflineBoard
+} from '../modes/offline.js';
 
 function addTouchHover(selector) {
   document.querySelectorAll(selector).forEach(el => {
@@ -22,12 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initPageFadeIn();
   initConfetti();
 
-  const params = new URLSearchParams(location.search);
-  const difficulty = params.get('difficulty') || 'medium';
-
   const boardEl = document.getElementById('board');
 
-  initBotRefs({
+  initOfflineRefs({
     boardEl,
     infoEl: document.getElementById('info'),
     subInfoEl: document.getElementById('sub-info'),
@@ -35,23 +31,20 @@ document.addEventListener('DOMContentLoaded', () => {
     leaderboardEl: document.getElementById('leaderboard'),
   });
 
-  setBotDifficulty(difficulty);
-  resetBotLeaderboard();
   boardEl.style.display = 'grid';
-  startBotGame();
+  startOfflineGame();
 
   document.getElementById('leave-btn').addEventListener('click', () => {
-    stopConfetti();
-    clearBotBoard();
-    navigateTo('../../');
+    clearOfflineBoard();
+    navigateTo('../');
   });
 
-  document.getElementById('restart-btn').addEventListener('click', () => restartBotGame());
+  document.getElementById('restart-btn').addEventListener('click', () => restartOfflineGame());
 
   boardEl.addEventListener('click', e => {
     const cell = e.target.closest('.cell');
     if (!cell) return;
-    handleBotMove(Number(cell.dataset.col));
+    handleOfflineMove(Number(cell.dataset.col));
   });
 
   window.addEventListener('resize', resizeConfetti);

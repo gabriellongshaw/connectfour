@@ -1,17 +1,29 @@
-import { goTo } from '../navigation.js';
-import { joinGame } from '../modes/online.js';
+import { applySystemTheme } from '../core/theme.js';
+import { initPageFadeIn, navigateTo } from '../core/transition.js';
+import { waitForAuth } from '../core/firebase.js';
+import { joinGame, saveGameSession } from '../modes/online.js';
 import { openQrScanner } from '../components/qrScanner.js';
 
-const $ = id => document.getElementById(id);
+function addTouchHover(selector) {
+  document.querySelectorAll(selector).forEach(el => {
+    el.addEventListener('touchstart', () => el.classList.add('hover'), { passive: true });
+    const rem = () => el.classList.remove('hover');
+    el.addEventListener('touchend', rem, { passive: true });
+    el.addEventListener('touchcancel', rem, { passive: true });
+    el.addEventListener('touchmove', rem, { passive: true });
+  });
+}
 
-export function initJoinGame({ boardOnline, getAuthReady }) {
-  const showJoinBtn = $('show-join-btn');
-  const joinGameBtn = $('join-game-btn');
-  const joinCodeInput = $('join-code-input');
-  const backFromJoinBtn = $('back-from-join');
-  const joinStatus = $('join-status');
-  const qrStatus = $('qr-status');
-  const scanQrBtn = $('scan-qr-btn');
+document.addEventListener('DOMContentLoaded', async () => {
+  applySystemTheme();
+  initPageFadeIn();
+
+  const joinCodeInput = document.getElementById('join-code-input');
+  const joinGameBtn = document.getElementById('join-game-btn');
+  const joinStatus = document.getElementById('join-status');
+  const qrStatus = document.getElementById('qr-status');
+  const scanQrBtn = document.getElementById('scan-qr-btn');
+  const backBtn = document.getElementById('back-btn');
 
   const JOIN_ERRORS = new Set([
     'Game not found. Check the code and try again.',
@@ -52,24 +64,29 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
     applyStatus(qrStatus, 'qr', text, QR_ERRORS.has(text));
   }
 
-  function resetJoin() {
-    joinCodeInput.value = '';
-    applyStatus(joinStatus, 'join', '', false);
-    applyStatus(qrStatus, 'qr', '', false);
+  let authReady = false;
+
+  try {
+    await waitForAuth();
+    authReady = true;
+  } catch (err) {
+    console.error('Auth failed:', err);
   }
 
-  showJoinBtn.addEventListener('click', async () => {
-    resetJoin();
-    await goTo('join');
-  });
+  const params = new URLSearchParams(location.search);
+  const codeParam = params.get('code');
+  if (codeParam) {
+    joinCodeInput.value = codeParam.trim().toUpperCase();
+    history.replaceState({}, document.title, location.pathname);
+  }
 
-  joinGameBtn.addEventListener('click', async () => {
-    if (!getAuthReady()) { setJoinStatus('Connecting\u2026 please wait.'); return; }
+  joinGameBtn.addEventListener('click', () => {
+    if (!authReady) { setJoinStatus('Connecting\u2026 please wait.'); return; }
     const code = joinCodeInput.value.trim().toUpperCase();
     joinCodeInput.value = code;
-    joinGame(code, async () => {
-      boardOnline.style.display = 'grid';
-      await goTo('game');
+    joinGame(code, () => {
+      saveGameSession();
+      navigateTo('../game/');
     }, text => { setJoinStatus(text); });
   });
 
@@ -77,10 +94,7 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
     if (e.key === 'Enter') joinGameBtn.click();
   });
 
-  backFromJoinBtn.addEventListener('click', async () => {
-    resetJoin();
-    await goTo('online');
-  });
+  backBtn.addEventListener('click', () => navigateTo('../'));
 
   scanQrBtn?.addEventListener('click', () => {
     openQrScanner({
@@ -88,7 +102,7 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
         let code;
         try {
           const url = new URL(data);
-          code = url.searchParams.get('join') || data;
+          code = url.searchParams.get('code') || url.searchParams.get('join') || data;
         } catch (_) {
           code = data;
         }
@@ -101,4 +115,6 @@ export function initJoinGame({ boardOnline, getAuthReady }) {
       },
     });
   });
-}
+
+  addTouchHover('.button, .secondary-button, .tertiary-button');
+});

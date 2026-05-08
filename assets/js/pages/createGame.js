@@ -1,17 +1,29 @@
-import { goTo } from '../navigation.js';
-import { createGame, cancelWaiting } from '../modes/online.js';
+import { applySystemTheme } from '../core/theme.js';
+import { initPageFadeIn, navigateTo } from '../core/transition.js';
+import { waitForAuth } from '../core/firebase.js';
+import { createGame, cancelWaiting, saveGameSession } from '../modes/online.js';
 
-const $ = id => document.getElementById(id);
+function addTouchHover(selector) {
+  document.querySelectorAll(selector).forEach(el => {
+    el.addEventListener('touchstart', () => el.classList.add('hover'), { passive: true });
+    const rem = () => el.classList.remove('hover');
+    el.addEventListener('touchend', rem, { passive: true });
+    el.addEventListener('touchcancel', rem, { passive: true });
+    el.addEventListener('touchmove', rem, { passive: true });
+  });
+}
 
-export function initCreateGame({ boardOnline, addTouchHover }) {
-  const createGameBtn = $('create-game-btn');
-  const backFromWaitBtn = $('back-from-wait');
-  const roomCodeSpan = $('room-code');
-  const roomCodeQr = $('room-code-qr');
-  const roomCodeQrWrap = $('room-code-qr-wrap');
-  const showQrToggle = $('show-qr-toggle');
-  const creatingStatus = $('creating-status');
-  const sendLinkBtn = $('send-link-btn');
+document.addEventListener('DOMContentLoaded', async () => {
+  applySystemTheme();
+  initPageFadeIn();
+
+  const roomCodeSpan = document.getElementById('room-code');
+  const roomCodeQr = document.getElementById('room-code-qr');
+  const roomCodeQrWrap = document.getElementById('room-code-qr-wrap');
+  const showQrToggle = document.getElementById('show-qr-toggle');
+  const creatingStatus = document.getElementById('creating-status');
+  const sendLinkBtn = document.getElementById('send-link-btn');
+  const cancelBtn = document.getElementById('cancel-btn');
 
   let currentJoinUrl = '';
   let statusTimeout = null;
@@ -35,35 +47,6 @@ export function initCreateGame({ boardOnline, addTouchHover }) {
       showQrToggle.innerHTML = '<i class="fa-solid fa-qrcode"></i> Show QR Code';
     }
   }
-
-  createGameBtn.addEventListener('click', async () => {
-    roomCodeSpan.textContent = '';
-    resetQr();
-    setCreatingStatus('');
-    currentJoinUrl = '';
-    await goTo('create');
-    createGame(
-      code => {
-        roomCodeSpan.textContent = code;
-        currentJoinUrl = location.origin + location.pathname + '?join=' + encodeURIComponent(code);
-        roomCodeQr.innerHTML = '';
-        new QRCode(roomCodeQr, {
-          text: currentJoinUrl,
-          width: 148,
-          height: 148,
-          colorDark: '#111111',
-          colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.M,
-        });
-        if (sendLinkBtn) sendLinkBtn.dataset.url = currentJoinUrl;
-        addTouchHover('#show-qr-toggle, #send-link-btn');
-      },
-      async () => {
-        boardOnline.style.display = 'grid';
-        await goTo('game');
-      }
-    );
-  });
 
   showQrToggle?.addEventListener('click', () => {
     const open = roomCodeQrWrap.classList.toggle('qr-panel-open');
@@ -96,9 +79,43 @@ export function initCreateGame({ boardOnline, addTouchHover }) {
     }
   });
 
-  backFromWaitBtn.addEventListener('click', async () => {
+  cancelBtn.addEventListener('click', async () => {
     resetQr();
     await cancelWaiting();
-    await goTo('online');
+    navigateTo('../');
   });
-}
+
+  try {
+    await waitForAuth();
+  } catch (err) {
+    console.error('Auth failed:', err);
+  }
+
+  resetQr();
+  setCreatingStatus('');
+  currentJoinUrl = '';
+
+  createGame(
+    code => {
+      roomCodeSpan.textContent = code;
+      currentJoinUrl = location.origin + '/projects/connectfour/online/join-game/?code=' + encodeURIComponent(code);
+      roomCodeQr.innerHTML = '';
+      new QRCode(roomCodeQr, {
+        text: currentJoinUrl,
+        width: 148,
+        height: 148,
+        colorDark: '#111111',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+      if (sendLinkBtn) sendLinkBtn.dataset.url = currentJoinUrl;
+      addTouchHover('#show-qr-toggle, #send-link-btn');
+    },
+    () => {
+      saveGameSession();
+      navigateTo('../game/');
+    }
+  );
+
+  addTouchHover('.secondary-button, .tertiary-button');
+});

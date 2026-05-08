@@ -541,3 +541,25 @@ function setStatus(text, isError = false) {
 function setRestartVisible(visible) {
   restartBtn.style.display = visible ? 'inline-flex' : 'none';
 }
+export function saveGameSession() {
+  if (gameId && playerNumber) {
+    sessionStorage.setItem('cf_gameId', gameId);
+    sessionStorage.setItem('cf_playerNumber', String(playerNumber));
+  }
+}
+
+export function loadGameSession() {
+  const id = sessionStorage.getItem('cf_gameId');
+  const num = sessionStorage.getItem('cf_playerNumber');
+  if (id && num) {
+    gameId = id;
+    playerNumber = Number(num);
+    return true;
+  }
+  return false;
+}
+
+export function clearGameSession() {
+  sessionStorage.removeItem('cf_gameId');
+  sessionStorage.removeItem('cf_playerNumber');
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Play Connect Four against the bot!">
+  <title>Connect Four — Play vs Bot</title>
+  <meta name="theme-color" content="#f9f9f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101010" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon/favicon-16x16.png">
+  <link rel="shortcut icon" href="../assets/images/favicon/favicon.ico">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/fonts.css">
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/animations.css">
+  <link rel="stylesheet" href="../assets/css/components/screens.css">
+  <link rel="stylesheet" href="../assets/css/components/buttons.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+  <div class="page">
+    <h1>Play vs Bot</h1>
+    <p class="difficulty-label">Choose difficulty</p>
+    <div class="button-container">
+      <button id="bot-easy" class="button"></button>
+      <button id="bot-medium" class="button"></button>
+      <button id="bot-hard" class="button"></button>
+      <button id="bot-expert" class="button"></button>
+      <button id="bot-impossible" class="button"></button>
+    </div>
+    <button id="back-btn" class="tertiary-button">Back</button>
+  </div>
+  <script type="module" src="../assets/js/pages/botDifficulty.js"></script>
+</body>
+</html>

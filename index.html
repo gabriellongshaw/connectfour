@@ -40,19 +40,15 @@
   <link rel="stylesheet" href="assets/css/animations.css">
   <link rel="stylesheet" href="assets/css/components/screens.css">
   <link rel="stylesheet" href="assets/css/components/buttons.css">
-  <link rel="stylesheet" href="assets/css/components/board.css">
-  <link rel="stylesheet" href="assets/css/components/multiplayer.css">
-  <link rel="stylesheet" href="assets/css/components/modal.css">
-  <link rel="stylesheet" href="assets/css/responsive.css">
   <link rel="canonical" href="https://www.gabriellongshaw.co.uk/projects/connectfour">
 </head>
 <body>
-  <div id="page-home" class="page">
+  <div class="page">
     <h1>Connect Four</h1>
     <div class="button-container">
-    <button id="play-offline" class="button"><i class="fa-solid fa-user-friends"></i> Play Offline</button>
-    <button id="play-online" class="button"><i class="fa-solid fa-wifi"></i> Play Online</button>
-    <button id="play-bot" class="button"><i class="fa-solid fa-robot"></i> Play vs Bot</button>
+      <a href="offline/" class="button"><i class="fa-solid fa-user-friends"></i> Play Offline</a>
+      <a href="online/" class="button" id="play-online-btn"><i class="fa-solid fa-wifi"></i> Play Online</a>
+      <a href="bot/" class="button"><i class="fa-solid fa-robot"></i> Play vs Bot</a>
     </div>
     <div class="credits-container">
       <p><a class="credits-copyright">&copy;</a> 2026 Gabriel Longshaw. All rights reserved.</p>
@@ -60,128 +56,7 @@
       <p><a class="credits-link" target="_blank" href="https://github.com/gabriellongshaw/connectfour">Source Code</a></p>
     </div>
   </div>
-  <div id="page-offline" class="page page-hidden">
-    <button id="leave-btn-offline" class="leave-button">&#8592; Leave</button>
-    <div class="game-inner">
-      <h1>Connect Four</h1>
-      <div id="leaderboard-offline" class="leaderboard"></div>
-      <div id="board-offline" class="board" role="grid" aria-label="Connect Four board"></div>
-      <p id="info-offline" class="info"></p>
-      <p id="sub-info-offline" class="sub-info"></p>
-      <div class="gamebutton-row">
-        <button id="restart-btn-offline" class="secondary-button">
-          <i class="fa-solid fa-redo"></i> Restart
-        </button>
-      </div>
-    </div>
-  </div>
-  <div id="page-bot-difficulty" class="page page-hidden">
-    <h1>Play vs Bot</h1>
-    <p class="difficulty-label">Choose difficulty</p>
-    <div class="button-container">
-    <button id="bot-easy" class="button">Easy</button>
-    <button id="bot-medium" class="button">Normal</button>
-    <button id="bot-hard" class="button">Hard</button>
-    <button id="bot-expert" class="button">Expert</button>
-    <button id="bot-impossible" class="button">Impossible</button>
-    </div>
-    <button id="back-from-bot-difficulty" class="tertiary-button">Back</button>
-  </div>
-  <div id="page-bot" class="page page-hidden">
-    <button id="leave-btn-bot" class="leave-button">&#8592; Leave</button>
-    <div class="game-inner">
-      <h1>Connect Four</h1>
-      <div id="leaderboard-bot" class="leaderboard"></div>
-      <div id="board-bot" class="board" role="grid" aria-label="Connect Four board"></div>
-      <p id="info-bot" class="info"></p>
-      <p id="sub-info-bot" class="sub-info"></p>
-      <div class="gamebutton-row">
-        <button id="restart-btn-bot" class="secondary-button">
-          <i class="fa-solid fa-redo"></i> Restart
-        </button>
-      </div>
-    </div>
-  </div>
-  <div id="page-online" class="page page-hidden">
-    <h1>Online Multiplayer</h1>
-    <div class="button-container">
-    <button id="create-game-btn" class="button"><i class="fa-solid fa-square-plus"></i> Create Game</button>
-    <button id="show-join-btn" class="button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Game</button>
-    </div>
-    <button id="back-from-online" class="tertiary-button">Back</button>
-  </div>
-  <div id="page-create" class="page page-hidden">
-    <h1>Create Game</h1>
-    <div class="room-code-display-wrap">
-      <div class="room-code-card">
-        <p>Share this code with a friend</p>
-        <span id="room-code"></span>
-      </div>
-      <div class="create-share-row">
-        <button id="show-qr-toggle" class="secondary-button" aria-expanded="false">
-          <i class="fa-solid fa-qrcode"></i> Show QR Code
-        </button>
-        <button id="send-link-btn" class="secondary-button">
-          <i class="fa-solid fa-share-nodes"></i> Send Link
-        </button>
-      </div>
-      <div id="room-code-qr-wrap" class="qr-panel">
-        <div class="qr-panel-inner">
-          <div id="room-code-qr" class="room-code-qr"></div>
-        </div>
-      </div>
-      <p id="creating-status" class="status-message creating-status-msg"></p>
-    </div>
-    <button id="back-from-wait" class="tertiary-button">Cancel</button>
-  </div>
-  <div id="page-join" class="page page-hidden">
-    <h1>Join Game</h1>
-    <div class="join-section">
-      <input type="text" id="join-code-input" class="text-input" placeholder="Enter Room Code"
-        autocomplete="off" autocapitalize="characters" spellcheck="false">
-      <button id="join-game-btn" class="button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join</button>
-      <p id="join-status" class="status-message"></p>
-      <button id="scan-qr-btn" class="secondary-button">
-        <i class="fa-solid fa-qrcode"></i> Scan QR Code
-      </button>
-      <p id="qr-status" class="status-message"></p>
-      <button id="back-from-join" class="tertiary-button">Back</button>
-    </div>
-  </div>
-  <div id="page-game" class="page page-hidden">
-    <button id="leave-btn-online" class="leave-button">&#8592; Leave</button>
-    <div class="game-inner">
-      <h1>Connect Four</h1>
-      <div id="leaderboard-online" class="leaderboard"></div>
-      <div id="board-online" class="board" role="grid" aria-label="Connect Four board"></div>
-      <p id="info-online" class="info"></p>
-      <p id="sub-info-online" class="sub-info"></p>
-      <div class="gamebutton-row">
-        <button id="restart-btn-online" class="secondary-button">
-          <i class="fa-solid fa-redo"></i> Restart
-        </button>
-      </div>
-    </div>
-  </div>
-  <dialog id="browser-modal" class="dialog">
-    <div class="modal-header">
-      <span class="material-symbols-rounded modal-icon">language</span>
-      <h2>Open in Browser</h2>
-    </div>
-    <div class="modal-body">
-      <p class="modal-body-text">
-        For the best experience with online multiplayer, open this site in a full browser like Chrome or Safari — not inside an app's built-in webview. This prevents your session from resetting when you share a room code.
-      </p>
-    </div>
-    <div class="modal-actions">
-      <button id="close-modal" class="modal-close-btn">Got it</button>
-    </div>
-  </dialog>
-  <div id="backdrop" class="backdrop"></div>
-  <canvas id="confetti-canvas"></canvas>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-  <script type="module" src="assets/js/main.js"></script>
+  <script type="module" src="assets/js/pages/home.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
