@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Create an online Connect Four game and share the code with a friend!">
+  <title>Connect Four — Create Game</title>
+  <meta name="theme-color" content="#f9f9f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101010" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../assets/images/favicon/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../assets/images/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../../assets/images/favicon/favicon-16x16.png">
+  <link rel="shortcut icon" href="../../assets/images/favicon/favicon.ico">
+  <link rel="manifest" href="../../manifest.json">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="../../assets/css/variables.css">
+  <link rel="stylesheet" href="../../assets/css/fonts.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/animations.css">
+  <link rel="stylesheet" href="../../assets/css/components/screens.css">
+  <link rel="stylesheet" href="../../assets/css/components/buttons.css">
+  <link rel="stylesheet" href="../../assets/css/components/multiplayer.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+</head>
+<body>
+  <div class="page">
+    <h1>Create Game</h1>
+    <div class="room-code-display-wrap">
+      <div class="room-code-card">
+        <p>Share this code with a friend</p>
+        <span id="room-code"></span>
+      </div>
+      <div class="create-share-row">
+        <button id="show-qr-toggle" class="secondary-button" aria-expanded="false">
+          <i class="fa-solid fa-qrcode"></i> Show QR Code
+        </button>
+        <button id="send-link-btn" class="secondary-button">
+          <i class="fa-solid fa-share-nodes"></i> Send Link
+        </button>
+      </div>
+      <div id="room-code-qr-wrap" class="qr-panel">
+        <div class="qr-panel-inner">
+          <div id="room-code-qr" class="room-code-qr"></div>
+        </div>
+      </div>
+      <p id="creating-status" class="status-message creating-status-msg"></p>
+    </div>
+    <button id="cancel-btn" class="tertiary-button">Cancel</button>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script type="module" src="../../assets/js/pages/createGame.js"></script>
+</body>
+</html>

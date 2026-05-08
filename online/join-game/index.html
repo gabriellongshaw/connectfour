@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Join an online Connect Four game with a room code!">
+  <title>Connect Four — Join Game</title>
+  <meta name="theme-color" content="#f9f9f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101010" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../assets/images/favicon/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../assets/images/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../../assets/images/favicon/favicon-16x16.png">
+  <link rel="shortcut icon" href="../../assets/images/favicon/favicon.ico">
+  <link rel="manifest" href="../../manifest.json">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="../../assets/css/variables.css">
+  <link rel="stylesheet" href="../../assets/css/fonts.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/animations.css">
+  <link rel="stylesheet" href="../../assets/css/components/screens.css">
+  <link rel="stylesheet" href="../../assets/css/components/buttons.css">
+  <link rel="stylesheet" href="../../assets/css/components/multiplayer.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+</head>
+<body>
+  <div class="page">
+    <h1>Join Game</h1>
+    <div class="join-section">
+      <input type="text" id="join-code-input" class="text-input" placeholder="Enter Room Code"
+        autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button id="join-game-btn" class="button"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join</button>
+      <p id="join-status" class="status-message"></p>
+      <button id="scan-qr-btn" class="secondary-button">
+        <i class="fa-solid fa-qrcode"></i> Scan QR Code
+      </button>
+      <p id="qr-status" class="status-message"></p>
+      <button id="back-btn" class="tertiary-button">Back</button>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script type="module" src="../../assets/js/pages/joinGame.js"></script>
+</body>
+</html>

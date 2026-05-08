@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Play Connect Four online with friends!">
+  <title>Connect Four — Online Multiplayer</title>
+  <meta name="theme-color" content="#f9f9f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101010" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon/favicon-16x16.png">
+  <link rel="shortcut icon" href="../assets/images/favicon/favicon.ico">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/fonts.css">
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/animations.css">
+  <link rel="stylesheet" href="../assets/css/components/screens.css">
+  <link rel="stylesheet" href="../assets/css/components/buttons.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:FILL,GRAD,wght,opsz@1,0,500,24&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/components/modal.css">
+</head>
+<body>
+  <div class="page">
+    <h1>Online Multiplayer</h1>
+    <div class="button-container">
+      <a href="create-game/" class="button" id="create-btn"><i class="fa-solid fa-square-plus"></i> Create Game</a>
+      <a href="join-game/" class="button" id="join-btn"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Game</a>
+    </div>
+    <button id="back-btn" class="tertiary-button">Back</button>
+  </div>
+  <dialog id="browser-modal" class="dialog">
+    <div class="modal-header">
+      <span class="material-symbols-rounded modal-icon">language</span>
+      <h2>Open in Browser</h2>
+    </div>
+    <div class="modal-body">
+      <p class="modal-body-text">
+        For the best experience with online multiplayer, open this site in a full browser like Chrome or Safari — not inside an app's built-in webview. This prevents your session from resetting when you share a room code.
+      </p>
+    </div>
+    <div class="modal-actions">
+      <button id="close-modal" class="modal-close-btn">Got it</button>
+    </div>
+  </dialog>
+  <div id="backdrop" class="backdrop"></div>
+  <script type="module" src="../assets/js/pages/onlineMenu.js"></script>
+</body>
+</html>

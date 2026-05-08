@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Play Connect Four against the bot!">
+  <title>Connect Four — vs Bot</title>
+  <meta name="theme-color" content="#f9f9f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101010" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../assets/images/favicon/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../assets/images/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../../assets/images/favicon/favicon-16x16.png">
+  <link rel="shortcut icon" href="../../assets/images/favicon/favicon.ico">
+  <link rel="manifest" href="../../manifest.json">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="../../assets/css/variables.css">
+  <link rel="stylesheet" href="../../assets/css/fonts.css">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/animations.css">
+  <link rel="stylesheet" href="../../assets/css/components/screens.css">
+  <link rel="stylesheet" href="../../assets/css/components/buttons.css">
+  <link rel="stylesheet" href="../../assets/css/components/board.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+</head>
+<body>
+  <div class="page">
+    <button id="leave-btn" class="leave-button">&#8592; Leave</button>
+    <div class="game-inner">
+      <h1>Connect Four</h1>
+      <div id="leaderboard" class="leaderboard"></div>
+      <div id="board" class="board" role="grid" aria-label="Connect Four board"></div>
+      <p id="info" class="info"></p>
+      <p id="sub-info" class="sub-info"></p>
+      <div class="gamebutton-row">
+        <button id="restart-btn" class="secondary-button">
+          <i class="fa-solid fa-redo"></i> Restart
+        </button>
+      </div>
+    </div>
+  </div>
+  <canvas id="confetti-canvas"></canvas>
+  <script type="module" src="../../assets/js/pages/botGame.js"></script>
+</body>
+</html>
