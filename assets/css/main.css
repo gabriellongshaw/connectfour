@@ -27,7 +27,7 @@ body {
   justify-content: center;
   align-items: center;
   overflow-x: hidden;
-  transition: background 0.2s, color 0.2s;
+  opacity: 0;
 }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }

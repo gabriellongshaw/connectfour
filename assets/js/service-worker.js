@@ -1,4 +1,4 @@
-const CACHE = 'connect-four-v9';
+const CACHE = 'connect-four-v10';
 
 const STATIC = [
   '/',
