@@ -56,13 +56,7 @@
       <p><a class="credits-link" target="_blank" href="https://github.com/gabriellongshaw/connectfour">Source Code</a></p>
     </div>
   </div>
+  <script src="assets/js/core/sw.js"></script>
   <script type="module" src="assets/js/pages/home.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('assets/js/service-worker.js');
-      });
-    }
-  </script>
 </body>
 </html>

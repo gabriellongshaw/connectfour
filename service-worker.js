@@ -30,6 +30,8 @@ const STATIC = [
   '/assets/css/components/multiplayer.css',
   '/assets/css/components/modal.css',
   '/assets/images/favicon/favicon-192x192.png',
+  '/service-worker.js',
+  '/assets/js/core/sw.js',
   '/assets/js/core/firebase.js',
   '/assets/js/core/icons.js',
   '/assets/js/core/theme.js',
