@@ -1,3 +1,3 @@
-navigator.serviceWorker.register('/projects/connect-four/service-worker.js', {
-  scope: '/projects/connect-four/'
+navigator.serviceWorker.register('/projects/connectfour/service-worker.js', {
+  scope: '/projects/connectfour/'
 });
