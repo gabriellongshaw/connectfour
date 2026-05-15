@@ -125,7 +125,6 @@ async function doBotMove() {
     renderLeaderboard();
     setInfo("Bot wins! 🤖");
     setSubInfo('Press Restart to play again.');
-    startConfetti();
     gameActive = false;
     isAnimating = false;
     return;
