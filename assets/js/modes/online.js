@@ -335,6 +335,8 @@ export async function handleOnlineMove(col) {
 
   isAnimating = false;
 
+  pendingMoveFlat = newFlat;
+
   try {
     await updateDoc(doc(db, 'games', gameId), {
       board: newFlat,
@@ -343,8 +345,8 @@ export async function handleOnlineMove(col) {
       winner: won ? currentPlayer : 0,
       draw: draw,
     });
-    pendingMoveFlat = newFlat;
   } catch (err) {
+    pendingMoveFlat = null;
     if (!won && !draw) {
       boardState[row][col] = 0;
       renderBoard(boardEl, boardState);
