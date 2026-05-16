@@ -3,7 +3,7 @@ import {
   deleteDoc, onSnapshot, query, where
 } from 'https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js';
 
-import { db, auth } from '../core/firebase.js';
+import { db, auth, waitForAuth } from '../core/firebase.js';
 import { generateCode } from '../core/utils.js';
 import {
   ROWS, COLS, createEmptyBoard, flattenBoard, unflattenBoard,
@@ -45,6 +45,7 @@ export async function createGame(onWaiting, onGameStart) {
   const code = generateCode(7);
 
   try {
+    await waitForAuth();
     const ref = await addDoc(gamesRef, {
       code,
       player1: auth.currentUser.uid,
@@ -76,6 +77,7 @@ export async function joinGame(code, onGameStart, onError) {
   onError?.('Joining…');
 
   try {
+    await waitForAuth();
     const q = query(gamesRef, where('code', '==', trimmed));
     const snap = await getDocs(q);
 
