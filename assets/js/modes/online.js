@@ -23,7 +23,6 @@ let gameActive = false;
 let isAnimating = false;
 let unsubGame = null;
 let isSelfLeaving = false;
-
 let pendingMoveFlat = null;
 let isRestarting = false;
 
@@ -159,13 +158,7 @@ export function startOnlineGame() {
   subscribeToGame();
 }
 
-function validateIncomingBoard(oldFlat, newFlat, expectedCurrentPlayer) {
-  if (!Array.isArray(newFlat) || newFlat.length !== ROWS * COLS) return { valid: false };
-
-  for (const v of newFlat) {
-    if (v !== 0 && v !== 1 && v !== 2) return { valid: false };
-  }
-
+function diffBoards(oldFlat, newFlat) {
   let changedIdx = -1;
   let changeCount = 0;
   for (let i = 0; i < newFlat.length; i++) {
@@ -174,23 +167,13 @@ function validateIncomingBoard(oldFlat, newFlat, expectedCurrentPlayer) {
       changedIdx = i;
     }
   }
-
-  if (changeCount === 0) return { valid: true, changedIdx: -1 };
-  if (changeCount !== 1) return { valid: false };
-
-  if (oldFlat[changedIdx] !== 0) return { valid: false };
-
-  const placedPlayer = newFlat[changedIdx];
-  if (placedPlayer !== 1 && placedPlayer !== 2) return { valid: false };
-  if (placedPlayer !== expectedCurrentPlayer) return { valid: false };
-
-  const placedRow = Math.floor(changedIdx / COLS);
-  const placedCol = changedIdx % COLS;
-  for (let r = placedRow + 1; r < ROWS; r++) {
-    if (newFlat[r * COLS + placedCol] === 0) return { valid: false };
-  }
-
-  return { valid: true, changedIdx, placedRow, placedCol, placedPlayer };
+  if (changeCount !== 1) return null;
+  return {
+    changedIdx,
+    placedRow: Math.floor(changedIdx / COLS),
+    placedCol: changedIdx % COLS,
+    placedPlayer: newFlat[changedIdx],
+  };
 }
 
 function subscribeToGame() {
@@ -215,23 +198,9 @@ function subscribeToGame() {
       return;
     }
 
-    if (data.status === 'playing' && data.currentPlayer === 1 && data.winner === 0 && data.draw === false
-        && Array.isArray(data.board) && data.board.every(v => v === 0)) {
-      boardState = createEmptyBoard();
-      currentPlayer = 1;
-      gameActive = true;
-      isAnimating = false;
-      isRestarting = false;
-      pendingMoveFlat = null;
-      initBoardElement(boardEl, false);
-      boardEl.style.opacity = '1';
-      setInfo(currentPlayer === playerNumber ? 'Your turn!' : "Opponent's turn…");
-      setSubInfo('');
-      renderLeaderboard();
-      return;
-    }
-
     const newFlat = data.board;
+    if (!Array.isArray(newFlat) || newFlat.length !== ROWS * COLS) return;
+
     const oldFlat = flattenBoard(boardState);
 
     if (pendingMoveFlat !== null) {
@@ -240,39 +209,25 @@ function subscribeToGame() {
       if (isMine) return;
     }
 
-    const validation = validateIncomingBoard(oldFlat, newFlat, currentPlayer);
+    const diff = diffBoards(oldFlat, newFlat);
 
-    if (!validation.valid) {
-      console.warn('Rejected invalid board update from Firestore');
-      return;
-    }
-
-    if (validation.changedIdx !== -1 && !isAnimating && !isRestarting) {
-      const { placedRow, placedCol, placedPlayer } = validation;
-      isAnimating = true;
-      await animateFallingDisc(boardEl, placedCol, placedPlayer, placedRow);
-      isAnimating = false;
+    if (diff && !isAnimating && !isRestarting) {
+      const { placedRow, placedCol, placedPlayer } = diff;
+      if (placedPlayer === 1 || placedPlayer === 2) {
+        isAnimating = true;
+        await animateFallingDisc(boardEl, placedCol, placedPlayer, placedRow);
+        isAnimating = false;
+      }
     }
 
     boardState = unflattenBoard(newFlat);
-
-    const incomingCurrentPlayer = data.currentPlayer;
-    if (incomingCurrentPlayer !== 1 && incomingCurrentPlayer !== 2) {
-      console.warn('Rejected invalid currentPlayer from Firestore');
-      return;
-    }
-    currentPlayer = incomingCurrentPlayer;
+    currentPlayer = data.currentPlayer;
 
     renderBoard(boardEl, boardState);
 
     if (data.status === 'finished') {
-      const winner = data.winner;
-      if (winner !== 0 && winner !== 1 && winner !== 2) {
-        console.warn('Rejected invalid winner value from Firestore');
-        return;
-      }
-
       gameActive = false;
+      const winner = data.winner;
       if (winner && winner !== 0) {
         const result = getWinningCells(boardState);
         if (result) pulseWinningCells(boardEl, result.cells);
@@ -352,7 +307,6 @@ export async function handleOnlineMove(col) {
   }
 
   isAnimating = false;
-
   pendingMoveFlat = newFlat;
 
   try {
@@ -440,7 +394,7 @@ async function handleRemoteRestart(data) {
   initBoardElement(boardEl, false);
   boardEl.style.opacity = '1';
   setRestartVisible(false);
-  setInfo("Waiting for opponent…");
+  setInfo('Waiting for opponent…');
   setSubInfo('');
   await new Promise(r => setTimeout(r, 200));
   isRestarting = false;
@@ -561,6 +515,7 @@ function setStatus(text, isError = false) {
 function setRestartVisible(visible) {
   restartBtn.style.display = visible ? 'inline-flex' : 'none';
 }
+
 export function saveGameSession() {
   if (gameId && playerNumber) {
     sessionStorage.setItem('cf_gameId', gameId);
