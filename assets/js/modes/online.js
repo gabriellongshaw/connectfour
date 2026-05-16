@@ -215,6 +215,22 @@ function subscribeToGame() {
       return;
     }
 
+    if (data.status === 'playing' && data.currentPlayer === 1 && data.winner === 0 && data.draw === false
+        && Array.isArray(data.board) && data.board.every(v => v === 0)) {
+      boardState = createEmptyBoard();
+      currentPlayer = 1;
+      gameActive = true;
+      isAnimating = false;
+      isRestarting = false;
+      pendingMoveFlat = null;
+      initBoardElement(boardEl, false);
+      boardEl.style.opacity = '1';
+      setInfo(currentPlayer === playerNumber ? 'Your turn!' : "Opponent's turn…");
+      setSubInfo('');
+      renderLeaderboard();
+      return;
+    }
+
     const newFlat = data.board;
     const oldFlat = flattenBoard(boardState);
 
