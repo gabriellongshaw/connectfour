@@ -104,22 +104,28 @@
   top: 12px;
   left: 14px;
   z-index: 9999;
-  background: none;
-  color: var(--meta-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
   border: none;
   cursor: pointer;
   font-size: 0.88rem;
-  font-weight: 500;
+  font-weight: 600;
   font-family: var(--font-family);
-  padding: 6px 10px;
-  border-radius: 8px;
-  transition: color 0.2s ease, opacity 0.2s ease;
+  padding: 8px 16px;
+  border-radius: 999px;
+  transition: background 0.2s ease, transform 0.2s ease;
   -webkit-user-select: none;
   user-select: none;
 }
 
-.leave-button-leave:hover,
+.leave-button:hover,
 .leave-button.hover {
-  color: var(--text);
-  opacity: 0.7;
+  background: var(--button-secondary-bg-hover);
+}
+
+.leave-button:active {
+  transform: scale(0.95);
 }
