@@ -58,6 +58,9 @@
   .page {
     padding: 10px 20px;
   }
+  .page:has(> .leave-button) {
+    padding-top: 56px;
+  }
   .button {
     padding: 0.7rem 1.2rem;
     margin: 4px;

@@ -12,6 +12,20 @@
   overflow-y: auto;
 }
 
+.page:has(> .leave-button) {
+  padding-top: 72px;
+}
+
+.page:has(> .game-inner) {
+  justify-content: flex-start;
+}
+
+.page > .game-inner {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+
 .game-inner {
   display: flex;
   flex-direction: column;
