@@ -17,6 +17,7 @@ const gamesRef = collection(db, 'games');
 
 let gameId = null;
 let playerNumber = 0;
+let roundScored = false;
 let boardState = createEmptyBoard();
 let currentPlayer = 1;
 let gameActive = false;
@@ -231,9 +232,7 @@ function subscribeToGame() {
       if (winner && winner !== 0) {
         const result = getWinningCells(boardState);
         if (result) pulseWinningCells(boardEl, result.cells);
-        if (winner === 1) leaderboard.p1++;
-        else leaderboard.p2++;
-        renderLeaderboard();
+        recordResult(winner);
         if (winner === playerNumber) {
           startConfetti();
           setInfo('You win! 🎉');
@@ -247,8 +246,7 @@ function subscribeToGame() {
             : 'Player 1 (host) can restart the game.');
         }
       } else if (data.draw) {
-        leaderboard.draws++;
-        renderLeaderboard();
+        recordResult(0);
         startConfetti();
         setInfo("It's a draw!");
         setSubInfo(playerNumber === 1
@@ -259,6 +257,7 @@ function subscribeToGame() {
       return;
     }
 
+    roundScored = false;
     clearWinningPulse(boardEl);
     gameActive = true;
     setInfo(currentPlayer === playerNumber ? 'Your turn!' : "Opponent's turn…");
@@ -289,6 +288,7 @@ export async function handleOnlineMove(col) {
 
   if (won) {
     gameActive = false;
+    recordResult(playerNumber);
     const result = getWinningCells(boardState);
     if (result) pulseWinningCells(boardEl, result.cells);
     startConfetti();
@@ -297,6 +297,7 @@ export async function handleOnlineMove(col) {
     if (playerNumber === 1) setRestartVisible(true);
   } else if (draw) {
     gameActive = false;
+    recordResult(0);
     startConfetti();
     setInfo("It's a draw!");
     setSubInfo('You can restart the game using the button below.');
@@ -357,6 +358,7 @@ async function handleRemoteRestart(data) {
       isAnimating = false;
       isRestarting = false;
       pendingMoveFlat = null;
+      roundScored = false;
       initBoardElement(boardEl, false);
       boardEl.style.opacity = '1';
       setInfo('Your turn!');
@@ -391,6 +393,7 @@ async function handleRemoteRestart(data) {
   gameActive = false;
   isAnimating = false;
   pendingMoveFlat = null;
+  roundScored = false;
   initBoardElement(boardEl, false);
   boardEl.style.opacity = '1';
   setRestartVisible(false);
@@ -446,6 +449,7 @@ export async function leaveOnlineGame() {
   leaderboard.p1 = 0;
   leaderboard.p2 = 0;
   leaderboard.draws = 0;
+  roundScored = false;
 }
 
 export async function cancelWaiting() {
@@ -457,19 +461,28 @@ export async function cancelWaiting() {
   playerNumber = 0;
 }
 
+function recordResult(winner) {
+  if (roundScored) return;
+  roundScored = true;
+  if (winner === 1) leaderboard.p1++;
+  else if (winner === 2) leaderboard.p2++;
+  else leaderboard.draws++;
+  renderLeaderboard();
+}
+
 function renderLeaderboard() {
   if (!leaderboardEl) return;
   leaderboardEl.classList.remove('lb-visible');
   leaderboardEl.innerHTML = `
     <div class="lb-row">
       <span class="lb-dot lb-dot-player"></span>
-      <span class="lb-name">Player 1</span>
+      <span class="lb-name">${playerNumber === 1 ? 'You' : 'Player 1'}</span>
       <span class="lb-score">${leaderboard.p1}</span>
     </div>
     <div class="lb-divider"></div>
     <div class="lb-row">
       <span class="lb-dot lb-dot-player2"></span>
-      <span class="lb-name">Player 2</span>
+      <span class="lb-name">${playerNumber === 2 ? 'You' : 'Player 2'}</span>
       <span class="lb-score">${leaderboard.p2}</span>
     </div>
     <div class="lb-divider"></div>
