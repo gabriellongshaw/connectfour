@@ -4,7 +4,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js';
 
 import { db, auth, waitForAuth } from '../core/firebase.js';
-import { generateCode } from '../core/utils.js';
+import { generateCode, snapshotScores, finishLeaderboard } from '../core/utils.js';
 import {
   ROWS, COLS, createEmptyBoard, flattenBoard, unflattenBoard,
   getAvailableRow, checkWin, isBoardFull, getWinningCells,
@@ -472,7 +472,7 @@ function recordResult(winner) {
 
 function renderLeaderboard() {
   if (!leaderboardEl) return;
-  leaderboardEl.classList.remove('lb-visible');
+  const prevScores = snapshotScores(leaderboardEl);
   leaderboardEl.innerHTML = `
     <div class="lb-row">
       <span class="lb-dot lb-dot-player"></span>
@@ -491,7 +491,7 @@ function renderLeaderboard() {
       <span class="lb-score">${leaderboard.draws}</span>
     </div>
   `;
-  requestAnimationFrame(() => leaderboardEl.classList.add('lb-visible'));
+  finishLeaderboard(leaderboardEl, prevScores);
 }
 
 let infoTimeout = null;

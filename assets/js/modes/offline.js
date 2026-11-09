@@ -1,3 +1,4 @@
+import { snapshotScores, finishLeaderboard } from '../core/utils.js';
 import {
   ROWS, COLS, createEmptyBoard, getAvailableRow, checkWin, isBoardFull,
   getWinningCells, initBoardElement, pulseWinningCells, clearWinningPulse,
@@ -125,7 +126,7 @@ export async function restartOfflineGame() {
 
 function renderLeaderboard() {
   if (!leaderboardEl) return;
-  leaderboardEl.classList.remove('lb-visible');
+  const prevScores = snapshotScores(leaderboardEl);
   leaderboardEl.innerHTML = `
     <div class="lb-row">
       <span class="lb-dot lb-dot-player"></span>
@@ -144,7 +145,7 @@ function renderLeaderboard() {
       <span class="lb-score">${leaderboard.draws}</span>
     </div>
   `;
-  requestAnimationFrame(() => leaderboardEl.classList.add('lb-visible'));
+  finishLeaderboard(leaderboardEl, prevScores);
 }
 
 let infoTimeout = null;

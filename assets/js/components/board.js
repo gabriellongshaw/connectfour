@@ -86,11 +86,12 @@ export function initBoardElement(boardEl, firstInit) {
       cell.dataset.row = r;
       cell.dataset.col = c;
       if (firstInit) {
-        cell.style.opacity = '0';
-        setTimeout(() => {
-          cell.style.transition = 'opacity 0.3s ease';
-          cell.style.opacity = '1';
-        }, 10);
+        cell.classList.add('cell-in');
+        cell.style.setProperty('--cell-delay', `${(r + c) * 35}ms`);
+        cell.addEventListener('animationend', () => {
+          cell.classList.remove('cell-in');
+          cell.style.removeProperty('--cell-delay');
+        }, { once: true });
       }
       boardEl.appendChild(cell);
     }
@@ -98,14 +99,19 @@ export function initBoardElement(boardEl, firstInit) {
 }
 
 export function pulseWinningCells(boardEl, cells) {
-  cells.forEach(([r, c]) => {
+  cells.forEach(([r, c], i) => {
     const cell = boardEl.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
-    if (cell) cell.classList.add('winning');
+    if (!cell) return;
+    cell.style.setProperty('--win-delay', `${i * 90}ms`);
+    cell.classList.add('winning');
   });
 }
 
 export function clearWinningPulse(boardEl) {
-  boardEl.querySelectorAll('.cell.winning').forEach(c => c.classList.remove('winning'));
+  boardEl.querySelectorAll('.cell.winning').forEach(c => {
+    c.classList.remove('winning');
+    c.style.removeProperty('--win-delay');
+  });
 }
 
 export function animateFallingDisc(boardEl, col, player, targetRow) {
@@ -130,10 +136,16 @@ export function animateFallingDisc(boardEl, col, player, targetRow) {
     disc.style.left = `${startX}px`;
     disc.style.top = `${startY}px`;
 
-    const duration = 280;
+    const duration = 300 + targetRow * 45;
     let startTime = null;
 
-    function easeOut(t) { return t * (2 - t); }
+    function easeOut(t) {
+      if (t < 1 / 2.75) return 7.5625 * t * t;
+      if (t < 2 / 2.75) { t -= 1.5 / 2.75; return 7.5625 * t * t + 0.75; }
+      if (t < 2.5 / 2.75) { t -= 2.25 / 2.75; return 7.5625 * t * t + 0.9375; }
+      t -= 2.625 / 2.75;
+      return 7.5625 * t * t + 0.984375;
+    }
 
     function tick(time) {
       if (!startTime) startTime = time;
@@ -146,6 +158,10 @@ export function animateFallingDisc(boardEl, col, player, targetRow) {
       } else {
         cell.dataset.player = player;
         disc.remove();
+        cell.classList.remove('landed');
+        void cell.offsetWidth;
+        cell.classList.add('landed');
+        cell.addEventListener('animationend', () => cell.classList.remove('landed'), { once: true });
         resolve();
       }
     }

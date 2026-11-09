@@ -1,3 +1,4 @@
+import { snapshotScores, finishLeaderboard } from '../core/utils.js';
 import {
   ROWS, COLS, createEmptyBoard, getAvailableRow, getWinningCells, isBoardFull,
   initBoardElement, pulseWinningCells, clearWinningPulse,
@@ -179,7 +180,7 @@ function renderLeaderboard() {
   if (!leaderboardEl) return;
   const diffLabels = { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert', impossible: 'Impossible' };
   const diffLabel = diffLabels[difficulty] || difficulty;
-  leaderboardEl.classList.remove('lb-visible');
+  const prevScores = snapshotScores(leaderboardEl);
   leaderboardEl.innerHTML = `
     <div class="lb-row">
       <span class="lb-dot lb-dot-player"></span>
@@ -198,7 +199,7 @@ function renderLeaderboard() {
       <span class="lb-score">${leaderboard.draws}</span>
     </div>
   `;
-  requestAnimationFrame(() => leaderboardEl.classList.add('lb-visible'));
+  finishLeaderboard(leaderboardEl, prevScores);
 }
 
 function getValidCols(board) {

@@ -31,3 +31,19 @@ export function generateCode(length = 7) {
   }
   return code;
 }
+
+export function snapshotScores(el) {
+  if (!el || !el.classList.contains('lb-visible')) return null;
+  return [...el.querySelectorAll('.lb-score')].map(n => n.textContent);
+}
+
+export function finishLeaderboard(el, prev) {
+  if (!prev) {
+    requestAnimationFrame(() => el.classList.add('lb-visible'));
+    return;
+  }
+  el.classList.add('lb-visible');
+  el.querySelectorAll('.lb-score').forEach((n, i) => {
+    if (prev[i] !== undefined && prev[i] !== n.textContent) n.classList.add('bump');
+  });
+}

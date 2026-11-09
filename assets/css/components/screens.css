@@ -170,7 +170,12 @@
   opacity: 0.7;
 }
 
+.lb-score.bump {
+  animation: scoreBump 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .lb-score {
+  display: inline-block;
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--text);

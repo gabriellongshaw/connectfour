@@ -58,3 +58,11 @@ h1 {
   z-index: 10001;
   display: none;
 }
+
+.page {
+  transition: transform 0.22s ease;
+}
+
+body.leaving .page {
+  transform: translateY(-8px) scale(0.985);
+}
