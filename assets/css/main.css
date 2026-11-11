@@ -60,9 +60,9 @@ h1 {
 }
 
 .page {
-  transition: transform 0.22s ease;
+  transition: transform 0.25s ease;
 }
 
 body.leaving .page {
-  transform: translateY(-8px) scale(0.985);
+  transform: scale(0.985);
 }

@@ -1,6 +1,6 @@
 let navigating = false;
 
-const TRANSITION = 'opacity 0.22s ease, background 0.2s, color 0.2s';
+const TRANSITION = 'opacity 0.25s ease, background 0.2s ease, color 0.2s ease';
 
 export function navigateTo(url) {
   if (navigating) return;
@@ -8,7 +8,7 @@ export function navigateTo(url) {
   document.body.classList.add('leaving');
   document.body.style.transition = TRANSITION;
   document.body.style.opacity = '0';
-  setTimeout(() => { window.location.href = url; }, 230);
+  setTimeout(() => { window.location.href = url; }, 200);
 }
 
 export function initPageFadeIn() {
