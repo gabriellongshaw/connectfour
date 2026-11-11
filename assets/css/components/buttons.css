@@ -106,17 +106,21 @@
   z-index: 9999;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  background: var(--button-secondary-bg);
-  color: var(--button-secondary-text);
+  height: 40px;
+  min-width: 40px;
+  padding: 0 11px;
   border: none;
+  border-radius: 999px;
   cursor: pointer;
+  font-family: var(--font-family);
   font-size: 0.88rem;
   font-weight: 600;
-  font-family: var(--font-family);
-  padding: 8px 16px;
-  border-radius: 999px;
-  transition: background 0.2s ease, transform 0.2s ease;
+  color: var(--button-secondary-text);
+  background: var(--button-secondary-bg);
+  touch-action: manipulation;
+  transition: background 0.2s ease, transform 0.15s ease;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -127,5 +131,14 @@
 }
 
 .leave-button:active {
-  transform: scale(0.95);
+  transform: scale(0.97);
+}
+
+.leave-button svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.leave-label {
+  display: none;
 }

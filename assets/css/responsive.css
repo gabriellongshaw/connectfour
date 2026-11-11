@@ -1,4 +1,10 @@
 @media (min-width: 480px) {
+  .leave-label {
+    display: inline;
+  }
+  .leave-button {
+    padding: 0 16px 0 12px;
+  }
   h1 {
     font-size: 2.2rem;
   }
@@ -152,5 +158,14 @@
   .qr-scanner-overlay-visible .qr-scanner-inner {
     transform: translateY(0) scale(1);
     opacity: 1;
+  }
+}
+
+@media (hover: hover) {
+  .leave-button:hover {
+    transform: translateY(-1px);
+  }
+  .leave-button:hover:active {
+    transform: scale(0.97);
   }
 }
