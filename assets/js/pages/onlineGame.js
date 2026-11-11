@@ -1,5 +1,6 @@
 import { applySystemTheme } from '../core/theme.js';
 import { initPageFadeIn, navigateTo } from '../core/transition.js';
+import { initBackButton } from '../components/backButton.js';
 import { initConfetti, resizeConfetti } from '../components/confetti.js';
 import { stopConfetti } from '../components/confetti.js';
 import {
@@ -55,11 +56,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   boardEl.style.display = 'grid';
   startOnlineGame();
 
-  document.getElementById('leave-btn').addEventListener('click', async () => {
-    await leaveOnlineGame();
-    stopConfetti();
-    clearOnlineBoard();
-    navigateTo('../../');
+  initBackButton({
+    target: '../../',
+    onBack: async () => {
+      await leaveOnlineGame();
+      stopConfetti();
+      clearOnlineBoard();
+    },
   });
 
   document.getElementById('restart-btn').addEventListener('click', () => requestOnlineRestart());
@@ -71,5 +74,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   window.addEventListener('resize', resizeConfetti);
-  addTouchHover('.secondary-button, .leave-button');
+  addTouchHover('.secondary-button');
 });

@@ -1,5 +1,6 @@
 import { applySystemTheme } from '../core/theme.js';
 import { initPageFadeIn, navigateTo } from '../core/transition.js';
+import { initBackButton } from '../components/backButton.js';
 import { waitForAuth } from '../core/firebase.js';
 import { joinGame, saveGameSession } from '../modes/online.js';
 import { openQrScanner } from '../components/qrScanner.js';
@@ -23,7 +24,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const joinStatus = document.getElementById('join-status');
   const qrStatus = document.getElementById('qr-status');
   const scanQrBtn = document.getElementById('scan-qr-btn');
-  const backBtn = document.getElementById('back-btn');
 
   const JOIN_ERRORS = new Set([
     'Game not found. Check the code and try again.',
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'Enter') joinGameBtn.click();
   });
 
-  backBtn.addEventListener('click', () => navigateTo('../'));
+  initBackButton({ target: '../' });
 
   scanQrBtn?.addEventListener('click', () => {
     openQrScanner({
@@ -116,5 +116,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  addTouchHover('.button, .secondary-button, .tertiary-button');
+  addTouchHover('.button, .secondary-button');
 });

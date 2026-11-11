@@ -1,4 +1,4 @@
-const CACHE = 'connect-four-v10';
+const CACHE = 'connect-four-v11';
 
 const STATIC = [
   '/',
@@ -37,6 +37,7 @@ const STATIC = [
   '/assets/js/core/theme.js',
   '/assets/js/core/utils.js',
   '/assets/js/core/transition.js',
+  '/assets/js/components/backButton.js',
   '/assets/js/components/board.js',
   '/assets/js/components/confetti.js',
   '/assets/js/components/modal.js',

@@ -1,5 +1,6 @@
 import { applySystemTheme } from '../core/theme.js';
 import { initPageFadeIn, navigateTo } from '../core/transition.js';
+import { initBackButton } from '../components/backButton.js';
 import { waitForAuth } from '../core/firebase.js';
 import { createGame, cancelWaiting, saveGameSession } from '../modes/online.js';
 
@@ -23,7 +24,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showQrToggle = document.getElementById('show-qr-toggle');
   const creatingStatus = document.getElementById('creating-status');
   const sendLinkBtn = document.getElementById('send-link-btn');
-  const cancelBtn = document.getElementById('cancel-btn');
 
   let currentJoinUrl = '';
   let statusTimeout = null;
@@ -79,10 +79,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  cancelBtn.addEventListener('click', async () => {
-    resetQr();
-    await cancelWaiting();
-    navigateTo('../');
+  initBackButton({
+    target: '../',
+    onBack: async () => {
+      resetQr();
+      await cancelWaiting();
+    },
   });
 
   try {
@@ -117,5 +119,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   );
 
-  addTouchHover('.secondary-button, .tertiary-button');
+  addTouchHover('.secondary-button');
 });

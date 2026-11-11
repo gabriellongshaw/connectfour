@@ -1,5 +1,6 @@
 import { applySystemTheme } from '../core/theme.js';
 import { initPageFadeIn, navigateTo } from '../core/transition.js';
+import { initBackButton } from '../components/backButton.js';
 import { difficultyIcons } from '../core/icons.js';
 
 function addTouchHover(selector) {
@@ -25,6 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => navigateTo(`game/?difficulty=${level}`));
   });
 
-  document.getElementById('back-btn').addEventListener('click', () => navigateTo('../'));
-  addTouchHover('.button, .tertiary-button');
+  initBackButton({ target: '../' });
+  addTouchHover('.button');
 });

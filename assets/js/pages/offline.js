@@ -1,5 +1,6 @@
 import { applySystemTheme } from '../core/theme.js';
-import { initPageFadeIn, navigateTo } from '../core/transition.js';
+import { initPageFadeIn } from '../core/transition.js';
+import { initBackButton } from '../components/backButton.js';
 import { initConfetti, resizeConfetti } from '../components/confetti.js';
 import {
   initOfflineRefs, startOfflineGame, handleOfflineMove,
@@ -34,9 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
   boardEl.style.display = 'grid';
   startOfflineGame();
 
-  document.getElementById('leave-btn').addEventListener('click', () => {
-    clearOfflineBoard();
-    navigateTo('../');
+  initBackButton({
+    target: '../',
+    onBack: () => clearOfflineBoard(),
   });
 
   document.getElementById('restart-btn').addEventListener('click', () => restartOfflineGame());
@@ -48,5 +49,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   window.addEventListener('resize', resizeConfetti);
-  addTouchHover('.secondary-button, .leave-button');
+  addTouchHover('.secondary-button');
 });
