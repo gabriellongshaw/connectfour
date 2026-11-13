@@ -157,12 +157,12 @@ export function animateFallingDisc(boardEl, col, player, targetRow) {
 
 export function animateRestart(boardEl) {
   return new Promise(resolve => {
-    boardEl.classList.add('shake');
+    boardEl.style.animation = 'boardShake 0.6s ease-in-out';
     boardEl.style.transition = 'opacity 350ms';
     boardEl.style.opacity = '0.25';
     setTimeout(() => {
       boardEl.style.opacity = '1';
-      setTimeout(() => boardEl.classList.remove('shake'), 350);
+      setTimeout(() => { boardEl.style.animation = 'none'; }, 350);
       resolve();
     }, 480);
   });
