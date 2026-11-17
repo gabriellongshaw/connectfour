@@ -3,6 +3,7 @@ import { initPageFadeIn, navigateTo } from '../core/transition.js';
 import { initBackButton } from '../components/backButton.js';
 import { waitForAuth } from '../core/firebase.js';
 import { createGame, cancelWaiting, saveGameSession } from '../modes/online.js';
+import { mountVersion } from '../components/version.js';
 
 function addTouchHover(selector) {
   document.querySelectorAll(selector).forEach(el => {
@@ -16,6 +17,7 @@ function addTouchHover(selector) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   applySystemTheme();
+  mountVersion(document.querySelector('.page'));
   initPageFadeIn();
 
   const roomCodeSpan = document.getElementById('room-code');

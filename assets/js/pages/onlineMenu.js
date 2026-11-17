@@ -3,6 +3,7 @@ import { initPageFadeIn, navigateTo } from '../core/transition.js';
 import { initBackButton } from '../components/backButton.js';
 import { initModal } from '../components/modal.js';
 import { waitForAuth } from '../core/firebase.js';
+import { mountVersion } from '../components/version.js';
 
 function addTouchHover(selector) {
   document.querySelectorAll(selector).forEach(el => {
@@ -16,6 +17,7 @@ function addTouchHover(selector) {
 
 document.addEventListener('DOMContentLoaded', () => {
   applySystemTheme();
+  mountVersion(document.querySelector('.page'));
   initPageFadeIn();
 
   const { isInAppBrowser, showModal } = initModal();

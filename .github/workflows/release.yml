@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - '.github/**'
+      - 'scripts/**'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Run mode
+        type: choice
+        default: release
+        options:
+          - release
+          - dry-run
+          - backfill
+          - refresh
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          case "$MODE" in
+            backfill) node scripts/release.mjs --backfill ;;
+            refresh) node scripts/release.mjs --backfill --refresh ;;
+            dry-run) node scripts/release.mjs --dry ;;
+            *) node scripts/release.mjs ;;
+          esac
+      - name: Publish version
+        if: inputs.mode == '' || inputs.mode == 'release'
+        run: |
+          if [ -n "$(git status --porcelain version.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add version.json
+            git commit -m "chore(release): update version [skip release]"
+            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" || echo "version push skipped"
+          fi

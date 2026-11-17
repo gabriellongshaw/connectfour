@@ -181,3 +181,38 @@
   color: var(--text);
   line-height: 1;
 }
+
+.page:has(> .version-tag):not(:has(> .game-inner)) {
+  padding-bottom: 44px;
+}
+
+.page > .version-tag {
+  position: fixed;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.page:has(> .game-inner) > .version-tag {
+  position: static;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.version-tag {
+  display: block;
+  color: var(--meta-text);
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  text-decoration: none;
+}
+
+.credits-link.version-tag {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  text-decoration: underline;
+}

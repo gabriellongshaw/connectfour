@@ -2,6 +2,7 @@ import { applySystemTheme } from '../core/theme.js';
 import { initPageFadeIn, navigateTo } from '../core/transition.js';
 import { initBackButton } from '../components/backButton.js';
 import { difficultyIcons } from '../core/icons.js';
+import { mountVersion } from '../components/version.js';
 
 function addTouchHover(selector) {
   document.querySelectorAll(selector).forEach(el => {
@@ -15,6 +16,7 @@ function addTouchHover(selector) {
 
 document.addEventListener('DOMContentLoaded', () => {
   applySystemTheme();
+  mountVersion(document.querySelector('.page'));
   initPageFadeIn();
 
   const levels = ['easy', 'medium', 'hard', 'expert', 'impossible'];

@@ -9,6 +9,7 @@ import {
   leaveOnlineGame, clearOnlineBoard
 } from '../modes/online.js';
 import { waitForAuth } from '../core/firebase.js';
+import { mountVersion } from '../components/version.js';
 
 function addTouchHover(selector) {
   document.querySelectorAll(selector).forEach(el => {
@@ -22,6 +23,7 @@ function addTouchHover(selector) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   applySystemTheme();
+  mountVersion(document.querySelector('.page'));
   initPageFadeIn();
   initConfetti();
 

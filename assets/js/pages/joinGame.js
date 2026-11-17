@@ -4,6 +4,7 @@ import { initBackButton } from '../components/backButton.js';
 import { waitForAuth } from '../core/firebase.js';
 import { joinGame, saveGameSession } from '../modes/online.js';
 import { openQrScanner } from '../components/qrScanner.js';
+import { mountVersion } from '../components/version.js';
 
 function addTouchHover(selector) {
   document.querySelectorAll(selector).forEach(el => {
@@ -17,6 +18,7 @@ function addTouchHover(selector) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   applySystemTheme();
+  mountVersion(document.querySelector('.page'));
   initPageFadeIn();
 
   const joinCodeInput = document.getElementById('join-code-input');
